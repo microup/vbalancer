@@ -137,11 +137,11 @@ func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 	dateStr := fmt.Sprintf("%s", recordTime.Format("2006-01-02"))
 	timeStr := fmt.Sprintf("%s", recordTime.Format("15:04:05"))
 
-	recordRow := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
+	recordRow := fmt.Sprintf("%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
 		dateStr,
 		timeStr,
 		typeLog.GetStr(),
-		resultCode.GetStatus(),
+		resultCode,
 		remoteAddr,
 		clientHost,
 		clientMethod,

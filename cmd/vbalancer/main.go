@@ -39,7 +39,7 @@ func main() {
 
 	go func() {
 		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.Proxy.Addr))
-		if err := proxy.StartServer(); err != nil {
+		if err := proxy.Start(); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't start server %s", err))
 		}
 	}()
