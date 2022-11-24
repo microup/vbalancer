@@ -1,7 +1,5 @@
 PROJECT_NAME = "vbalancer"
 
-PKG="localhost/microup/$(PROJECT_NAME)"
-
 .PHONY: all dep build clean test lint
 
 all: lint test race build
