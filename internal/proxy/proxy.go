@@ -22,10 +22,10 @@ type Proxy struct {
 	currentPeerIndex *uint64
 }
 
-func New(ctx context.Context, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
+func New(ctx context.Context, proxyPort string, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
 
 	httpServer := &http.Server{
-		Addr:              cfg.Addr,
+		Addr:              proxyPort,
 		TLSConfig:         nil,
 		ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
 		ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
