@@ -40,7 +40,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
 
-	return nil
+	return err
 }
 
 func (v *VLog) Close() error {
@@ -129,10 +129,10 @@ func (v *VLog) checkToCreateNewLogFile() error {
 }
 
 func (v *VLog) removeOldRecordsFromMemory() {
-	var x string
 	if uint64(len(v.mapLastLogRecords)) > v.cfg.ApiShowRecords {
-		x, v.mapLastLogRecords = v.mapLastLogRecords[0], v.mapLastLogRecords[1:]
-		x, v.mapLastLogRecords = v.mapLastLogRecords[len(v.mapLastLogRecords)-1], v.mapLastLogRecords[:len(v.mapLastLogRecords)-1]
-		v.mapLastLogRecords = append(v.mapLastLogRecords, x)
+		var xLast string
+		_, v.mapLastLogRecords = v.mapLastLogRecords[0], v.mapLastLogRecords[1:]
+		xLast, v.mapLastLogRecords = v.mapLastLogRecords[len(v.mapLastLogRecords)-1], v.mapLastLogRecords[:len(v.mapLastLogRecords)-1]
+		v.mapLastLogRecords = append(v.mapLastLogRecords, xLast)
 	}
 }
