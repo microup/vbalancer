@@ -14,15 +14,15 @@ Proxy:
 Peers:
   - Name: test_backend_1
     Proto: http
-    URI: 192.168.1.43:8040
+    URI: 127.0.0.1:8040
 
   - Name: test_backend_2
     Proto: http
-    URI: 192.168.1.43:8030
+    URI: 127.0.0.1:8030
 
   - Name: test_backend_3
     Proto: http
-    URI: 192.168.1.43:8020    
+    URI: 127.0.0.1:8020    
 
 PeerCheckTimeAlive:  
   TimeCheck: 2
