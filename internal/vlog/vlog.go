@@ -54,6 +54,10 @@ func (v *VLog) GetCountRecords() int {
 }
 
 func (v *VLog) Add(values ...interface{}) {
+	go v.addInThread(values...)
+}
+
+func (v *VLog) addInThread(values ...interface{}) {
 	v.wgNewLog.Wait()
 
 	v.mu.Lock()
@@ -67,9 +71,9 @@ func (v *VLog) Add(values ...interface{}) {
 
 	switch typeLog {
 	case Fatal:
-		log.Fatalf(recordRow)
+		log.Fatal(recordRow)
 	default:
-		log.Printf(recordRow)
+		log.Print(recordRow)
 	}
 
 	_, err := v.fileLog.WriteString(recordRow + "\n")
@@ -85,7 +89,6 @@ func (v *VLog) Add(values ...interface{}) {
 	if err != nil {
 		log.Printf("Error: %s - is writing: %s to log file: %s", err, recordRow, v.fileLog.Name())
 	}
-
 }
 
 func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
@@ -103,13 +106,13 @@ func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 	var proxyURI string
 
 	for _, v := range values {
-		switch v.(type) {
+		switch vt := v.(type) {
 		case TypeLog:
-			typeLog = v.(TypeLog)
+			typeLog = TypeLog(vt) 
 		case types.ResultCode:
-			resultCode = v.(types.ResultCode)
+			resultCode = types.ResultCode(vt)
 		case string:
-			val = val + v.(string) + ","
+			val = val + string(vt) + ","
 		case RemoteAddr:
 			remoteAddr = string(v.(RemoteAddr))
 		case ClientHost:
@@ -134,8 +137,8 @@ func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 	resultFmtStr := core.FmtStringWithDelimiter(";", val)
 
 	recordTime := time.Now()
-	dateStr := fmt.Sprintf("%s", recordTime.Format("2006-01-02"))
-	timeStr := fmt.Sprintf("%s", recordTime.Format("15:04:05"))
+	dateStr :=recordTime.Format("2006-01-02")
+	timeStr := recordTime.Format("15:04:05")
 
 	recordRow := fmt.Sprintf("%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
 		dateStr,
