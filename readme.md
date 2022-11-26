@@ -1,17 +1,10 @@
-## VBalancer introduction
+# VBalancer
 
-Разработан балансировщик нагрузки для входящих запросов. Позволяет последовательно переключать все входящие запросы
-по указанным IP из конфиг файла. Данное решение позволяет снизить нагрузку и увеличить стабильность Вашего решения. 
+The VBalancer has realized for switch traffic between peers, and it uses Robin Round algorithm.
+This is implementation need to increase stability and downgrade high load to backend.
 
 ![Diagram](assets/vbalancer.png)
 
-### Настройки
+## Settings
 
-В файле: cmd/vbalancer/config.yaml Вы можете добавлять и удалять сервера между которыми необходимо
-переключаться.  
-
-### Перспективы разработки:
-- сделать поддержку HTTPS
-- сделать ограничитель трафика
-- расширить логирование
-- добавить защиту от DDOS 
+In file: cmd/vbalancer/config.yaml you can add or delete peer(s), and configure PROXY settings.
