@@ -15,6 +15,7 @@ type Config struct {
 	Logger *vlog.Config  `yaml:"Logger"`
 	Proxy  *proxy.Config `yaml:"Proxy"`
 	Peers  []*peer.Peer  `yaml:"Peers"`
+	CheckTimeAlive *peer.CheckTimeAlive `yaml:"PeerCheckTimeAlive"`
 }
 
 func New(configFileName string) (*Config, error) {
