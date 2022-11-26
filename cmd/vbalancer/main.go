@@ -21,7 +21,7 @@ func main() {
 	cfgFile := flag.String("cfg_file", "config.yaml", "config file")
 	flag.Parse()
 
-	_, serverCancel := context.WithCancel(context.Background())
+	ctx, serverCancel := context.WithCancel(context.Background())
 
 	cfg, err := config.New(*cfgFile)
 	if err != nil {
@@ -35,11 +35,11 @@ func main() {
 	defer logger.Close()
 
 	logger.Add(vlog.Info, types.ResultOK, "the balancer was running")
-	proxy := proxy.New(cfg.Proxy, logger, cfg.Peers)
+	proxy := proxy.New(ctx, cfg.Proxy, cfg.Peers, logger)
 
 	go func() {
 		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.Proxy.Addr))
-		if err := proxy.Start(); err != nil {
+		if err := proxy.Start(cfg.CheckTimeAlive); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't start server %s", err))
 		}
 	}()

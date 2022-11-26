@@ -3,7 +3,7 @@ package proxy
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -14,6 +14,7 @@ import (
 )
 
 type Proxy struct {
+	ctx              context.Context
 	proxyServer      *http.Server
 	logger           *vlog.VLog
 	peers            []*peer.Peer
@@ -21,7 +22,7 @@ type Proxy struct {
 	currentPeerIndex *uint64
 }
 
-func New(cfg *Config, logger *vlog.VLog, peers []*peer.Peer) *Proxy {
+func New(ctx context.Context, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
 
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,
@@ -40,6 +41,7 @@ func New(cfg *Config, logger *vlog.VLog, peers []*peer.Peer) *Proxy {
 
 	var startPeerIndex uint64 = 0
 	proxy := &Proxy{
+		ctx:              ctx,
 		proxyServer:      httpServer,
 		logger:           logger,
 		peers:            peers,
@@ -47,16 +49,18 @@ func New(cfg *Config, logger *vlog.VLog, peers []*peer.Peer) *Proxy {
 		currentPeerIndex: &startPeerIndex,
 	}
 
-	for _, p := range proxy.peers {
-		p.Logger = logger
-	}
-
 	httpServer.Handler = http.HandlerFunc(proxy.ProxyHandler)
 
 	return proxy
 }
 
-func (p *Proxy) Start() error {
+func (p *Proxy) Start(checkTimeAlive *peer.CheckTimeAlive) error {
+	for _, peer := range p.peers {
+		peer.CheckTimeAlive = checkTimeAlive
+		peer.Logger = p.logger
+		go peer.CheckIsAlive(p.ctx)
+	}
+
 	return p.proxyServer.ListenAndServe()
 }
 
@@ -94,12 +98,16 @@ func (p *Proxy) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := transport.RoundTrip(newRequest)
 	if err != nil {
 		http.Error(w, "Proxy error", http.StatusInternalServerError)
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path), err.Error())
+		if resp != nil {
+			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path), err.Error())
+		} else {
+			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method),	vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), err.Error())	
+		}
 		return
 	}
 
 	defer resp.Body.Close()
-	resultBody, err := ioutil.ReadAll(resp.Body)
+	resultBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		http.Error(w, "Proxy error", http.StatusInternalServerError)
 		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path), err.Error())
@@ -126,7 +134,7 @@ func (p *Proxy) getNextPeer() (*peer.Peer, error) {
 	l := len(p.peers) + next
 	for i := next; i < l; i++ {
 		idx := i % len(p.peers)
-		isAlive := p.peers[idx].IsBackendAlive()
+		isAlive := p.peers[idx].IsAlive()
 		if isAlive {
 			atomic.StoreUint64(p.currentPeerIndex, uint64(idx))
 			return p.peers[idx], nil
