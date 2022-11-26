@@ -3,7 +3,7 @@ package proxy
 import (
 	"testing"
 
-	"github.com/microup/vbalancer/internal/peer"
+	"vbalancer/internal/peer"
 )
 
 func Test_API_Get_Next_Peer(t *testing.T) {

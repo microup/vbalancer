@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/microup/vbalancer/internal/core"
+	"vbalancer/internal/core"
 )
 
 func (v *VLog) New(fileNameDateTime string) {

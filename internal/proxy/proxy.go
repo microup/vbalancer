@@ -8,9 +8,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/microup/vbalancer/internal/peer"
-	"github.com/microup/vbalancer/internal/types"
-	"github.com/microup/vbalancer/internal/vlog"
+	"vbalancer/internal/peer"
+	"vbalancer/internal/types"
+	"vbalancer/internal/vlog"
 )
 
 type Proxy struct {

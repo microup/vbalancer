@@ -9,8 +9,8 @@ import (
 
 	"os"
 
-	"github.com/microup/vbalancer/internal/core"
-	"github.com/microup/vbalancer/internal/types"
+	"vbalancer/internal/core"
+	"vbalancer/internal/types"
 )
 
 type VLog struct {

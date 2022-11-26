@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/microup/vbalancer/internal/config"
-	"github.com/microup/vbalancer/internal/proxy"
-	"github.com/microup/vbalancer/internal/types"
-	"github.com/microup/vbalancer/internal/vlog"
+	"vbalancer/internal/config"
+	"vbalancer/internal/proxy"
+	"vbalancer/internal/types"
+	"vbalancer/internal/vlog"
 )
 
 func main() {

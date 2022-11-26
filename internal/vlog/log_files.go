@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/microup/vbalancer/internal/core"
-	"github.com/microup/vbalancer/internal/types"
-	"github.com/microup/vbalancer/internal/version"
+	"vbalancer/internal/core"
+	"vbalancer/internal/types"
+	"vbalancer/internal/version"
 )
 
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {

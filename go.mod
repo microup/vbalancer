@@ -1,4 +1,4 @@
-module github.com/microup/vbalancer
+module vbalancer
 
 go 1.19
 

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/microup/vbalancer/internal/types"
-	"github.com/microup/vbalancer/internal/vlog"
+	"vbalancer/internal/types"
+	"vbalancer/internal/vlog"
 )
 
 type Peer struct {

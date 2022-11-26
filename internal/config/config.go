@@ -5,9 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/microup/vbalancer/internal/peer"
-	"github.com/microup/vbalancer/internal/proxy"
-	"github.com/microup/vbalancer/internal/vlog"
+	"vbalancer/internal/peer"
+	"vbalancer/internal/proxy"
+	"vbalancer/internal/vlog"
+
 	"gopkg.in/yaml.v2"
 )
 
