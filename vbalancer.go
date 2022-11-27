@@ -17,11 +17,7 @@ import (
 )
 
 func main() {
-	proxyPort := fmt.Sprintf(":%s", os.Getenv("ProxyPort"))
-	if proxyPort == ":" {
-		log.Fatalf("Can't read environment variable ProxyPort")
-	}
-
+	
 	configFile :=os.Getenv("ConfigFile")
 	if configFile == "" {
 		log.Fatalf("Can't read environment variable ConfigFile")
@@ -32,6 +28,14 @@ func main() {
 	cfg, err := config.New(configFile)
 	if err != nil {
 		log.Fatalf("Can't create and init config from file: %s, err: %v", configFile, err)
+	}
+
+	proxyPort := fmt.Sprintf(":%s", os.Getenv("ProxyPort"))
+	if proxyPort == ":" {
+		proxyPort = fmt.Sprintf(":%s", cfg.Proxy.DefaultPort) 
+	}
+	if proxyPort == ":" {
+	 	log.Fatalf("Empty variable a ProxyPort")
 	}
 
 	logger, err := vlog.New(cfg.Logger)
