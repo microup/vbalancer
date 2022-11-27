@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"sync/atomic"
 	"time"
 
@@ -21,11 +20,6 @@ type Proxy struct {
 	peers            []*peer.Peer
 	cfg              *Config
 	currentPeerIndex *uint64
-}
-
-type Channel struct {
-	from, to net.Conn
-	ack      chan bool
 }
 
 func New(ctx context.Context, proxyPort string, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
@@ -56,7 +50,10 @@ func (p *Proxy) Start(checkTimeAlive *peer.CheckTimeAlive) error {
 
 	for {
 		if conn, err := p.srv.Accept(); err == nil {
-			conn.SetDeadline(time.Now().Add(time.Duration(p.cfg.TimeDeadLineMS) * time.Millisecond))
+			err := conn.SetDeadline(time.Now().Add(time.Duration(p.cfg.TimeDeadLineMS) * time.Millisecond))
+			if err != nil {
+				p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Sprintf("Accept failed, %v\n", err))
+			}
 			go p.copyConn(conn)
 		} else {
 			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Sprintf("Accept failed, %v\n", err))
@@ -75,7 +72,6 @@ func (p *Proxy) copyConn(client net.Conn) {
 	peer, err := p.getNextPeer()
 
 	if err != nil || peer == nil {
-		// http.Error(w, "Proxy error", http.StatusServiceUnavailable)
 		if peer != nil {
 			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(client.RemoteAddr().String()), vlog.ProxyHost(peer.Uri), err.Error())
 		} else {
@@ -101,6 +97,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 	go func() {
 		defer client.Close()
 		defer dst.Close()
+		//nolint:errcheck 
 		io.Copy(dst, client)
 		done <- true
 	}()
@@ -108,6 +105,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 	go func() {
 		defer client.Close()
 		defer dst.Close()
+		//nolint:errcheck 
 		io.Copy(client, dst)
 		done <- true
 	}()
@@ -138,12 +136,4 @@ func (p *Proxy) getNextPeer() (*peer.Peer, error) {
 
 func (p *Proxy) nextIndex() int {
 	return int(atomic.AddUint64(p.currentPeerIndex, uint64(1)) % uint64(len(p.peers)))
-}
-
-func (p *Proxy) copyHeader(source http.Header, dest *http.Header) {
-	for n, v := range source {
-		for _, vv := range v {
-			dest.Add(n, vv)
-		}
-	}
 }
