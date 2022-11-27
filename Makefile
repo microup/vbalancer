@@ -1,6 +1,6 @@
 PROJECT_NAME = "vbalancer"
 
-.PHONY: all dep build clean test lint
+.PHONY: all dep build test lint mocks
 
 all: lint test race build
 
@@ -17,4 +17,4 @@ dep: ## Get the dependencies
   @go get -v -d ./...
 
 build: 
-   @go build -o bin/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/main.go  
+   @go build -o bin/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/main.go
