@@ -6,12 +6,8 @@ Logger:
 
 Proxy:
   DefaultPort: 8080
+  TimeDeadlineMS: 200
   ShutdownTimeout: 10
-  ReadHeaderTimeout: 30
-  WriteTimeout: 30
-  ReadTimeout: 30
-  IdleTimeout: 60
-
 Peers:
   - Name: test_backend_1
     Proto: http
