@@ -6,7 +6,7 @@ Logger:
 
 Proxy:
   DefaultPort: 8080
-  TimeDeadlineMS: 200
+  TimeDeadLineMS: 200
   ShutdownTimeout: 10
 Peers:
   - Name: test_backend_1
