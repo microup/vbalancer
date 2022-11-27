@@ -1,4 +1,4 @@
-# VBalancer
+# What is VBalancer?
 
 The VBalancer has realized for switch traffic between peers, and it uses Robin Round algorithm.
 This is an implementation need to increase stability and downgrade high load to backend.
@@ -26,3 +26,9 @@ $docker build --tag vbalancer . -f Dockerfile
 ```bash
 $docker run --rm -p 8080:8080 vbalancer
 ```
+
+## Features
+
+- All log write to 'csv' file
+- Size log file can be changed in the config file
+  
