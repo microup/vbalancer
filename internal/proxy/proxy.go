@@ -3,51 +3,46 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"sync/atomic"
 	"time"
 
 	"vbalancer/internal/peer"
+	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
 
 type Proxy struct {
-	ctx                     context.Context
-	proxyServer             *http.Server
-	logger                  *vlog.VLog
-	peers                   []*peer.Peer
-	cfg                     *Config
-	currentPeerIndex        *uint64
+	ctx              context.Context
+	srv              net.Listener
+	logger           *vlog.VLog
+	peers            []*peer.Peer
+	cfg              *Config
+	currentPeerIndex *uint64
+}
+
+type Channel struct {
+	from, to net.Conn
+	ack      chan bool
 }
 
 func New(ctx context.Context, proxyPort string, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
-
-	httpServer := &http.Server{
-		Addr:              proxyPort,
-		TLSConfig:         nil,
-		ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
-		ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
-		WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
-		IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
-		MaxHeaderBytes:    0,
-		TLSNextProto:      nil,
-		ConnState:         nil,
-		ErrorLog:          nil,
-		BaseContext:       nil,
-		ConnContext:       nil,
+	proxySrv, err := net.Listen("tcp", proxyPort)
+	if err != nil {
+		panic("connection error:" + err.Error())
 	}
 
 	var startPeerIndex uint64 = 0
 	proxy := &Proxy{
 		ctx:              ctx,
-		proxyServer:      httpServer,
+		srv:              proxySrv,
 		logger:           logger,
 		peers:            peers,
 		cfg:              cfg,
 		currentPeerIndex: &startPeerIndex,
 	}
-
-	httpServer.Handler = http.HandlerFunc(proxy.ProxyHandler)
 
 	return proxy
 }
@@ -59,11 +54,66 @@ func (p *Proxy) Start(checkTimeAlive *peer.CheckTimeAlive) error {
 		go peer.CheckIsAlive(p.ctx)
 	}
 
-	return p.proxyServer.ListenAndServe()
+	for {
+		if conn, err := p.srv.Accept(); err == nil {
+			conn.SetDeadline(time.Now().Add(time.Duration(p.cfg.TimeDeadLineMS) * time.Millisecond))
+			go p.copyConn(conn)
+		} else {
+			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Sprintf("Accept failed, %v\n", err))
+			fmt.Printf("Accept failed, %v\n", err)
+		}
+	}
+
 }
 
 func (p *Proxy) Shutdown(ctx context.Context) error {
-	return p.proxyServer.Shutdown(ctx)
+	return nil
+}
+
+func (p *Proxy) copyConn(client net.Conn) {
+	defer client.Close()
+	peer, err := p.getNextPeer()
+
+	if err != nil || peer == nil {
+		// http.Error(w, "Proxy error", http.StatusServiceUnavailable)
+		if peer != nil {
+			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(client.RemoteAddr().String()), vlog.ProxyHost(peer.Uri), err.Error())
+		} else {
+			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(client.RemoteAddr().String()), err.Error())
+		}
+		return
+	}
+
+	dst, err := net.Dial("tcp", peer.Uri)
+	if err != nil {
+		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(client.RemoteAddr().String()), fmt.Sprintf("Accept failed, %v\n", err))
+		return
+	}
+
+	p.logger.Add(vlog.Debug,
+		types.ResultOK,
+		vlog.RemoteAddr(client.RemoteAddr().String()),
+		vlog.ProxyHost(peer.Uri),
+	)
+
+	done := make(chan bool, 2)
+
+	go func() {
+		defer client.Close()
+		defer dst.Close()
+		io.Copy(dst, client)
+		done <- true
+	}()
+
+	go func() {
+		defer client.Close()
+		defer dst.Close()
+		io.Copy(client, dst)
+		done <- true
+	}()
+
+	<-done
+	<-done
 }
 
 func (p *Proxy) getNextPeer() (*peer.Peer, error) {
