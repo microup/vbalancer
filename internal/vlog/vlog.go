@@ -22,6 +22,7 @@ type VLog struct {
 	headerCSV         string
 	startTimeLog      time.Time
 	wgNewLog          sync.WaitGroup
+	IsDisabled        bool
 }
 
 func New(cfg *Config) (*VLog, error) {
@@ -33,6 +34,7 @@ func New(cfg *Config) (*VLog, error) {
 			"ClientHost", "ClientMethod", "ClientProto", "ClientURI", "PeerMethod", "PeerProto", "PeerHost",
 			"PeerRequestURI", "Description"),
 		startTimeLog: time.Now(),
+		IsDisabled: false,
 	}
 
 	err := l.newFileLog("", true)
@@ -54,6 +56,9 @@ func (v *VLog) GetCountRecords() int {
 }
 
 func (v *VLog) Add(values ...interface{}) {
+	if v.IsDisabled {
+		return
+	}
 	go v.addInThread(values...)
 }
 
