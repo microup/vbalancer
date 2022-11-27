@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -17,6 +18,8 @@ import (
 )
 
 func main() {
+
+    runtime.GOMAXPROCS(runtime.NumCPU())
 	
 	configFile :=os.Getenv("ConfigFile")
 	if configFile == "" {
