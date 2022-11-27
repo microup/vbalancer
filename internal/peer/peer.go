@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
 
@@ -51,12 +50,6 @@ func (p *Peer) CheckIsAlive(ctx context.Context) {
 			conn, err := net.DialTimeout("tcp", p.urlPeer.Host, timeout)
 
 			if err != nil {
-				p.Logger.Add(vlog.Debug,
-					types.ResultCode(types.StatusInternalServerError),
-					vlog.RemoteAddr(p.urlPeer.Host),
-					vlog.ProxyHost(p.urlPeer.Host),
-					vlog.ProxyProto(p.Proto),
-					err.Error())
 				p.setAlive(false)
 			} else {
 				_ = conn.Close()
