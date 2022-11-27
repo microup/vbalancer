@@ -5,7 +5,7 @@ Logger:
   KindType: "csv"
 
 Proxy:
-  DefaultPort: 8000
+  DefaultPort: 8080
   ShutdownTimeout: 10
   ReadHeaderTimeout: 30
   WriteTimeout: 30
