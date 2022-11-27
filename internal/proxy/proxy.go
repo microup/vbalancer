@@ -3,23 +3,21 @@ package proxy
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"sync/atomic"
 	"time"
 
 	"vbalancer/internal/peer"
-	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
 
 type Proxy struct {
-	ctx              context.Context
-	proxyServer      *http.Server
-	logger           *vlog.VLog
-	peers            []*peer.Peer
-	cfg              *Config
-	currentPeerIndex *uint64
+	ctx                     context.Context
+	proxyServer             *http.Server
+	logger                  *vlog.VLog
+	peers                   []*peer.Peer
+	cfg                     *Config
+	currentPeerIndex        *uint64
 }
 
 func New(ctx context.Context, proxyPort string, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
@@ -66,61 +64,6 @@ func (p *Proxy) Start(checkTimeAlive *peer.CheckTimeAlive) error {
 
 func (p *Proxy) Shutdown(ctx context.Context) error {
 	return p.proxyServer.Shutdown(ctx)
-}
-
-func (p *Proxy) ProxyHandler(w http.ResponseWriter, r *http.Request) {
-	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI))
-
-	if len(p.peers) == 0 {
-		http.Error(w, "Proxy error", http.StatusInternalServerError)
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), "Peers not found")
-		return
-	}
-
-	peer, err := p.getNextPeer()
-	if err != nil || peer == nil {
-		http.Error(w, "Proxy error", http.StatusServiceUnavailable)
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), err.Error())
-		return
-	}
-
-	newProxyURI := fmt.Sprintf("%s://%s%s", peer.Proto, peer.Uri, r.RequestURI)
-
-	newRequest, err := http.NewRequest(r.Method, newProxyURI, r.Body)
-	if err != nil {
-		http.Error(w, "Proxy error", http.StatusInternalServerError)
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), err.Error())
-		return
-	}
-	p.copyHeader(r.Header, &newRequest.Header)
-
-	var transport http.Transport
-	resp, err := transport.RoundTrip(newRequest)
-	if err != nil {
-		http.Error(w, "Proxy error", http.StatusInternalServerError)
-		if resp != nil {
-			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path), err.Error())
-		} else {
-			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method),	vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), err.Error())	
-		}
-		return
-	}
-
-	defer resp.Body.Close()
-	resultBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, "Proxy error", http.StatusInternalServerError)
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path), err.Error())
-		return
-	}
-
-	_, err = w.Write(resultBody)
-	if err != nil {
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path), err.Error())
-	}
-
-	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(r.RemoteAddr), vlog.ClientHost(r.Host), vlog.ClientMethod(r.Method), vlog.ClientProto(r.Proto), vlog.ClientURI(r.RequestURI), vlog.ProxyHost(resp.Request.Host), vlog.ProxyMethod(resp.Request.Method), vlog.ProxyProto(resp.Request.Proto), vlog.ProxyURI(resp.Request.URL.Path))
-
 }
 
 func (p *Proxy) getNextPeer() (*peer.Peer, error) {
