@@ -7,7 +7,7 @@ This is an implementation need to increase stability and downgrade high load to 
 
 ## Important: need set ENV to run
 
-To run need to set an environment os "ProxyPort" and path to config file "ConfigFile"
+For normal run a VBalancer, it needs to set an environment OS "ProxyPort" and path to config file "ConfigFile".
 
 ## Settings
 
