@@ -44,5 +44,5 @@ jobs:
 
       - name: Build All
         run: |
-          make build
+          go build -o bin/vbalancer cmd/vbalancer/main.go
 
