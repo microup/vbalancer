@@ -34,10 +34,10 @@ jobs:
           git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
 
       - name: Test All
-        run: make test
+        run: go test -short ./...
 
       - name: Linter
-        run: make lint
+        run: golangci-lint run -v ./...
 
       - name: Build All
         run: make build
