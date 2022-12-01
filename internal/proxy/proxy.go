@@ -42,11 +42,9 @@ func New(ctx context.Context, proxyPort string, cfg *Config, peers []*peer.Peer,
 }
 
 func (p *Proxy) Start(checkTimeAlive *peer.CheckTimeAlive) error {
-
 	for _, peer := range p.peers {
 		peer.CheckTimeAlive = checkTimeAlive
 		peer.Logger = p.logger
-		
 		go peer.CheckIsAlive(p.ctx)
 	}
 
@@ -99,7 +97,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 	go func() {
 		defer client.Close()
 		defer dst.Close()
-		//nolint:errcheck
+		//nolint:errcheck 
 		io.Copy(dst, client)
 		done <- true
 	}()
@@ -107,7 +105,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 	go func() {
 		defer client.Close()
 		defer dst.Close()
-		//nolint:errcheck
+		//nolint:errcheck 
 		io.Copy(client, dst)
 		done <- true
 	}()
