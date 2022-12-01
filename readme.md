@@ -29,6 +29,7 @@ $docker run --rm -p 8080:8080 vbalancer
 
 ## Features
 
+- The proxy (VBalancer) has realized on TCP net.Listener
 - All log write to 'csv' file
 - Size log file can be changed in the config file
   
