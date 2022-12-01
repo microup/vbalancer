@@ -10,16 +10,13 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
 	"vbalancer/internal/config"
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
-
 )
 
 func main() {
-
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	cfg := initConfig()
@@ -36,12 +33,12 @@ func main() {
 	defer cancel()
 
 	logger.Add(vlog.Info, types.ResultOK, "the balancer was running")
-	proxy := proxy.New(ctx, cfg.ProxyPort, cfg.Proxy, cfg.Peers, logger)
+	proxy := proxy.New(cfg.ProxyPort, cfg.Proxy, cfg.Peers, logger)
 
 	go func() {
 		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
 
-		if err = proxy.Start(cfg.CheckTimeAlive); err != nil {
+		if err = proxy.Start(ctx, cfg.CheckTimeAlive); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't start server %s", err))
 		}
 	}()
