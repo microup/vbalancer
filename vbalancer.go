@@ -15,31 +15,14 @@ import (
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
+
 )
 
 func main() {
 
-    runtime.GOMAXPROCS(runtime.NumCPU())
-	
-	configFile :=os.Getenv("ConfigFile")
-	if configFile == "" {
-		log.Fatalf("Can't read environment variable ConfigFile")
-	}
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	ctx, serverCancel := context.WithCancel(context.Background())
-
-	cfg, err := config.New(configFile)
-	if err != nil {
-		log.Fatalf("Can't create and init config from file: %s, err: %v", configFile, err)
-	}
-
-	proxyPort := fmt.Sprintf(":%s", os.Getenv("ProxyPort"))
-	if proxyPort == ":" {
-		proxyPort = fmt.Sprintf(":%s", cfg.Proxy.DefaultPort) 
-	}
-	if proxyPort == ":" {
-	 	log.Fatalf("Empty variable a ProxyPort")
-	}
+	cfg := initConfig()
 
 	logger, err := vlog.New(cfg.Logger)
 	if err != nil {
@@ -47,12 +30,18 @@ func main() {
 	}
 	defer logger.Close()
 
+	ctx, serverCancel := context.WithCancel(context.Background())
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeout)*time.Second)
+
+	defer cancel()
+
 	logger.Add(vlog.Info, types.ResultOK, "the balancer was running")
-	proxy := proxy.New(ctx, proxyPort, cfg.Proxy, cfg.Peers, logger)
+	proxy := proxy.New(ctx, cfg.ProxyPort, cfg.Proxy, cfg.Peers, logger)
 
 	go func() {
-		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", proxyPort))
-		if err := proxy.Start(cfg.CheckTimeAlive); err != nil {
+		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
+
+		if err = proxy.Start(cfg.CheckTimeAlive); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't start server %s", err))
 		}
 	}()
@@ -63,18 +52,39 @@ func main() {
 
 	serverCancel()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	var syncSrvShutdown sync.WaitGroup
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeout)*time.Second)
-	defer cancel()
+	syncSrvShutdown.Add(1)
 
 	go func() {
-		defer wg.Done()
-		if err := proxy.Shutdown(shutdownCtx); err != nil {
+		defer syncSrvShutdown.Done()
+
+		if err = proxy.Shutdown(shutdownCtx); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't stop server %s", err))
 		}
 	}()
 
-	wg.Wait()
+	syncSrvShutdown.Wait()
+}
+
+func initConfig() *config.Config {
+	configFile := os.Getenv("ConfigFile")
+
+	if configFile == "" {
+		log.Fatalf("Can't read environment variable ConfigFile")
+	}
+
+	cfg := config.New()
+
+	resultCode := cfg.Init()
+	if resultCode != types.ResultOK {
+		log.Fatalf("can't init config: %s, err: %s", configFile, resultCode.ToStr())
+	}
+
+	err := cfg.Open(configFile)
+	if err != nil {
+		log.Fatalf("can't create and init config from file: %s, err: %v", configFile, err)
+	}
+
+	return cfg
 }

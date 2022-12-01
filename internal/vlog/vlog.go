@@ -34,7 +34,7 @@ func New(cfg *Config) (*VLog, error) {
 			"ClientHost", "ClientMethod", "ClientProto", "ClientURI", "PeerMethod", "PeerProto", "PeerHost",
 			"PeerRequestURI", "Description"),
 		startTimeLog: time.Now(),
-		IsDisabled: false,
+		IsDisabled:   false,
 	}
 
 	err := l.newFileLog("", true)
@@ -98,51 +98,62 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 	var typeLog TypeLog
+
 	var val string
+
 	var resultCode types.ResultCode
+
 	var remoteAddr string
+
 	var clientHost string
+
 	var clientMethod string
+
 	var clientProto string
+
 	var clientURI string
+
 	var proxyHost string
+
 	var proxyMethod string
+
 	var proxyProto string
+
 	var proxyURI string
 
-	for _, v := range values {
-		switch vt := v.(type) {
+	for _, value := range values {
+		switch valueTypeLog := value.(type) {
 		case TypeLog:
-			typeLog = TypeLog(vt) 
+			typeLog = TypeLog(valueTypeLog)
 		case types.ResultCode:
-			resultCode = types.ResultCode(vt)
+			resultCode = types.ResultCode(valueTypeLog)
 		case string:
-			val = val + string(vt) + ","
+			val = val + string(valueTypeLog) + ","
 		case RemoteAddr:
-			remoteAddr = string(v.(RemoteAddr))
+			remoteAddr = string(value.(RemoteAddr))
 		case ClientHost:
-			clientHost = string(v.(ClientHost))
+			clientHost = string(value.(ClientHost))
 		case ClientMethod:
-			clientMethod = string(v.(ClientMethod))
+			clientMethod = string(value.(ClientMethod))
 		case ClientProto:
-			clientProto = string(v.(ClientProto))
+			clientProto = string(value.(ClientProto))
 		case ClientURI:
-			clientURI = string(v.(ClientURI))
+			clientURI = string(value.(ClientURI))
 		case ProxyHost:
-			proxyHost = string(v.(ProxyHost))
+			proxyHost = string(value.(ProxyHost))
 		case ProxyMethod:
-			proxyMethod = string(v.(ProxyMethod))
+			proxyMethod = string(value.(ProxyMethod))
 		case ProxyProto:
-			proxyProto = string(v.(ProxyProto))
+			proxyProto = string(value.(ProxyProto))
 		case ProxyURI:
-			proxyURI = string(v.(ProxyURI))
+			proxyURI = string(value.(ProxyURI))
 		}
 	}
 
 	resultFmtStr := core.FmtStringWithDelimiter(";", val)
 
 	recordTime := time.Now()
-	dateStr :=recordTime.Format("2006-01-02")
+	dateStr := recordTime.Format("2006-01-02")
 	timeStr := recordTime.Format("15:04:05")
 
 	recordRow := fmt.Sprintf("%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",

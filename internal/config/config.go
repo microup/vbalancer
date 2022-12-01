@@ -2,56 +2,82 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"vbalancer/internal/peer"
 	"vbalancer/internal/proxy"
+	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Logger *vlog.Config  `yaml:"Logger"`
-	Proxy  *proxy.Config `yaml:"Proxy"`
-	Peers  []*peer.Peer  `yaml:"Peers"`
-	CheckTimeAlive *peer.CheckTimeAlive `yaml:"PeerCheckTimeAlive"`
+	Logger         *vlog.Config         `yaml:"logger"`
+	Proxy          *proxy.Config        `yaml:"proxy"`
+	Peers          []*peer.Peer         `yaml:"peers"`
+	CheckTimeAlive *peer.CheckTimeAlive `yaml:"peerCheckTimeAlive"`
+	ProxyPort      string
 }
 
-func New(configFileName string) (*Config, error) {
-	if _, err := os.Stat(configFileName); errors.Is(err, os.ErrNotExist) {
-		return nil, err
+func New() *Config {
+	cfg := &Config{
+		Logger:         nil,
+		Proxy:          nil,
+		Peers:          nil,
+		CheckTimeAlive: nil,
+		ProxyPort:      "",
+	}
+	return cfg
+}
+
+func (c *Config) Init() types.ResultCode {
+	c.ProxyPort = fmt.Sprintf(":%s", os.Getenv("ProxyPort"))
+	if c.ProxyPort == ":" {
+		c.ProxyPort = fmt.Sprintf(":%s", c.Proxy.DefaultPort) 
 	}
 
-	f, err := os.Open(configFileName)
+	if c.ProxyPort == strings.Trim(":", " ") {
+	 	return types.ErrEmptyValue
+	}
+
+	return types.ResultOK
+}
+
+func (c *Config) Open(configFileName string) error {
+
+	if _, err := os.Stat(configFileName); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to checked exists config file: %w", err)
+	}
+
+	fileConfig, err := os.Open(configFileName)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to open config file: %w", err)
 	}
 
 	defer func(f *os.File) {
-		err := f.Close()
+		err = f.Close()
 		if err != nil {
 			log.Fatalf("Error can't close config file: %s, err: %s", configFileName, err)
 		}
-	}(f)
+	}(fileConfig)
 
-	cfg := &Config{}
-
-	err = cfg.decodeYaml(f)
+	err = c.decodeConfigFileYaml(fileConfig)
 	if err != nil {
-		log.Fatalf("Can't decode config file: %s, err: %s", configFileName, err)
-		return nil, err
+		return fmt.Errorf("can't decode config file: %s, err: %w", configFileName, err)
 	}
 
-	return cfg, nil
+	return  nil
 }
 
-func (c *Config) decodeYaml(configYaml *os.File) error {
+func (c *Config) decodeConfigFileYaml(configYaml *os.File) error {
 	decoder := yaml.NewDecoder(configYaml)
 	err := decoder.Decode(c)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to decode config yml file: %w", err)
 	}
 	return nil
 }

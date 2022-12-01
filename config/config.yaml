@@ -1,15 +1,15 @@
-Logger:
+logger:
   DirLog: ./logs/
   FileSize: 10000000
   ApiShowRecords: 5
   KindType: "csv"
 
-Proxy:
+proxy:
   DefaultPort: 8080
   TimeDeadLineMS: 200
   ShutdownTimeout: 10
   
-Peers:
+peers:
   - Name: test_backend_1
     Proto: http
     URI: 127.0.0.1:8040
@@ -22,6 +22,6 @@ Peers:
     Proto: http
     URI: 127.0.0.1:8020    
 
-PeerCheckTimeAlive:  
+peerCheckTimeAlive:  
   TimeCheck: 2
   WaitTimeCheck: 2
