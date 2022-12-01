@@ -1,12 +1,14 @@
-package proxy
+package proxy_test
 
 import (
 	"testing"
-
 	"vbalancer/internal/peer"
+	"vbalancer/internal/proxy"
 )
 
+//nolint:funlen
 func Test_API_Get_Next_Peer(t *testing.T) {
+	t.Parallel()
 
 	cases := []struct {
 		nameTest          string
@@ -15,11 +17,11 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 		wantNextPeerIndex uint64
 	}{
 		{
-			nameTest: "test_9",
-			peers: []*peer.Peer{},
+			nameTest:          "test_9",
+			peers:             []*peer.Peer{},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 0,
-		},			
+		},
 		{
 			nameTest: "test_8",
 			peers: []*peer.Peer{
@@ -27,7 +29,7 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 			},
 			currentPeerIndex:  1,
 			wantNextPeerIndex: 1,
-		},				
+		},
 		{
 			nameTest: "test_7",
 			peers: []*peer.Peer{
@@ -35,7 +37,7 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 			},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 0,
-		},		
+		},
 		{
 			nameTest: "test_6",
 			peers: []*peer.Peer{
@@ -86,17 +88,21 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 		},
 	}
 
-	proxy := &Proxy{}
-
-	for _, c := range cases {
-
-		proxy.peers = c.peers
-		proxy.currentPeerIndex = &c.currentPeerIndex
-
-		_, _ = proxy.getNextPeer()
-		if *proxy.currentPeerIndex != c.wantNextPeerIndex {
-			t.Errorf("Test: %s | Result failed. got %d, want: %d", c.nameTest, *proxy.currentPeerIndex, c.wantNextPeerIndex)
-		}
+	proxy := &proxy.Proxy{
+		Peers:            nil,
+		CurrentPeerIndex: nil,
 	}
 
+	//nolint:varnamelen
+	for _, c := range cases {
+		proxy.Peers = c.peers
+		//nolint:exportloopref
+		proxy.CurrentPeerIndex = &c.currentPeerIndex
+
+		_, _ = proxy.GetNextPeer()
+
+		if *proxy.CurrentPeerIndex != c.wantNextPeerIndex {
+			t.Errorf("Test: %s | Result failed. got %d, want: %d", c.nameTest, *proxy.CurrentPeerIndex, c.wantNextPeerIndex)
+		}
+	}
 }

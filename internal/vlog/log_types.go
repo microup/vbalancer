@@ -10,16 +10,16 @@ type (
 )
 
 type (
-	RemoteAddr       string 
-	ClientHost       string
-	ClientMethod     string
-	ClientProto      string
-	ClientURI        string
-	ProxyHost        string
-	ProxyMethod      string
-	ProxyProto       string
-	ProxyURI         string
-	ProxyRequestURI  string
+	RemoteAddr      string
+	ClientHost      string
+	ClientMethod    string
+	ClientProto     string
+	ClientURI       string
+	ProxyHost       string
+	ProxyMethod     string
+	ProxyProto      string
+	ProxyURI        string
+	ProxyRequestURI string
 )
 
 const (
@@ -31,19 +31,20 @@ const (
 	Info
 )
 
-var mapTypeLog = map[TypeLog]string{
-	Disable: "DISABLE",
-	Info:    "INFO",
-	Debug:   "DEBUG",
-	Warning: "WARNING",
-	Error:   "ERROR",
-	Fatal:   "FATAL",
-}
-
 func (s TypeLog) GetStr() string {
+	mapTypeLog := map[TypeLog]string{
+		Disable: "DISABLE",
+		Info:    "INFO",
+		Debug:   "DEBUG",
+		Warning: "WARNING",
+		Error:   "ERROR",
+		Fatal:   "FATAL",
+	}
+
 	m, ok := mapTypeLog[s]
 	if !ok {
 		return fmt.Sprintf("unknown result code: %d", s)
 	}
+
 	return m
 }

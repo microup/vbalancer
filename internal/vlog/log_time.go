@@ -5,23 +5,24 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
 	"vbalancer/internal/core"
 )
 
 func (v *VLog) New(fileNameDateTime string) {
-
 	defer func() {
 		v.startTimeLog = time.Now()
 	}()
 
 	v.wgNewLog.Add(1)
+
 	defer func() {
 		v.wgNewLog.Done()
 	}()
 
-	var fileInfo os.FileInfo = nil
+	var fileInfo os.FileInfo
+
 	var err error
+
 	if v.fileLog != nil {
 		fileInfo, err = os.Stat(v.fileLog.Name())
 		if err != nil {
@@ -34,6 +35,7 @@ func (v *VLog) New(fileNameDateTime string) {
 		if err != nil {
 			return
 		}
+
 		return
 	}
 
@@ -48,6 +50,7 @@ func (v *VLog) New(fileNameDateTime string) {
 
 	fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
 	err = os.Remove(fileCsv)
+
 	if err != nil {
 		return
 	}
