@@ -16,6 +16,7 @@ const (
 	StatusBadRequest                     = http.StatusBadRequest
 	StatusInternalServerError            = http.StatusInternalServerError
 	StatusNotExtended                    = http.StatusNotExtended
+	ErrEmptyValue                        = 1001
 	ErrUnknown                           = 0xFFFFFFFF
 )
 
@@ -25,10 +26,11 @@ var mapStatus = map[ResultCode]string{
 	StatusBadRequest:          "StatusBadRequest",
 	StatusInternalServerError: "StatusInternalServerError",
 	StatusNotExtended:         "StatusNotExtended",
+	ErrEmptyValue:             "Value is empty",
 	ErrUnknown:                "unknown error",
 }
 
-func (s ResultCode) GetStatus() string {
+func (s ResultCode) ToStr() string {
 	m, ok := mapStatus[s]
 	if !ok {
 		return fmt.Sprintf("unknown result code: %d", s)
