@@ -44,7 +44,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
 
-	return err
+	return fmt.Errorf("failed to write string: %w", err)
 }
 
 func (v *VLog) Close() error {
