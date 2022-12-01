@@ -17,39 +17,46 @@ func TrimLastChar(value string) string {
 	return value
 }
 
+//nolint:cyclop
 func FmtStringWithDelimiter(delimiter string, values ...interface{}) *string {
 	resultStr := ""
-	for _, v := range values {
-		value := ""
 
-		if v == nil {
+	for _, value := range values {
+		valueStr := ""
+
+		if value == nil {
 			continue
 		}
 
 		//nolint:exhaustive
-		switch reflect.TypeOf(v).Kind() {
+		switch reflect.TypeOf(value).Kind() {
 		case reflect.String:
-			value = fmt.Sprintf("%s", v)
+			valueStr = fmt.Sprintf("%s", value)
 		case reflect.Int:
-			value = fmt.Sprintf("%d", v.(int))
+			valueInt, ok := value.(int)
+			if !ok {
+				continue
+			}
+
+			valueStr = fmt.Sprintf("%d", valueInt)
 		case reflect.Slice:
-			s := reflect.ValueOf(v)
+			s := reflect.ValueOf(value)
 			for i := 0; i < s.Len(); i++ {
 				val := s.Index(i)
-				if value == "" {
-					value = fmt.Sprintf("%s", val)
+				if valueStr == "" {
+					valueStr = fmt.Sprintf("%s", val)
 				} else {
-					value = value + delimiter + fmt.Sprintf("%s", val)
+					valueStr = valueStr + delimiter + fmt.Sprintf("%s", val)
 				}
 			}
 		default:
-			value = fmt.Sprintf("%v", v)
+			valueStr = fmt.Sprintf("%v", value)
 		}
 
 		if resultStr == "" {
-			resultStr = value
+			resultStr = valueStr
 		} else {
-			resultStr = fmt.Sprintf("%s%s%s", resultStr, delimiter, value)
+			resultStr = fmt.Sprintf("%s%s%s", resultStr, delimiter, valueStr)
 		}
 	}
 
@@ -57,5 +64,4 @@ func FmtStringWithDelimiter(delimiter string, values ...interface{}) *string {
 	resultStr = reg.ReplaceAllString(resultStr, " ")
 
 	return &resultStr
-
 }

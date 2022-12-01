@@ -2,13 +2,10 @@ package vlog
 
 import (
 	"fmt"
-
 	"log"
+	"os"
 	"sync"
 	"time"
-
-	"os"
-
 	"vbalancer/internal/core"
 	"vbalancer/internal/types"
 )
@@ -18,47 +15,55 @@ type VLog struct {
 	fileLog           *os.File
 	countToLogID      int
 	mapLastLogRecords []string
-	mu                sync.Mutex
+	mu                *sync.Mutex
 	headerCSV         string
 	startTimeLog      time.Time
-	wgNewLog          sync.WaitGroup
+	wgNewLog          *sync.WaitGroup
 	IsDisabled        bool
 }
 
 func New(cfg *Config) (*VLog, error) {
-
-	l := &VLog{
-		cfg:          cfg,
-		countToLogID: -1,
-		headerCSV: fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;", "Date", "Time", "Type", "ResultCode", "RemoteAddr",
-			"ClientHost", "ClientMethod", "ClientProto", "ClientURI", "PeerMethod", "PeerProto", "PeerHost",
+	vLog := &VLog{
+		wgNewLog:          &sync.WaitGroup{},
+		mu:                &sync.Mutex{},
+		fileLog:           nil,
+		cfg:               cfg,
+		countToLogID:      -1,
+		mapLastLogRecords: []string{},
+		headerCSV: fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;",
+			"Date", "Time", "Type", "ResultCode", "RemoteAddr",
+			"ClientHost", "ClientMethod", "ClientProto", "ClientURI",
+			"PeerMethod", "PeerProto", "PeerHost",
 			"PeerRequestURI", "Description"),
 		startTimeLog: time.Now(),
 		IsDisabled:   false,
 	}
 
-	err := l.newFileLog("", true)
+	err := vLog.newFileLog("", true)
 	if err != nil {
 		return nil, err
 	}
 
-	return l, nil
-
+	return vLog, nil
 }
 
 func (v *VLog) GetCountRecords() int {
 	v.mu.Lock()
 	defer v.mu.Unlock()
+
 	if v.mapLastLogRecords == nil {
 		return 0
 	}
+
 	return len(v.mapLastLogRecords)
 }
 
+//nolint
 func (v *VLog) Add(values ...interface{}) {
-	if v.IsDisabled {
+	if v.IsDisabled || values == nil {
 		return
 	}
+
 	go v.addInThread(values...)
 }
 
@@ -74,9 +79,10 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 	typeLog, recordRow := v.buildCsvRecord(values)
 
+	//nolint:exhaustive
 	switch typeLog {
 	case Fatal:
-		log.Fatal(recordRow)
+		log.Panic(recordRow)
 	default:
 		log.Print(recordRow)
 	}
@@ -96,6 +102,7 @@ func (v *VLog) addInThread(values ...interface{}) {
 	}
 }
 
+//nolint
 func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 	var typeLog TypeLog
 
@@ -103,50 +110,85 @@ func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 
 	var resultCode types.ResultCode
 
-	var remoteAddr string
+	var remoteAddr RemoteAddr
 
-	var clientHost string
+	var clientHost ClientHost
 
-	var clientMethod string
+	var clientMethod ClientMethod
 
-	var clientProto string
+	var clientProto ClientProto
 
-	var clientURI string
+	var clientURI ClientURI
 
-	var proxyHost string
+	var proxyHost ProxyHost
 
-	var proxyMethod string
+	var proxyMethod ProxyMethod
 
-	var proxyProto string
+	var proxyProto ProxyProto
 
-	var proxyURI string
+	var proxyURI ProxyURI
+
+	var isConvertOk bool
 
 	for _, value := range values {
 		switch valueTypeLog := value.(type) {
 		case TypeLog:
-			typeLog = TypeLog(valueTypeLog)
+			typeLog, isConvertOk = value.(TypeLog)
+			if !isConvertOk {
+				continue
+			}
 		case types.ResultCode:
-			resultCode = types.ResultCode(valueTypeLog)
+			resultCode, isConvertOk = value.(types.ResultCode)
+			if !isConvertOk {
+				continue
+			}
 		case string:
-			val = val + string(valueTypeLog) + ","
+			val = val + valueTypeLog + ","
 		case RemoteAddr:
-			remoteAddr = string(value.(RemoteAddr))
+			remoteAddr, isConvertOk = value.(RemoteAddr)
+			if !isConvertOk {
+				continue
+			}
 		case ClientHost:
-			clientHost = string(value.(ClientHost))
+			clientHost, isConvertOk = value.(ClientHost)
+			if !isConvertOk {
+				continue
+			}
 		case ClientMethod:
-			clientMethod = string(value.(ClientMethod))
+			clientMethod, isConvertOk = value.(ClientMethod)
+			if !isConvertOk {
+				continue
+			}			
 		case ClientProto:
-			clientProto = string(value.(ClientProto))
+			clientProto, isConvertOk = value.(ClientProto)
+			if !isConvertOk {
+				continue
+			}				
 		case ClientURI:
-			clientURI = string(value.(ClientURI))
+			clientURI, isConvertOk = value.(ClientURI)
+			if !isConvertOk {
+				continue
+			}					
 		case ProxyHost:
-			proxyHost = string(value.(ProxyHost))
+			proxyHost, isConvertOk = value.(ProxyHost)
+			if !isConvertOk {
+				continue
+			}					
 		case ProxyMethod:
-			proxyMethod = string(value.(ProxyMethod))
+			proxyMethod, isConvertOk = value.(ProxyMethod)
+			if !isConvertOk {
+				continue
+			}					
 		case ProxyProto:
-			proxyProto = string(value.(ProxyProto))
+			proxyProto, isConvertOk = value.(ProxyProto)
+			if !isConvertOk {
+				continue
+			}					
 		case ProxyURI:
-			proxyURI = string(value.(ProxyURI))
+			proxyURI, isConvertOk = value.(ProxyURI)
+			if !isConvertOk {
+				continue
+			}					
 		}
 	}
 
