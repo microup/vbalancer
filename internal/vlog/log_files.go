@@ -15,7 +15,7 @@ const (
 	maskDefaultDir = 0x666
 )
 
-//nolint
+// nolint
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.mapLastLogRecords = make([]string, 0)
@@ -44,7 +44,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
 
-	return fmt.Errorf("failed to write string: %w", err)
+	return err
 }
 
 func (v *VLog) Close() error {
