@@ -11,47 +11,50 @@ import (
 
 func ArchiveFile(fileName string, extension string) {
 	file := filepath.Base(fileName)                                 // + ".zip"
-	file = strings.TrimSuffix(file, filepath.Ext(file)) + extension //".zip"
+	file = strings.TrimSuffix(file, filepath.Ext(file)) + extension // ".zip"
 	path := filepath.Dir(fileName)
 	fs := filepath.Join(path, file)
 
 	archive, err := os.Create(fs)
 	defer func(archive *os.File) {
-		err := archive.Close()
+		err = archive.Close()
 		if err != nil {
 			log.Fatalf("archive close failed: %v", err)
 		}
 	}(archive)
+
 	if err != nil {
 		panic(err)
 	}
 
-	f1, err := os.Open(fileName)
+	csvFileName, err := os.Open(fileName)
 	if err != nil {
 		panic(err)
 	}
+
 	defer func(f1 *os.File) {
-		err := f1.Close()
+		err = f1.Close()
 		if err != nil {
 			log.Fatalf("file close failed: %v", err)
 		}
-	}(f1)
+	}(csvFileName)
 
 	zipWriter := zip.NewWriter(archive)
 	defer func(zipWriter *zip.Writer) {
-		err := zipWriter.Close()
+		err = zipWriter.Close()
 		if err != nil {
 			log.Fatalf("zipWriter close failed: %v", err)
 		}
 	}(zipWriter)
 
 	fc := filepath.Base(fileName)
-	w1, err := zipWriter.Create(fc)
+	fileZip, err := zipWriter.Create(fc)
+
 	if err != nil {
 		panic(err)
 	}
 
-	if _, err := io.Copy(w1, f1); err != nil {
+	if _, err := io.Copy(fileZip, csvFileName); err != nil {
 		panic(err)
 	}
 }

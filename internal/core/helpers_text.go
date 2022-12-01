@@ -7,23 +7,26 @@ import (
 	"unicode/utf8"
 )
 
+func TrimLastChar(value string) string {
+	for len(value) > 0 {
+		_, size := utf8.DecodeLastRuneInString(value)
 
-func TrimLastChar(s string) string {
-	for len(s) > 0 {
-		_, size := utf8.DecodeLastRuneInString(s)
-		return s[:len(s)-size]
+		return value[:len(value)-size]
 	}
-	return s
+
+	return value
 }
 
 func FmtStringWithDelimiter(delimiter string, values ...interface{}) *string {
 	resultStr := ""
-
 	for _, v := range values {
 		value := ""
+
 		if v == nil {
 			continue
 		}
+
+		//nolint:exhaustive
 		switch reflect.TypeOf(v).Kind() {
 		case reflect.String:
 			value = fmt.Sprintf("%s", v)
@@ -50,8 +53,7 @@ func FmtStringWithDelimiter(delimiter string, values ...interface{}) *string {
 		}
 	}
 
-	// reg, _ := regexp.Compile("[^a-zA-Z0-9,:]+")
-	reg, _ := regexp.Compile("\r?\n|\r")
+	reg := regexp.MustCompile("\r?\n|\r")
 	resultStr = reg.ReplaceAllString(resultStr, " ")
 
 	return &resultStr
