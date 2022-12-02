@@ -36,11 +36,11 @@ jobs:
 
       - name: test all
         run: |
-          make test
+          go test -short ./...
 
       - name: test race
         run: |
-          make race
+          go test -race -short ./...
 
       - name: linter
         run: |
