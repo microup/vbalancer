@@ -26,7 +26,8 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: download deps
-        run: go mod download
+        run:  |
+          go mod download
 
       - name: check go.mod
         run: |
@@ -34,10 +35,12 @@ jobs:
           git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
 
       - name: test all
-        run: make test
+        run: |
+          make test
 
       - name: test race
-        run: make race
+        run: |
+          make race
 
       - name: linter
         run: |
