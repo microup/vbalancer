@@ -1,11 +1,8 @@
 name: Release
 
 on:
-  pull_request:
-    branches:
-      - master
-    types:
-      - closed  
+  release:
+    types: [released, published]
 
 jobs:
   release:
@@ -15,7 +12,6 @@ jobs:
     name: Release 
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'vbalancer')
-
     strategy:
       matrix:
         goos: [linux, darwin, windows]
