@@ -9,7 +9,7 @@ jobs:
     permissions:
       contents: write # to upload release asset (actions/upload-release-asset)
 
-    name: Release cmd/vbalancer
+    name: Release vbalancer
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'vbalancer')
     strategy:
