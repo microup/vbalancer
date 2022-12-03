@@ -2,9 +2,11 @@ name: Release
 
 on:
   push:
-    branches: [ dev-release-** ]
+    branches: [ dev-release-**, release ]
   pull_request:
-    branches: [ dev-release-** ]
+    branches: [ dev-release-**, release ]
+  release:
+    types: [published, released]    
 
 jobs:
 
@@ -49,8 +51,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          ls -a 
-          go build -o build/vbalancer cmd/vbalancer/vbalancer.go
+          go build -o build/ cmd/vbalancer/vbalancer.go
 
       - name: Copy assets
         run: |
@@ -60,18 +61,17 @@ jobs:
       - name: Create package
         id: package
         run: |
-          PACKAGE_NAME=vbalancer.${GITHUB_REF#refs/tags/cmd/vbalancer/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
-          ls -a 
-          ls -a ./build/
-          tar -czvf $PACKAGE_NAME -C build .
+          PACKAGE_NAME=vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          tar -czvf $PACKAGE_NAME build
           echo ::set-output name=name::${PACKAGE_NAME}
 
-      - name: Upload asset
-        uses: actions/upload-release-asset@v1
+      - name: Upload
+        uses: svenstaro/upload-release-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ steps.package.outputs.name }}
-          asset_name: ${{ steps.package.outputs.name }}
-          asset_content_type: application/gzip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          asset_name: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          tag: ${{ github.ref }}
+          overwrite: true 
