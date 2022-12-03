@@ -64,7 +64,7 @@ jobs:
         id: package
         run: |
           PACKAGE_NAME=vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
-          tar -czvf $PACKAGE_NAME .
+          tar -czvf ./build/ $PACKAGE_NAME 
           ls -a .
           echo ::set-output name=name::${PACKAGE_NAME}
 
