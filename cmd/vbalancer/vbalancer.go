@@ -80,7 +80,7 @@ func initConfig() *config.Config {
 
 	err := cfg.Open(configFile)
 	if err != nil {
-		log.Fatalf("can't create and init config from file: %s, err: %v", configFile, err)
+		log.Fatalf("%v", err)
 	}
 
 	return cfg

@@ -17,4 +17,4 @@ dep: ## Get the dependencies
   go get -v -d ./...
 
 build: 
-  go build -o bin/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/main.go
+  go build -o build/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/$(PROJECT_NAME).go

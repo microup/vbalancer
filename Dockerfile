@@ -14,7 +14,7 @@ COPY go.sum .
 COPY . .
 
 RUN go mod download
-RUN go build
+RUN go build -o vbalancer cmd/vbalancer/vbalancer.go
 RUN find . -name "*.go" -type f -delete
 
 CMD ["./vbalancer"]
