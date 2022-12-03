@@ -5,6 +5,8 @@ on:
     branches: [ dev-release-** ]
   pull_request:
     branches: [ dev-release-** ]
+  release:
+    types: [published]    
 
 jobs:
 
@@ -61,12 +63,11 @@ jobs:
         id: package
         run: |
           PACKAGE_NAME=vbalancer.${GITHUB_REF#refs/tags/cmd/vbalancer/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
-          ls -a 
           ls -a ./build/
-          tar -czvf $PACKAGE_NAME -C build .
+          tar -czvf $PACKAGE_NAME ./build 
           echo ::set-output name=name::${PACKAGE_NAME}
 
-      - name: Upload asset
+      - name: Upload
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
