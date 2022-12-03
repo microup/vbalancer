@@ -1,17 +1,21 @@
 name: Release
 
 on:
-  release:
-    types: [released, published]
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed  
 
 jobs:
   release:
     permissions:
       contents: write # to upload release asset (actions/upload-release-asset)
 
-    name: Release vbalancer
+    name: Release 
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'vbalancer')
+
     strategy:
       matrix:
         goos: [linux, darwin, windows]
