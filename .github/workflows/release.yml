@@ -3,8 +3,10 @@ name: Release
 on:
   release:
     types: [released, published]
-
+  workflow_dispatch:
+  
 jobs:
+
   release:
     permissions:
       contents: write # to upload release asset (actions/upload-release-asset)
@@ -48,6 +50,7 @@ jobs:
           PACKAGE_NAME=vbalancer.${GITHUB_REF#refs/tags/cmd/vbalancer/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           tar -czvf $PACKAGE_NAME -C build .
           echo ::set-output name=name::${PACKAGE_NAME}
+
       - name: Upload asset
         uses: actions/upload-release-asset@v1
         env:
