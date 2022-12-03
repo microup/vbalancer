@@ -1,10 +1,13 @@
 name: Release
 
 on:
-  release:
-    types: [released, published]
+  push:
+    branches: [ main, release-** ]
+  pull_request:
+    branches: [ main, release-** ]
 
 jobs:
+
   release:
     permissions:
       contents: write # to upload release asset (actions/upload-release-asset)
@@ -13,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        go: [ '1.19' ]
         goos: [linux, darwin, windows]
         goarch: [386, amd64, arm64]
         exclude:
@@ -20,34 +24,48 @@ jobs:
             goarch: 386
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - name: setup Go ${{ matrix.go }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: download deps
+        run:  |
+          go mod download
+
+      - name: check go.mod
+        run: |
+          go mod tidy -v
+          git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
 
       - name: Download dependencies
         run: |
           go mod download
-      - name: Prepare build directory
-        run: |
-          mkdir -p build/
-          cp README.md build/
-          cp LICENSE build/
-          cp config/config.yaml build/
+
       - name: Build
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          cd cmd/vbalancer
-          go build -trimpath -o $GITHUB_WORKSPACE/build
+          ls -a 
+          go build -o build/vbalancer cmd/vbalancer/vbalancer.go
+
+      - name: Copy assets
+        run: |
+          cp ./readme.md ./build/
+          cp ./config/config.yaml ./build/
+
       - name: Create package
         id: package
         run: |
           PACKAGE_NAME=vbalancer.${GITHUB_REF#refs/tags/cmd/vbalancer/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          echo ::set-output name=name::${PACKAGE_NAME}
+          ls -a 
           tar -czvf $PACKAGE_NAME -C build .
           echo ::set-output name=name::${PACKAGE_NAME}
+
       - name: Upload asset
         uses: actions/upload-release-asset@v1
         env:
