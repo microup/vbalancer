@@ -50,12 +50,12 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           ls -a 
-          go build -o build/vbalancer -o cmd/vbalancer/vbalancer.go
+          go build -o ./build/vbalancer -o ./cmd/vbalancer/vbalancer.go
 
       - name: Copy assets
         run: |
-          cp readme.md build/
-          cp config/config.yaml build/
+          cp ./readme.md ./build/
+          cp ./config/config.yaml ./build/
 
       - name: Create package
         id: package
