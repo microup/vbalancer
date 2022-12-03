@@ -2,11 +2,11 @@ name: Release
 
 on:
   push:
-    branches: [ dev-release-** ]
+    branches: [ dev-release-**, release ]
   pull_request:
-    branches: [ dev-release-** ]
+    branches: [ dev-release-**, release ]
   release:
-    types: [published]    
+    types: [published, released]    
 
 jobs:
 
@@ -74,5 +74,4 @@ jobs:
           file: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           asset_name: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           tag: ${{ github.ref }}
-          overwrite: true
-          body: "This is my release text"     
+          overwrite: true 
