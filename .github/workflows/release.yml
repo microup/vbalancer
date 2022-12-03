@@ -56,13 +56,14 @@ jobs:
 
       - name: Copy assets
         run: |
+          ls -a ./config/
           cp ./readme.md ./build/
           cp ./config/config.yaml ./build/
 
       - name: Create package
         id: package
         run: |
-          PACKAGE_NAME=vbalancer.${GITHUB_REF#refs/tags/cmd/vbalancer/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          PACKAGE_NAME=vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           ls -a ./build/
           tar -czvf $PACKAGE_NAME ./build 
           echo ::set-output name=name::${PACKAGE_NAME}
