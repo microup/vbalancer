@@ -1,3 +1,5 @@
+[![test-and-linter](https://github.com/microup/vbalancer/actions/workflows/main.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/main.yml)
+
 # What is VBalancer?
 
 The VBalancer has realized for switch traffic between peers, and it uses Robin Round algorithm.
