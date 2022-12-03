@@ -73,5 +73,4 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           asset_name: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
-          tag: ${{ github.ref }}
           overwrite: true 
