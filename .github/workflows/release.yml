@@ -51,12 +51,10 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
-          ls -a 
           go build -o build/vbalancer cmd/vbalancer/vbalancer.go
 
       - name: Copy assets
         run: |
-          ls -a ./config/
           cp ./readme.md ./build/
           cp ./config/config.yaml ./build/
 
@@ -65,15 +63,16 @@ jobs:
         run: |
           PACKAGE_NAME=vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           tar -czvf $PACKAGE_NAME build
-          ls -a .
           echo ::set-output name=name::${PACKAGE_NAME}
 
       - name: Upload
-        uses: actions/upload-release-asset@v1
+        uses: svenstaro/upload-release-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ steps.package.outputs.name }}
-          asset_name: ${{ steps.package.outputs.name }}
-          asset_content_type: application/gzip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          asset_name: mything
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "This is my release text"     
