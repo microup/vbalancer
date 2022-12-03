@@ -50,7 +50,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           ls -a 
-          go build -o ./build/vbalancer -o ./cmd/vbalancer/vbalancer.go
+          go build -o build/vbalancer cmd/vbalancer/vbalancer.go
 
       - name: Copy assets
         run: |
