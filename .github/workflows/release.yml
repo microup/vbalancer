@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    branches: [ dev-release-**, release ]
+  pull_request:
+    branches: [ dev-release-**, release ]
+  release:
+    types: [published, released]    
+
+jobs:
+
+  release:
+    permissions:
+      contents: write # to upload release asset (actions/upload-release-asset)
+
+    name: Release 
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ '1.19' ]
+        goos: [linux, darwin, windows]
+        goarch: [386, amd64, arm64]
+        exclude:
+          - goos: darwin
+            goarch: 386
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup Go ${{ matrix.go }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: download deps
+        run:  |
+          go mod download
+
+      - name: check go.mod
+        run: |
+          go mod tidy -v
+          git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
+
+      - name: Download dependencies
+        run: |
+          go mod download
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          go build -o build/ cmd/vbalancer/vbalancer.go
+
+      - name: Copy assets
+        run: |
+          cp ./readme.md ./build/
+          cp ./config/config.yaml ./build/
+
+      - name: Create package
+        id: package
+        run: |
+          PACKAGE_NAME=vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          tar -czvf $PACKAGE_NAME build
+          echo ::set-output name=name::${PACKAGE_NAME}
+
+      - name: Upload
+        uses: svenstaro/upload-release-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          asset_name: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
+          overwrite: true 
