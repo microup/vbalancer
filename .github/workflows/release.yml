@@ -2,9 +2,9 @@ name: Release
 
 on:
   push:
-    branches: [ main, release-** ]
+    branches: [ dev-release-** ]
   pull_request:
-    branches: [ main, release-** ]
+    branches: [ dev-release-** ]
 
 jobs:
 
@@ -61,7 +61,6 @@ jobs:
         id: package
         run: |
           PACKAGE_NAME=vbalancer.${GITHUB_REF#refs/tags/cmd/vbalancer/}.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
-          echo echo "{name}" >> $PACKAGE_NAME
           ls -a 
           ls -a ./build/
           tar -czvf $PACKAGE_NAME -C build .
