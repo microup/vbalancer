@@ -75,4 +75,3 @@ jobs:
           asset_name: vbalancer.${{ matrix.goos }}.${{ matrix.goarch }}.tar.gz
           tag: ${{ github.ref }}
           overwrite: true 
-          body: ${{ github.ref }}
