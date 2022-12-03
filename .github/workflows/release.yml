@@ -65,6 +65,16 @@ jobs:
           tar -czvf $PACKAGE_NAME build
           echo ::set-output name=name::${PACKAGE_NAME}
 
+      - name: Create an incremental release
+        uses: aurestic/incrementarl-create-release@master
+        with:
+          flag_branch: true
+          message: version
+          prev_tag: 'v'
+          update_odoo_module_version: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload
         uses: svenstaro/upload-release-action@v2
         env:
