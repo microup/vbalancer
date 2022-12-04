@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"vbalancer/internal/peer"
+	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
@@ -51,7 +51,7 @@ func (c *Config) Init() types.ResultCode {
 }
 
 func (c *Config) Open(configFileName string) error {
-	searchPathConfig := []string{"", configFileName}
+	searchPathConfig := []string{configFileName, "", "./config/"}
 
 	var isPathFound bool
 
@@ -69,7 +69,7 @@ func (c *Config) Open(configFileName string) error {
 
 	if !isPathFound {
 		//nolint:goerr113
-		return fmt.Errorf("failed to checked exists config: %s", types.ErrCantFindFile.ToStr())
+		return fmt.Errorf("failed: %s", types.ErrCantFindFile.ToStr())
 	}
 
 	fileConfig, err := os.Open(configFileName)
