@@ -13,7 +13,7 @@
             "env": {
                 "go.gopath": "$GOPATH",
                 "ProxyPort": "8080",
-                "ConfigFile":"../../config/config.yaml",
+                "ConfigFile":"../../config",
             },
             "args": [],
         }

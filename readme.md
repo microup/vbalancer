@@ -13,7 +13,7 @@ For normal run a VBalancer, it needs to set an environment OS "ProxyPort" and pa
 
 ## Settings
 
-On file: config/config.yaml you can add or delete peer(s), and configure PROXY settings.
+On file: config.yaml you can add or delete peer(s), and configure PROXY settings.
 
 ## Docker
 
@@ -26,7 +26,7 @@ $docker build --tag vbalancer . -f Dockerfile
 ### run
 
 ```bash
-$docker run --rm -p 8080:8080 vbalancer
+$docker run --restart=always -p 8080:8080 vbalancer
 ```
 
 ## Features
@@ -34,4 +34,3 @@ $docker run --rm -p 8080:8080 vbalancer
 - The proxy (VBalancer) has realized on TCP net.Listener
 - All log write to 'csv' file
 - Size log file can be changed in the config file
-  
