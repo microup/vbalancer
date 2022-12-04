@@ -1,9 +1,7 @@
 package proxy
 
 import (
-	"bufio"
 	"context"
-	"strings"
 	"time"
 
 	"fmt"
