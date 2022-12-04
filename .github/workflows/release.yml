@@ -2,11 +2,8 @@ name: Release
 
 on:
   push:
-    branches: [ dev-release-**, release ]
-  pull_request:
-    branches: [ dev-release-**, release ]
-  release:
-    types: [published, released]    
+    tags:
+      - 'v*'
 
 jobs:
 
