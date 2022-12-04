@@ -11,14 +11,15 @@ type (
 )
 
 const (
-	ResultOK                  ResultCode = 0
-	ProxyError                           = 1
-	StatusBadRequest                     = http.StatusBadRequest
-	StatusInternalServerError            = http.StatusInternalServerError
-	StatusNotExtended                    = http.StatusNotExtended
-	ErrEmptyValue                        = 1001
-	ErrCantFinePeers                     = 2001
-	ErrUnknown                           = 0xFFFFFFFF
+	ResultOK ResultCode = iota
+	ProxyError
+	ErrEmptyValue
+	ErrCantFindFile
+	ErrCantFinePeers
+	StatusBadRequest          ResultCode = http.StatusBadRequest
+	StatusInternalServerError ResultCode = http.StatusInternalServerError
+	StatusNotExtended         ResultCode = http.StatusNotExtended
+	ErrUnknown                ResultCode = 0xFFFFFFFF
 )
 
 func (s ResultCode) ToStr() string {
@@ -29,6 +30,7 @@ func (s ResultCode) ToStr() string {
 		StatusInternalServerError: "StatusInternalServerError",
 		StatusNotExtended:         "StatusNotExtended",
 		ErrEmptyValue:             "Value is empty",
+		ErrCantFindFile:           "Can't find file",
 		ErrCantFinePeers:          "Can't find peers",
 		ErrUnknown:                "unknown error",
 	}
