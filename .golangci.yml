@@ -121,8 +121,8 @@ linters:
     - maligned 
     - interfacer
     - exhaustivestruct
-    - ifshort
   unsused:
+    - ifshort    
     - gofumpt 
     - wastedassign     
     - rowserrcheck
