@@ -7,13 +7,9 @@ This is an implementation need to increase stability and downgrade high load to 
 
 ![Diagram](assets/vbalancer.png)
 
-## Important: need set ENV to run
-
-For normal run a VBalancer, it needs to set an environment OS "ProxyPort" and path to config file "ConfigFile".
-
 ## Settings
 
-On file: config/config.yaml you can add or delete peer(s), and configure PROXY settings.
+There is file config/config.yaml you can add or delete peer(s), and configure PROXY settings.
 
 ## Docker
 
