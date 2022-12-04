@@ -1,9 +1,9 @@
-package proxy_test
+package peers_test
 
 import (
 	"testing"
-	"vbalancer/internal/peer"
-	"vbalancer/internal/proxy"
+	"vbalancer/internal/proxy/peer"
+	"vbalancer/internal/proxy/peers"
 )
 
 //nolint:funlen
@@ -88,21 +88,18 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 		},
 	}
 
-	proxy := &proxy.Proxy{
-		Peers:            nil,
-		CurrentPeerIndex: nil,
-	}
+	peers := peers.New(nil)
 
 	//nolint:varnamelen
 	for _, c := range cases {
-		proxy.Peers = c.peers
+		peers.List = c.peers
 		//nolint:exportloopref
-		proxy.CurrentPeerIndex = &c.currentPeerIndex
+		peers.CurrentPeerIndex = &c.currentPeerIndex
 
-		_, _ = proxy.GetNextPeer()
+		_, _ = peers.GetNextPeer()
 
-		if *proxy.CurrentPeerIndex != c.wantNextPeerIndex {
-			t.Errorf("Test: %s | Result failed. got %d, want: %d", c.nameTest, *proxy.CurrentPeerIndex, c.wantNextPeerIndex)
+		if *peers.CurrentPeerIndex != c.wantNextPeerIndex {
+			t.Errorf("Test: %s | Result failed. got %d, want: %d", c.nameTest, *peers.CurrentPeerIndex, c.wantNextPeerIndex)
 		}
 	}
 }

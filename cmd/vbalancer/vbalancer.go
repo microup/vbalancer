@@ -67,19 +67,17 @@ func main() {
 func initConfig() *config.Config {
 	configFile := os.Getenv("ConfigFile")
 
-	if configFile == "" {
-		log.Fatalf("Can't read environment variable ConfigFile")
+	if configFile == "." {
+		configFile = "../../config"
 	}
 
 	cfg := config.New()
 
-	resultCode := cfg.Init()
-	if resultCode != types.ResultOK {
+	if resultCode := cfg.Init(); resultCode != types.ResultOK {
 		log.Fatalf("can't init config: %s, err: %s", configFile, resultCode.ToStr())
 	}
 
-	err := cfg.Open(configFile)
-	if err != nil {
+	if err := cfg.Open(configFile); err != nil {
 		log.Fatalf("%v", err)
 	}
 

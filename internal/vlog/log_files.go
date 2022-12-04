@@ -73,6 +73,7 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 
 	fileNameLog = filepath.Join(v.cfg.DirLog, fileNameLog)
 
+	//nolint:nosnakecase
 	fileLog, err := os.OpenFile(fileNameLog, os.O_APPEND|os.O_CREATE|os.O_RDWR, maskDefaultDir)
 
 	if err != nil || fileLog == nil {

@@ -1,16 +1,14 @@
 FROM golang:latest
 
-ENV ConfigFile="./config/config.yaml"
-
+ENV ConfigFile="./config"
 ENV ProxyPort 8080
+
 EXPOSE 8080:8080
 
 LABEL maintainer="<contact@microup.ru>"
 
-WORKDIR /app
+WORKDIR /vbalancer
 
-COPY go.mod .
-COPY go.sum .
 COPY . .
 
 RUN go mod download

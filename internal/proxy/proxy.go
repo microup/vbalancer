@@ -2,12 +2,14 @@ package proxy
 
 import (
 	"context"
+	"time"
+
 	"fmt"
 	"io"
 	"net"
-	"sync/atomic"
-	"time"
-	"vbalancer/internal/peer"
+	"vbalancer/internal/proxy/peer"
+	"vbalancer/internal/proxy/peers"
+	"vbalancer/internal/proxy/response"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
@@ -17,34 +19,30 @@ const (
 )
 
 type Proxy struct {
-	srv              net.Listener
-	logger           *vlog.VLog
-	Peers            []*peer.Peer
-	cfg              *Config
-	CurrentPeerIndex *uint64
+	srv    net.Listener
+	logger *vlog.VLog
+	Peers  *peers.Peers
+	cfg    *Config
 }
 
-func New(proxyPort string, cfg *Config, peers []*peer.Peer, logger *vlog.VLog) *Proxy {
+func New(proxyPort string, cfg *Config, listPeer []*peer.Peer, logger *vlog.VLog) *Proxy {
 	proxySrv, err := net.Listen("tcp", proxyPort)
 	if err != nil {
 		panic("connection error:" + err.Error())
 	}
 
-	var startPeerIndex uint64
-
 	proxy := &Proxy{
-		srv:              proxySrv,
-		logger:           logger,
-		Peers:            peers,
-		cfg:              cfg,
-		CurrentPeerIndex: &startPeerIndex,
+		srv:    proxySrv,
+		logger: logger,
+		Peers:  peers.New(listPeer),
+		cfg:    cfg,
 	}
 
 	return proxy
 }
 
 func (p *Proxy) Start(ctx context.Context, checkTimeAlive *peer.CheckTimeAlive) error {
-	for _, peer := range p.Peers {
+	for _, peer := range p.Peers.List {
 		peer.CheckTimeAlive = checkTimeAlive
 		peer.Logger = p.logger
 
@@ -54,14 +52,15 @@ func (p *Proxy) Start(ctx context.Context, checkTimeAlive *peer.CheckTimeAlive) 
 	for {
 		if conn, err := p.srv.Accept(); err == nil {
 			err = conn.SetDeadline(time.Now().Add(time.Duration(p.cfg.TimeDeadLineMS) * time.Millisecond))
+
 			if err != nil {
-				p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(conn.RemoteAddr().String()),
+				p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
 					fmt.Sprintf("Accept failed, %v\n", err))
 			}
 
 			go p.copyConn(conn)
 		} else {
-			p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(conn.RemoteAddr().String()),
+			p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Sprintf("Accept failed, %v\n", err))
 		}
 	}
@@ -74,23 +73,31 @@ func (p *Proxy) Shutdown(ctx context.Context) error {
 func (p *Proxy) copyConn(client net.Conn) {
 	defer client.Close()
 
-	peer, resultCode := p.GetNextPeer()
+	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()))
+
+	peer, resultCode := p.Peers.GetNextPeer()
 
 	if resultCode != types.ResultOK || peer == nil {
 		if peer != nil {
 			p.logger.Add(vlog.Debug, resultCode, vlog.RemoteAddr(client.RemoteAddr().String()),
-				vlog.ProxyHost(peer.URI))
+				vlog.ProxyHost(peer.URI), resultCode.ToStr())
 		} else {
-			p.logger.Add(vlog.Debug, resultCode, vlog.RemoteAddr(client.RemoteAddr().String()))
+			p.logger.Add(vlog.Debug, resultCode, vlog.RemoteAddr(client.RemoteAddr().String()), resultCode.ToStr())
 		}
+
+		response := response.New(p.logger)
+		response.SentResponse(client, resultCode)
 
 		return
 	}
 
 	dst, err := net.Dial("tcp", peer.URI)
 	if err != nil {
-		p.logger.Add(vlog.Debug, types.ProxyError, vlog.RemoteAddr(client.RemoteAddr().String()),
+		p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(client.RemoteAddr().String()),
 			fmt.Sprintf("Accept failed, %v\n", err))
+
+		response := response.New(p.logger)
+		response.SentResponse(client, types.ErrProxy)
 
 		return
 	}
@@ -98,10 +105,10 @@ func (p *Proxy) copyConn(client net.Conn) {
 	p.logger.Add(vlog.Debug,
 		types.ResultOK,
 		vlog.RemoteAddr(client.RemoteAddr().String()),
-		vlog.ProxyHost(peer.URI),
-	)
+		vlog.ProxyHost(peer.URI))
 
 	done := make(chan bool, maxCopyChan)
+	defer close(done)
 
 	go func() {
 		defer client.Close()
@@ -121,32 +128,4 @@ func (p *Proxy) copyConn(client net.Conn) {
 
 	<-done
 	<-done
-}
-
-func (p *Proxy) GetNextPeer() (*peer.Peer, types.ResultCode) {
-	var next int
-
-	if *p.CurrentPeerIndex >= uint64(len(p.Peers)) {
-		atomic.StoreUint64(p.CurrentPeerIndex, uint64(0))
-	} else {
-		next = p.nextIndex()
-	}
-
-	l := len(p.Peers) + next
-	for i := next; i < l; i++ {
-		idx := i % len(p.Peers)
-		isAlive := p.Peers[idx].IsAlive()
-
-		if isAlive {
-			atomic.StoreUint64(p.CurrentPeerIndex, uint64(idx))
-
-			return p.Peers[idx], types.ResultOK
-		}
-	}
-
-	return nil, types.ErrCantFinePeers
-}
-
-func (p *Proxy) nextIndex() int {
-	return int(atomic.AddUint64(p.CurrentPeerIndex, uint64(1)) % uint64(len(p.Peers)))
 }

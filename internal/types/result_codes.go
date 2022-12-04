@@ -11,26 +11,34 @@ type (
 )
 
 const (
-	ResultOK                  ResultCode = 0
-	ProxyError                           = 1
-	StatusBadRequest                     = http.StatusBadRequest
-	StatusInternalServerError            = http.StatusInternalServerError
-	StatusNotExtended                    = http.StatusNotExtended
-	ErrEmptyValue                        = 1001
-	ErrCantFinePeers                     = 2001
-	ErrUnknown                           = 0xFFFFFFFF
+	ResultOK ResultCode = iota
+	ErrProxy
+	ErrClientProxy
+	ErrEmptyValue
+	ErrCantFindFile
+	ErrCantFindActivePeers
+	ErrCantMarshalJSON
+	ErrSendResponseToClient
+	StatusBadRequest          ResultCode = http.StatusBadRequest
+	StatusInternalServerError ResultCode = http.StatusInternalServerError
+	StatusNotExtended         ResultCode = http.StatusNotExtended
+	ResultUnknown             ResultCode = 0xFFFFFFFF
 )
 
 func (s ResultCode) ToStr() string {
 	mapStatus := map[ResultCode]string{
 		ResultOK:                  "SUCCESS",
-		ProxyError:                "Proxy error",
-		StatusBadRequest:          "StatusBadRequest",
-		StatusInternalServerError: "StatusInternalServerError",
-		StatusNotExtended:         "StatusNotExtended",
-		ErrEmptyValue:             "Value is empty",
-		ErrCantFinePeers:          "Can't find peers",
-		ErrUnknown:                "unknown error",
+		ErrProxy:                  "proxy error",
+		ErrClientProxy:            "proxy client error",
+		ErrCantMarshalJSON:        "can't marshal json object",
+		ErrSendResponseToClient:   "proxy err send response to client",
+		StatusBadRequest:          "status bad request",
+		StatusInternalServerError: "status internal server error",
+		StatusNotExtended:         "status not extended",
+		ErrEmptyValue:             "value is empty",
+		ErrCantFindFile:           "can't find file",
+		ErrCantFindActivePeers:    "can't find active peers",
+		ResultUnknown:             "unknown error",
 	}
 
 	m, ok := mapStatus[s]

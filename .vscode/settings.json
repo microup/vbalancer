@@ -1,9 +1,12 @@
 {
     "cSpell.words": [
         "czvf",
+        "errcheck",
         "funlen",
         "goarch",
+        "highload",
         "nolint",
+        "nosnakecase",
         "svenstaro"
     ]
 }

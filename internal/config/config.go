@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
-	"vbalancer/internal/peer"
+	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
@@ -50,8 +51,25 @@ func (c *Config) Init() types.ResultCode {
 }
 
 func (c *Config) Open(configFileName string) error {
-	if _, err := os.Stat(configFileName); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("failed to checked exists config: %w", err)
+	searchPathConfig := []string{configFileName, "", "./config/"}
+
+	var isPathFound bool
+
+	for _, searchPath := range searchPathConfig {
+		configFilePath := filepath.Join(searchPath, "config.yaml")
+		if _, err := os.Stat(configFilePath); errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+
+		isPathFound = true
+		configFileName = configFilePath
+
+		break
+	}
+
+	if !isPathFound {
+		//nolint:goerr113
+		return fmt.Errorf("failed: %s", types.ErrCantFindFile.ToStr())
 	}
 
 	fileConfig, err := os.Open(configFileName)
