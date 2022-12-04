@@ -2,8 +2,8 @@
 
 # What is VBalancer?
 
-The VBalancer has realized for switch traffic between peers, and it uses Robin Round algorithm.
-This is an implementation need to increase stability and downgrade high load to backend.
+Golang TCP/IP socket server for highload switch traffic between identical peers, and it uses Robin Round algorithm.
+This is an implementation need to increase stability and downgrade high load to back-end.
 
 ![Diagram](assets/vbalancer.png)
 
@@ -32,5 +32,5 @@ $docker run --restart=always -p 8080:8080 vbalancer
 ## Features
 
 - The proxy (VBalancer) has realized on TCP net.Listener
-- All log write to 'csv' file
+- All log write to 'CSV' file
 - Size log file can be changed in the config file
