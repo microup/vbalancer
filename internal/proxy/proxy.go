@@ -108,6 +108,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 		vlog.ProxyHost(peer.URI))
 
 	done := make(chan bool, maxCopyChan)
+	defer close(done)
 
 	go func() {
 		defer client.Close()
