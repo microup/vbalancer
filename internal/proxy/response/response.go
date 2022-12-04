@@ -12,21 +12,21 @@ import (
 type Response struct {
 	StatusCode  types.ResultCode `json:"statusCode"`
 	Description string           `json:"description"`
-	logger *vlog.VLog
+	logger      *vlog.VLog
 }
 
 func New(logger *vlog.VLog) *Response {
 	return &Response{
-		StatusCode: types.ResultUnknown,
+		StatusCode:  types.ResultUnknown,
 		Description: "",
-		logger: logger,
+		logger:      logger,
 	}
 }
 
 func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) {
 	r.StatusCode = codeResponse
 	r.Description = codeResponse.ToStr()
-	
+
 	responseJSON, err := json.Marshal(r)
 
 	if err != nil {
@@ -48,6 +48,6 @@ func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) 
 		r.logger.Add(vlog.Debug, types.ErrSendResponseToClient, vlog.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrSendResponseToClient.ToStr())
 	}
-
+	
 	time.Sleep(1 * time.Nanosecond)
 }
