@@ -67,8 +67,8 @@ func main() {
 func initConfig() *config.Config {
 	configFile := os.Getenv("ConfigFile")
 
-	if configFile == "" {
-		log.Fatalf("Can't read environment variable ConfigFile")
+	if configFile == "." {
+		configFile = "../../config"
 	}
 
 	cfg := config.New()
