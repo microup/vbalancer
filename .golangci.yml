@@ -82,8 +82,6 @@ linters:
     - promlinter 
     - reassign 
     - revive 
-    - rowserrcheck 
-    - sqlclosecheck 
     - staticcheck 
     - stylecheck 
     - tagliatelle 
@@ -98,7 +96,6 @@ linters:
     - unused 
     - usestdlibvars 
     - varnamelen 
-    - wastedassign 
     - whitespace 
     - wrapcheck 
     - wsl   
@@ -116,17 +113,18 @@ linters:
     - godot 
     - godox 
     - goerr113 
-    - gofumpt     
-  unsused:
-    - structcheck
-    - maligned 
-    - deadcode
-    - exhaustivestruct
-    - interfacer
-    - ifshort
     - golint
+    - deadcode
     - nosnakecase 
-    - scopelint 
     - varcheck 
-    - deadcode 
-    - structcheck 
+    - scopelint 
+    - maligned 
+    - interfacer
+    - exhaustivestruct
+    - ifshort
+  unsused:
+    - gofumpt 
+    - wastedassign     
+    - rowserrcheck
+    - structcheck      
+    - sqlclosecheck     
