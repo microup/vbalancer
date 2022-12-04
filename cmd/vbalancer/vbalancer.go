@@ -73,13 +73,11 @@ func initConfig() *config.Config {
 
 	cfg := config.New()
 
-	resultCode := cfg.Init()
-	if resultCode != types.ResultOK {
+	if resultCode := cfg.Init(); resultCode != types.ResultOK {
 		log.Fatalf("can't init config: %s, err: %s", configFile, resultCode.ToStr())
 	}
 
-	err := cfg.Open(configFile)
-	if err != nil {
+	if err := cfg.Open(configFile); err != nil {
 		log.Fatalf("%v", err)
 	}
 
