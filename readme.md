@@ -33,7 +33,7 @@ $docker run --restart=always -p 8080:8080 vbalancer
 
 ## License
 
-Copyright (C) 2022 microup.ru
+Copyright (C) 2022-2023 https://microup.ru
 
 ### vblancer
 

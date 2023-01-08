@@ -12,6 +12,7 @@ import (
 	"time"
 	"vbalancer/internal/config"
 	"vbalancer/internal/proxy"
+	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
@@ -23,31 +24,45 @@ func main() {
 
 	logger, err := vlog.New(cfg.Logger)
 	if err != nil {
-		log.Fatalf("Error create logger: %v", err)
+		log.Fatalf("create logger: %v", err)
 	}
-	defer logger.Close()
 
-	ctx, serverCancel := context.WithCancel(context.Background())
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeout)*time.Second)
+	defer func(logger *vlog.VLog) {
+		err = logger.Close()
+		if err != nil {
+			log.Fatalf("close logger: %v", err)
+		}
+	}(logger)
+
+	ctx, proxyWorkCancel := context.WithCancel(context.Background())
+	_, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeout)*time.Second)
 
 	defer cancel()
 
-	logger.Add(vlog.Info, types.ResultOK, "the balancer was running")
-	proxy := proxy.New(cfg.ProxyPort, cfg.Proxy, cfg.Peers, logger)
+	listPeer := make([]peer.IPeer, len(cfg.Peers))
+
+	for i, v := range cfg.Peers {
+		v.Mu = &sync.RWMutex{}
+		listPeer[i] = v
+	}
+
+	proxyBalancer := proxy.New(cfg.ProxyPort, cfg.Proxy, listPeer, logger)
 
 	go func() {
 		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
 
-		if err = proxy.Start(ctx, cfg.CheckTimeAlive); err != nil {
+		if err = proxyBalancer.Start(ctx, cfg.CheckTimeAlive); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't start server %s", err))
 		}
 	}()
+
+	logger.Add(vlog.Info, types.ResultOK, "the balancer is running")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	serverCancel()
+	proxyWorkCancel()
 
 	var syncSrvShutdown sync.WaitGroup
 
@@ -56,7 +71,7 @@ func main() {
 	go func() {
 		defer syncSrvShutdown.Done()
 
-		if err = proxy.Shutdown(shutdownCtx); err != nil {
+		if err = proxyBalancer.Shutdown(); err != nil {
 			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't stop server %s", err))
 		}
 	}()
@@ -77,7 +92,7 @@ func initConfig() *config.Config {
 		log.Fatalf("can't init config: %s, err: %s", configFile, resultCode.ToStr())
 	}
 
-	if err := cfg.Open(configFile); err != nil {
+	if err := cfg.Load(configFile); err != nil {
 		log.Fatalf("%v", err)
 	}
 

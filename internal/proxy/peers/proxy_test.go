@@ -1,7 +1,9 @@
 package peers_test
 
 import (
+	"sync"
 	"testing"
+
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
 )
@@ -12,94 +14,94 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 
 	cases := []struct {
 		nameTest          string
-		peers             []*peer.Peer
+		isAlive           []bool
 		currentPeerIndex  uint64
 		wantNextPeerIndex uint64
 	}{
 		{
-			nameTest:          "test_9",
-			peers:             []*peer.Peer{},
+			nameTest: "test_9",
+			isAlive:  []bool{},
+			//testListPeers:             []peer.Peer{},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 0,
 		},
 		{
-			nameTest: "test_8",
-			peers: []*peer.Peer{
-				{Alive: false}, {Alive: true}, {Alive: false},
-			},
+			nameTest:          "test_8",
+			isAlive:           []bool{false, true, false},
 			currentPeerIndex:  1,
 			wantNextPeerIndex: 1,
 		},
 		{
-			nameTest: "test_7",
-			peers: []*peer.Peer{
-				{Alive: true}, {Alive: false}, {Alive: false},
-			},
+			nameTest:          "test_7",
+			isAlive:           []bool{true, false, false},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 0,
 		},
 		{
-			nameTest: "test_6",
-			peers: []*peer.Peer{
-				{Alive: false}, {Alive: false}, {Alive: false},
-			},
+			nameTest:          "test_6",
+			isAlive:           []bool{false, false, false},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 1,
 		},
 		{
-			nameTest: "test_5",
-			peers: []*peer.Peer{
-				{Alive: false}, {Alive: false}, {Alive: true},
-			},
+			nameTest:          "test_5",
+			isAlive:           []bool{false, false, true},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 2,
 		},
 		{
-			nameTest: "test_4",
-			peers: []*peer.Peer{
-				{Alive: true}, {Alive: false}, {Alive: true},
-			},
+			nameTest:          "test_4",
+			isAlive:           []bool{true, false, true},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 2,
 		},
 		{
-			nameTest: "test_3",
-			peers: []*peer.Peer{
-				{Alive: true}, {Alive: true}, {Alive: true},
-			},
+			nameTest:          "test_3",
+			isAlive:           []bool{true, true, true},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 1,
 		},
 		{
-			nameTest: "test_2",
-			peers: []*peer.Peer{
-				{Alive: true}, {Alive: true}, {Alive: true},
-			},
+			nameTest:          "test_2",
+			isAlive:           []bool{true, true, true},
 			currentPeerIndex:  2,
 			wantNextPeerIndex: 0,
 		},
 		{
-			nameTest: "test_1",
-			peers: []*peer.Peer{
-				{Alive: true}, {Alive: true}, {Alive: true},
-			},
+			nameTest:          "test_1",
+			isAlive:           []bool{true, true, true},
 			currentPeerIndex:  3,
 			wantNextPeerIndex: 0,
 		},
 	}
 
-	peers := peers.New(nil)
+	testListPeers := peers.New(nil)
 
 	//nolint:varnamelen
 	for _, c := range cases {
-		peers.List = c.peers
+		var listPeers []peer.IPeer
+
+		for _, valIsAlive := range c.isAlive {
+			pPeer := &peer.Peer{
+				Name:  "",
+				Proto: "",
+				URI:   "",
+				Mu:    &sync.RWMutex{},
+			}
+			pPeer.Mu = &sync.RWMutex{}
+			pPeer.SetAlive(valIsAlive)
+			listPeers = append(listPeers, pPeer)
+		}
+
+		testListPeers.List = listPeers
 		//nolint:exportloopref
-		peers.CurrentPeerIndex = &c.currentPeerIndex
+		testListPeers.CurrentPeerIndex = &c.currentPeerIndex
 
-		_, _ = peers.GetNextPeer()
+		_, _ = testListPeers.GetNextPeer()
 
-		if *peers.CurrentPeerIndex != c.wantNextPeerIndex {
-			t.Errorf("Test: %s | Result failed. got %d, want: %d", c.nameTest, *peers.CurrentPeerIndex, c.wantNextPeerIndex)
+		if *testListPeers.CurrentPeerIndex != c.wantNextPeerIndex {
+			t.Errorf("Test: %s | Result failed. got %d, want: %d",
+				c.nameTest, *testListPeers.CurrentPeerIndex, c.wantNextPeerIndex)
 		}
 	}
 }

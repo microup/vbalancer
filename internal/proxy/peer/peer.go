@@ -10,29 +10,24 @@ import (
 	"vbalancer/internal/vlog"
 )
 
+type IPeer interface {
+	IsAlive() bool
+	SetAlive(bool)
+	CheckIsAlive(context.Context)
+	GetURI() string
+	SetCheckTimeAlive(*CheckTimeAlive)
+	SetLogger(*vlog.VLog)
+}
+
 type Peer struct {
 	Name           string `yaml:"name"`
 	Proto          string `yaml:"proto"`
 	URI            string `yaml:"uri"`
-	CheckTimeAlive *CheckTimeAlive
-	Alive          bool
-	Logger         *vlog.VLog
+	alive          bool
+	checkTimeAlive *CheckTimeAlive
+	logger         *vlog.VLog
 	urlPeer        *url.URL
-	mux            sync.RWMutex
-}
-
-func (p *Peer) setAlive(alive bool) {
-	p.mux.Lock()
-	p.Alive = alive
-	p.mux.Unlock()
-}
-
-func (p *Peer) IsAlive() bool {
-	p.mux.RLock()
-	alive := p.Alive
-	p.mux.RUnlock()
-
-	return alive
+	Mu             *sync.RWMutex
 }
 
 func (p *Peer) CheckIsAlive(ctx context.Context) {
@@ -40,7 +35,7 @@ func (p *Peer) CheckIsAlive(ctx context.Context) {
 		p.urlPeer, _ = url.Parse(fmt.Sprintf("%s://%s", p.Proto, p.URI))
 	}
 
-	timeout := time.Duration(p.CheckTimeAlive.TimeCheck) * time.Second
+	timeout := time.Duration(p.checkTimeAlive.TimeCheck) * time.Second
 
 	for {
 		select {
@@ -50,12 +45,38 @@ func (p *Peer) CheckIsAlive(ctx context.Context) {
 			conn, err := net.DialTimeout("tcp", p.urlPeer.Host, timeout)
 
 			if err != nil {
-				p.setAlive(false)
+				p.SetAlive(false)
 			} else {
 				_ = conn.Close()
-				p.setAlive(true)
+				p.SetAlive(true)
 			}
 		}
-		time.Sleep(time.Duration(p.CheckTimeAlive.WaitTimeCheck) * time.Second)
+		time.Sleep(time.Duration(p.checkTimeAlive.WaitTimeCheck) * time.Second)
 	}
+}
+
+func (p *Peer) SetCheckTimeAlive(value *CheckTimeAlive) {
+	p.checkTimeAlive = value
+}
+
+func (p *Peer) SetLogger(value *vlog.VLog) {
+	p.logger = value
+}
+
+func (p *Peer) SetAlive(value bool) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	p.alive = value
+}
+
+func (p *Peer) IsAlive() bool {
+	p.Mu.RLock()
+	alive := p.alive
+	p.Mu.RUnlock()
+
+	return alive
+}
+
+func (p *Peer) GetURI() string {
+	return p.URI
 }

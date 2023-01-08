@@ -25,7 +25,7 @@ type Proxy struct {
 	cfg    *Config
 }
 
-func New(proxyPort string, cfg *Config, listPeer []*peer.Peer, logger *vlog.VLog) *Proxy {
+func New(proxyPort string, cfg *Config, listPeer []peer.IPeer, logger *vlog.VLog) *Proxy {
 	proxySrv, err := net.Listen("tcp", proxyPort)
 	if err != nil {
 		panic("connection error:" + err.Error())
@@ -42,11 +42,11 @@ func New(proxyPort string, cfg *Config, listPeer []*peer.Peer, logger *vlog.VLog
 }
 
 func (p *Proxy) Start(ctx context.Context, checkTimeAlive *peer.CheckTimeAlive) error {
-	for _, peer := range p.Peers.List {
-		peer.CheckTimeAlive = checkTimeAlive
-		peer.Logger = p.logger
+	for _, pPeer := range p.Peers.List {
+		pPeer.SetCheckTimeAlive(checkTimeAlive)
+		pPeer.SetLogger(p.logger)
 
-		go peer.CheckIsAlive(ctx)
+		go pPeer.CheckIsAlive(ctx)
 	}
 
 	for {
@@ -66,63 +66,72 @@ func (p *Proxy) Start(ctx context.Context, checkTimeAlive *peer.CheckTimeAlive) 
 	}
 }
 
-func (p *Proxy) Shutdown(ctx context.Context) error {
+func (p *Proxy) Shutdown() error {
 	return nil
 }
 
+//nolint:funlen
 func (p *Proxy) copyConn(client net.Conn) {
-	defer client.Close()
+	defer func(client net.Conn) {
+		_ = client.Close()
+	}(client)
 
 	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()))
 
-	peer, resultCode := p.Peers.GetNextPeer()
+	pPeer, resultCode := p.Peers.GetNextPeer()
 
-	if resultCode != types.ResultOK || peer == nil {
-		if peer != nil {
+	if resultCode != types.ResultOK || pPeer == nil {
+		if pPeer != nil {
 			p.logger.Add(vlog.Debug, resultCode, vlog.RemoteAddr(client.RemoteAddr().String()),
-				vlog.ProxyHost(peer.URI), resultCode.ToStr())
+				vlog.ProxyHost(pPeer.GetURI()), resultCode.ToStr())
 		} else {
 			p.logger.Add(vlog.Debug, resultCode, vlog.RemoteAddr(client.RemoteAddr().String()), resultCode.ToStr())
 		}
 
-		response := response.New(p.logger)
-		response.SentResponse(client, resultCode)
+		responseLogger := response.New(p.logger)
+		responseLogger.SentResponse(client, resultCode)
 
 		return
 	}
 
-	dst, err := net.Dial("tcp", peer.URI)
+	dst, err := net.Dial("tcp", pPeer.GetURI())
 	if err != nil {
 		p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(client.RemoteAddr().String()),
 			fmt.Sprintf("Accept failed, %v\n", err))
 
-		response := response.New(p.logger)
-		response.SentResponse(client, types.ErrProxy)
+		responseLogger := response.New(p.logger)
+		responseLogger.SentResponse(client, types.ErrProxy)
 
 		return
 	}
 
-	p.logger.Add(vlog.Debug,
-		types.ResultOK,
-		vlog.RemoteAddr(client.RemoteAddr().String()),
-		vlog.ProxyHost(peer.URI))
+	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()),
+		vlog.ProxyHost(pPeer.GetURI()))
 
 	done := make(chan bool, maxCopyChan)
 	defer close(done)
 
 	go func() {
-		defer client.Close()
-		defer dst.Close()
-		//nolint:errcheck
-		io.Copy(dst, client)
+		defer func(client net.Conn) {
+			_ = client.Close()
+		}(client)
+		defer func(dst net.Conn) {
+			_ = dst.Close()
+		}(dst)
+
+		_, _ = io.Copy(dst, client)
 		done <- true
 	}()
 
 	go func() {
-		defer client.Close()
-		defer dst.Close()
-		//nolint:errcheck
-		io.Copy(client, dst)
+		defer func(client net.Conn) {
+			_ = client.Close()
+		}(client)
+		defer func(dst net.Conn) {
+			_ = dst.Close()
+		}(dst)
+
+		_, _ = io.Copy(client, dst)
 		done <- true
 	}()
 

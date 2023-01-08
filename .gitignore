@@ -18,7 +18,6 @@ cmd/golang-gin-poc/gin.log
 bin/
 logs/
 build/
-
 vendor/
 
 

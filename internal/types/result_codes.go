@@ -17,6 +17,7 @@ const (
 	ErrEmptyValue
 	ErrCantFindFile
 	ErrCantFindActivePeers
+	ErrPeerIsFailed
 	ErrCantMarshalJSON
 	ErrSendResponseToClient
 	StatusBadRequest          ResultCode = http.StatusBadRequest

@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy"
+	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 
@@ -50,7 +50,7 @@ func (c *Config) Init() types.ResultCode {
 	return types.ResultOK
 }
 
-func (c *Config) Open(configFileName string) error {
+func (c *Config) Load(configFileName string) error {
 	searchPathConfig := []string{configFileName, "", "./config/"}
 
 	var isPathFound bool
@@ -92,7 +92,6 @@ func (c *Config) Open(configFileName string) error {
 	return nil
 }
 
-//nolint
 func (c *Config) decodeConfigFileYaml(configYaml *os.File) error {
 	decoder := yaml.NewDecoder(configYaml)
 	err := decoder.Decode(c)

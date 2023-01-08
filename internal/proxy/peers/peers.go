@@ -2,20 +2,20 @@ package peers
 
 import (
 	"sync/atomic"
+	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/types"
-	"vbalancer/internal/proxy/peer"	
 )
 
 type Peers struct {
-	List            []*peer.Peer
+	List             []peer.IPeer
 	CurrentPeerIndex *uint64
 }
 
-func New(list []*peer.Peer) *Peers {
-	var startIndexInListPeer uint64 
+func New(list []peer.IPeer) *Peers {
+	var startIndexInListPeer uint64
 
 	return &Peers{
-		List: list,
+		List:             list,
 		CurrentPeerIndex: &startIndexInListPeer,
 	}
 }
@@ -36,8 +36,13 @@ func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 
 		if isAlive {
 			atomic.StoreUint64(p.CurrentPeerIndex, uint64(idx))
+			peerValue, ok := p.List[idx].(*peer.Peer)
 
-			return p.List[idx], types.ResultOK
+			if !ok {
+				return nil, types.ErrPeerIsFailed
+			}
+
+			return peerValue, types.ResultOK
 		}
 	}
 
