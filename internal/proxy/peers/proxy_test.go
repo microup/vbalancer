@@ -100,7 +100,8 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 		_, _ = testListPeers.GetNextPeer()
 
 		if *testListPeers.CurrentPeerIndex != c.wantNextPeerIndex {
-			t.Errorf("Test: %s | Result failed. got %d, want: %d", c.nameTest, *testListPeers.CurrentPeerIndex, c.wantNextPeerIndex)
+			t.Errorf("Test: %s | Result failed. got %d, want: %d",
+				c.nameTest, *testListPeers.CurrentPeerIndex, c.wantNextPeerIndex)
 		}
 	}
 }

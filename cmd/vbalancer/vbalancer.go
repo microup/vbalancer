@@ -24,13 +24,13 @@ func main() {
 
 	logger, err := vlog.New(cfg.Logger)
 	if err != nil {
-		log.Fatalf("error create logger: %v", err)
+		log.Fatalf("create logger: %v", err)
 	}
 
 	defer func(logger *vlog.VLog) {
 		err = logger.Close()
 		if err != nil {
-			log.Fatalf("error close logger: %v", err)
+			log.Fatalf("close logger: %v", err)
 		}
 	}(logger)
 

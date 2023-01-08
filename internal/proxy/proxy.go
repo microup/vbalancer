@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"fmt"
@@ -71,12 +70,10 @@ func (p *Proxy) Shutdown() error {
 	return nil
 }
 
+//nolint:funlen
 func (p *Proxy) copyConn(client net.Conn) {
 	defer func(client net.Conn) {
-		err := client.Close()
-		if err != nil {
-			log.Fatalf("error close client: %v", err)
-		}
+		_ = client.Close()
 	}(client)
 
 	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()))
@@ -108,9 +105,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 		return
 	}
 
-	p.logger.Add(vlog.Debug,
-		types.ResultOK,
-		vlog.RemoteAddr(client.RemoteAddr().String()),
+	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()),
 		vlog.ProxyHost(pPeer.GetURI()))
 
 	done := make(chan bool, maxCopyChan)
@@ -123,7 +118,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 		defer func(dst net.Conn) {
 			_ = dst.Close()
 		}(dst)
-		//nolint:errcheck
+
 		_, _ = io.Copy(dst, client)
 		done <- true
 	}()
@@ -135,7 +130,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 		defer func(dst net.Conn) {
 			_ = dst.Close()
 		}(dst)
-		//nolint:errcheck
+
 		_, _ = io.Copy(client, dst)
 		done <- true
 	}()
