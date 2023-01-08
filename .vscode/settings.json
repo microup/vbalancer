@@ -4,6 +4,7 @@
         "errcheck",
         "funlen",
         "goarch",
+        "gomock",
         "highload",
         "nolint",
         "nosnakecase",

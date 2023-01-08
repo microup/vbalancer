@@ -4,10 +4,17 @@ PROJECT_NAME = "vbalancer"
 
 all: lint test race build
 
-lint: ## Lint the files
+build-mocks:
+  @go get github.com/golang/mock/gomock
+  @go install github.com/golang/mock/mockgen
+  
+mocks:
+  mockgen -destination=mocks/mock_peer.go -package=mocks -source=./internal/proxy/peer/peer.go Peer
+
+lint: 
   golangci-lint run -v ./...
 
-test: ## Run unittests
+test: 
   go test -short ./...
 
 race: dep ## Run data race detector

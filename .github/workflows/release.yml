@@ -59,6 +59,7 @@ jobs:
         run: |
           cp ./readme.md ./build/
           cp ./config/config.yaml ./build/
+          cp ./LICENSE ./build/
 
       - name: Create package
         id: package
