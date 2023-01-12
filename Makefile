@@ -10,6 +10,7 @@ build-mocks:
   
 mocks:
   mockgen -destination=mocks/mock_peer.go -package=mocks -source=./internal/proxy/peer/peer.go Peer
+  mockgen -package=mocks net Conn > mocks/mock_net.go
 
 lint: 
   golangci-lint run -v ./...
