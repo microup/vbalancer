@@ -2,7 +2,7 @@ logger:
   dirLog: ./logs/
   fileSize: 10000000
   apiShowRecords: 5
-  kindType: "csv"
+  kindType: csv
 
 proxy:
   defaultPort: 8080

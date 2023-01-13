@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"time"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
@@ -23,7 +22,7 @@ func New(logger *vlog.VLog) *Response {
 	}
 }
 
-func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) {
+func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) error {
 	r.StatusCode = codeResponse
 	r.Description = codeResponse.ToStr()
 
@@ -33,7 +32,7 @@ func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) 
 		r.logger.Add(vlog.Debug, types.ErrCantMarshalJSON, vlog.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrCantMarshalJSON.ToStr())
 
-		return
+		return err //nolint:wrapcheck
 	}
 
 	responseLen := len(responseJSON)
@@ -47,7 +46,9 @@ func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) 
 	if err != nil {
 		r.logger.Add(vlog.Debug, types.ErrSendResponseToClient, vlog.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrSendResponseToClient.ToStr())
+
+		return err //nolint:wrapcheck
 	}
-	
-	time.Sleep(1 * time.Nanosecond)
+
+	return nil
 }

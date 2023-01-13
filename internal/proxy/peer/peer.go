@@ -12,7 +12,6 @@ import (
 
 type IPeer interface {
 	IsAlive() bool
-	SetAlive(bool)
 	CheckIsAlive(context.Context)
 	GetURI() string
 	SetCheckTimeAlive(*CheckTimeAlive)
@@ -45,10 +44,10 @@ func (p *Peer) CheckIsAlive(ctx context.Context) {
 			conn, err := net.DialTimeout("tcp", p.urlPeer.Host, timeout)
 
 			if err != nil {
-				p.SetAlive(false)
+				p.setAlive(false)
 			} else {
 				_ = conn.Close()
-				p.SetAlive(true)
+				p.setAlive(true)
 			}
 		}
 		time.Sleep(time.Duration(p.checkTimeAlive.WaitTimeCheck) * time.Second)
@@ -63,12 +62,6 @@ func (p *Peer) SetLogger(value *vlog.VLog) {
 	p.logger = value
 }
 
-func (p *Peer) SetAlive(value bool) {
-	p.Mu.Lock()
-	defer p.Mu.Unlock()
-	p.alive = value
-}
-
 func (p *Peer) IsAlive() bool {
 	p.Mu.RLock()
 	alive := p.alive
@@ -79,4 +72,10 @@ func (p *Peer) IsAlive() bool {
 
 func (p *Peer) GetURI() string {
 	return p.URI
+}
+
+func (p *Peer) setAlive(value bool) {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+	p.alive = value
 }

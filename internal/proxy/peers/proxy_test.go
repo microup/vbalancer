@@ -1,8 +1,9 @@
 package peers_test
 
 import (
-	"sync"
+	"github.com/golang/mock/gomock"
 	"testing"
+	"vbalancer/mocks"
 
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
@@ -12,16 +13,15 @@ import (
 func Test_API_Get_Next_Peer(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	var statePeers = []struct {
 		nameTest          string
 		isAlive           []bool
 		currentPeerIndex  uint64
 		wantNextPeerIndex uint64
 	}{
 		{
-			nameTest: "test_9",
-			isAlive:  []bool{},
-			//testListPeers:             []peer.Peer{},
+			nameTest:          "test_9",
+			isAlive:           []bool{},
 			currentPeerIndex:  0,
 			wantNextPeerIndex: 0,
 		},
@@ -76,32 +76,26 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 	}
 
 	testListPeers := peers.New(nil)
+	ctrl := gomock.NewController(t)
 
-	//nolint:varnamelen
-	for _, c := range cases {
+	for _, statePeer := range statePeers {
 		var listPeers []peer.IPeer
 
-		for _, valIsAlive := range c.isAlive {
-			pPeer := &peer.Peer{
-				Name:  "",
-				Proto: "",
-				URI:   "",
-				Mu:    &sync.RWMutex{},
-			}
-			pPeer.Mu = &sync.RWMutex{}
-			pPeer.SetAlive(valIsAlive)
-			listPeers = append(listPeers, pPeer)
+		for _, valIsAlive := range statePeer.isAlive {
+			mockPeer := mocks.NewMockIPeer(ctrl)
+			mockPeer.EXPECT().IsAlive().Return(valIsAlive).AnyTimes()
+			listPeers = append(listPeers, mockPeer)
 		}
 
 		testListPeers.List = listPeers
 		//nolint:exportloopref
-		testListPeers.CurrentPeerIndex = &c.currentPeerIndex
+		testListPeers.CurrentPeerIndex = &statePeer.currentPeerIndex
 
 		_, _ = testListPeers.GetNextPeer()
 
-		if *testListPeers.CurrentPeerIndex != c.wantNextPeerIndex {
-			t.Errorf("Test: %s | Result failed. got %d, want: %d",
-				c.nameTest, *testListPeers.CurrentPeerIndex, c.wantNextPeerIndex)
+		if *testListPeers.CurrentPeerIndex != statePeer.wantNextPeerIndex {
+			t.Errorf("Test: %s | Result failed. got %d, want: %d", statePeer.nameTest,
+				*testListPeers.CurrentPeerIndex, statePeer.wantNextPeerIndex)
 		}
 	}
 }
