@@ -14,7 +14,7 @@
 
 go.work
 
-cmd/golang-gin-poc/gin.log
+cmd/vbalancer/logs/
 bin/
 logs/
 build/
