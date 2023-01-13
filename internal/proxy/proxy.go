@@ -89,7 +89,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 		}
 
 		responseLogger := response.New(p.logger)
-		responseLogger.SentResponse(client, resultCode)
+		_ = responseLogger.SentResponse(client, resultCode)
 
 		return
 	}
@@ -100,7 +100,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 			fmt.Sprintf("Accept failed, %v\n", err))
 
 		responseLogger := response.New(p.logger)
-		responseLogger.SentResponse(client, types.ErrProxy)
+		_ = responseLogger.SentResponse(client, types.ErrProxy)
 
 		return
 	}
