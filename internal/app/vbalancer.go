@@ -17,14 +17,19 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-func Run(isAppStart chan bool) {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+//nolint:funlen
+func Run(wgStartApp *sync.WaitGroup) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("catch err: %v", err) //nolint:forbidigo
+		}
+	}()
 
 	cfg := initConfig()
 
 	logger, err := vlog.New(cfg.Logger)
 	if err != nil {
-		log.Fatalf("create logger: %v", err)
+		log.Panicf("create logger: %v", err)
 	}
 
 	defer func(logger *vlog.VLog) {
@@ -46,19 +51,21 @@ func Run(isAppStart chan bool) {
 		listPeer[i] = v
 	}
 
-	proxyBalancer := proxy.New(cfg.ProxyPort, cfg.Proxy, listPeer, logger)
+	proxyBalancer := proxy.New(cfg.Proxy, listPeer, logger)
 
 	go func() {
 		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
 
-		if err = proxyBalancer.Start(ctx, cfg.CheckTimeAlive); err != nil {
-			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't start server %s", err))
+		if err = proxyBalancer.Start(ctx, cfg.ProxyPort, cfg.CheckTimeAlive); err != nil {
+			logger.Add(vlog.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
 		}
 	}()
 
 	logger.Add(vlog.Info, types.ResultOK, "the balancer is running")
 
-	isAppStart <- true
+	if wgStartApp != nil {
+		wgStartApp.Done()
+	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -66,22 +73,24 @@ func Run(isAppStart chan bool) {
 
 	proxyWorkCancel()
 
-	var syncSrvShutdown sync.WaitGroup
+	var srvShutdown sync.WaitGroup
 
-	syncSrvShutdown.Add(1)
+	srvShutdown.Add(1)
 
 	go func() {
-		defer syncSrvShutdown.Done()
+		defer srvShutdown.Done()
 
 		if err = proxyBalancer.Shutdown(); err != nil {
-			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("can't stop server %s", err))
+			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("shutdown proxy err: %s", err))
 		}
 	}()
 
-	syncSrvShutdown.Wait()
+	srvShutdown.Wait()
 }
 
 func initConfig() *config.Config {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	configFile := os.Getenv("ConfigFile")
 
 	if configFile == "." {
@@ -90,13 +99,17 @@ func initConfig() *config.Config {
 
 	cfg := config.New()
 
-	if resultCode := cfg.Init(); resultCode != types.ResultOK {
-		log.Fatalf("can't init config: %s, err: %s", configFile, resultCode.ToStr())
-	}
-
 	if err := cfg.Load(configFile); err != nil {
 		log.Fatalf("%v", err)
 	}
 
+	initProxy(cfg)
+
 	return cfg
+}
+
+func initProxy(cfg *config.Config) {
+	if resultCode := cfg.Init(); resultCode != types.ResultOK {
+		log.Fatalf("can't init proxy: %s", resultCode.ToStr())
+	}
 }
