@@ -50,19 +50,19 @@ func (c *Config) Init() types.ResultCode {
 	return types.ResultOK
 }
 
-func (c *Config) Load(configFileName string) error {
-	searchPathConfig := []string{configFileName, "", "./config/"}
+func (c *Config) Load(cfgFileName string) error {
+	searchPathConfig := []string{cfgFileName, "", "./config/", "../../config/", "../config/", "../../../config"}
 
 	var isPathFound bool
 
 	for _, searchPath := range searchPathConfig {
-		configFilePath := filepath.Join(searchPath, "config.yaml")
-		if _, err := os.Stat(configFilePath); errors.Is(err, os.ErrNotExist) {
+		cfgFilePath := filepath.Join(searchPath, "config.yaml")
+		if _, err := os.Stat(cfgFilePath); errors.Is(err, os.ErrNotExist) {
 			continue
 		}
 
 		isPathFound = true
-		configFileName = configFilePath
+		cfgFileName = cfgFilePath
 
 		break
 	}
@@ -72,7 +72,7 @@ func (c *Config) Load(configFileName string) error {
 		return fmt.Errorf("failed: %s", types.ErrCantFindFile.ToStr())
 	}
 
-	fileConfig, err := os.Open(configFileName)
+	fileConfig, err := os.Open(cfgFileName)
 	if err != nil {
 		return fmt.Errorf("failed to open config file: %w", err)
 	}
@@ -80,13 +80,13 @@ func (c *Config) Load(configFileName string) error {
 	defer func(f *os.File) {
 		err = f.Close()
 		if err != nil {
-			log.Fatalf("Error can't close config file: %s, err: %s", configFileName, err)
+			log.Fatalf("Error can't close config file: %s, err: %s", cfgFileName, err)
 		}
 	}(fileConfig)
 
 	err = c.decodeConfigFileYaml(fileConfig)
 	if err != nil {
-		return fmt.Errorf("can't decode config file: %s, err: %w", configFileName, err)
+		return fmt.Errorf("can't decode config file: %s, err: %w", cfgFileName, err)
 	}
 
 	return nil
