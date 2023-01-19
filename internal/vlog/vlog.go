@@ -108,7 +108,7 @@ func (v *VLog) addInThread(values ...interface{}) {
 	}
 }
 
-// nolint
+//nolint
 func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 	var typeLog TypeLog
 
