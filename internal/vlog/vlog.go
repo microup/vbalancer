@@ -58,16 +58,22 @@ func (v *VLog) GetCountRecords() int {
 	return len(v.mapLastLogRecords)
 }
 
-//nolint
 func (v *VLog) Add(values ...interface{}) {
-	if v.IsDisabled || values == nil {
-		return
-	}
-
 	go v.addInThread(values...)
 }
 
 func (v *VLog) addInThread(values ...interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("catch err: %v", err) //nolint:forbidigo
+			os.Exit(int(types.ErrGotPanic))
+		}
+	}()
+
+	if v.IsDisabled || values == nil {
+		return
+	}
+
 	v.wgNewLog.Wait()
 
 	v.mu.Lock()
@@ -158,37 +164,37 @@ func (v *VLog) buildCsvRecord(values []interface{}) (TypeLog, string) {
 			clientMethod, isConvertOk = value.(ClientMethod)
 			if !isConvertOk {
 				continue
-			}			
+			}
 		case ClientProto:
 			clientProto, isConvertOk = value.(ClientProto)
 			if !isConvertOk {
 				continue
-			}				
+			}
 		case ClientURI:
 			clientURI, isConvertOk = value.(ClientURI)
 			if !isConvertOk {
 				continue
-			}					
+			}
 		case ProxyHost:
 			proxyHost, isConvertOk = value.(ProxyHost)
 			if !isConvertOk {
 				continue
-			}					
+			}
 		case ProxyMethod:
 			proxyMethod, isConvertOk = value.(ProxyMethod)
 			if !isConvertOk {
 				continue
-			}					
+			}
 		case ProxyProto:
 			proxyProto, isConvertOk = value.(ProxyProto)
 			if !isConvertOk {
 				continue
-			}					
+			}
 		case ProxyURI:
 			proxyURI, isConvertOk = value.(ProxyURI)
 			if !isConvertOk {
 				continue
-			}					
+			}
 		}
 	}
 

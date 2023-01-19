@@ -3,25 +3,25 @@ package vlog
 const maxLenString = 250
 
 //nolint:cyclop
-func (c *VLog) GetRecordsText(isReverse bool) string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (v *VLog) GetRecordsText(isReverse bool) string {
+	v.mu.Lock()
+	defer v.mu.Unlock()
 
 	result := ""
 
-	if c.mapLastLogRecords == nil {
+	if v.mapLastLogRecords == nil {
 		return result
 	}
 
-	if len(c.mapLastLogRecords) == 0 {
+	if len(v.mapLastLogRecords) == 0 {
 		return result
 	}
 
 	switch isReverse {
 	case true:
 		{
-			for i, j := 0, len(c.mapLastLogRecords)-1; j > -1; i, j = i+1, j-1 {
-				strLastLogRecord := c.mapLastLogRecords[j]
+			for i, j := 0, len(v.mapLastLogRecords)-1; j > -1; i, j = i+1, j-1 {
+				strLastLogRecord := v.mapLastLogRecords[j]
 
 				if result == "" {
 					result = strLastLogRecord
@@ -36,7 +36,7 @@ func (c *VLog) GetRecordsText(isReverse bool) string {
 		}
 	case false:
 		{
-			for _, strLastLogRecord := range c.mapLastLogRecords {
+			for _, strLastLogRecord := range v.mapLastLogRecords {
 				if result == "" {
 					result = strLastLogRecord
 				} else {
