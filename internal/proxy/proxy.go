@@ -25,14 +25,9 @@ type Proxy struct {
 	cfg    *Config
 }
 
-func New(proxyPort string, cfg *Config, listPeer []peer.IPeer, logger *vlog.VLog) *Proxy {
-	proxySrv, err := net.Listen("tcp", proxyPort)
-	if err != nil {
-		panic("connection error:" + err.Error())
-	}
-
+func New(cfg *Config, listPeer []peer.IPeer, logger *vlog.VLog) *Proxy {
 	proxy := &Proxy{
-		srv:    proxySrv,
+		srv:    nil,
 		logger: logger,
 		Peers:  peers.New(listPeer),
 		cfg:    cfg,
@@ -41,7 +36,14 @@ func New(proxyPort string, cfg *Config, listPeer []peer.IPeer, logger *vlog.VLog
 	return proxy
 }
 
-func (p *Proxy) Start(ctx context.Context, checkTimeAlive *peer.CheckTimeAlive) error {
+func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *peer.CheckTimeAlive) error {
+	proxySrv, err := net.Listen("tcp", proxyPort)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	p.srv = proxySrv
+
 	for _, pPeer := range p.Peers.List {
 		pPeer.SetCheckTimeAlive(checkTimeAlive)
 		pPeer.SetLogger(p.logger)
@@ -55,7 +57,9 @@ func (p *Proxy) Start(ctx context.Context, checkTimeAlive *peer.CheckTimeAlive) 
 
 			if err != nil {
 				p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
-					fmt.Sprintf("Accept failed, %v\n", err))
+					fmt.Sprintf("Accept failed: %v\n", err))
+
+				return fmt.Errorf("failed to set deadline: %w", err)
 			}
 
 			go p.copyConn(conn)
