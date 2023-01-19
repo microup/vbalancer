@@ -20,6 +20,7 @@ const (
 	ErrPeerIsFailed
 	ErrCantMarshalJSON
 	ErrSendResponseToClient
+	ErrGotPanic
 	StatusBadRequest          ResultCode = http.StatusBadRequest
 	StatusInternalServerError ResultCode = http.StatusInternalServerError
 	StatusNotExtended         ResultCode = http.StatusNotExtended
@@ -39,6 +40,7 @@ func (s ResultCode) ToStr() string {
 		ErrEmptyValue:             "value is empty",
 		ErrCantFindFile:           "can't find file",
 		ErrCantFindActivePeers:    "can't find active peers",
+		ErrGotPanic:               "got panic",
 		ResultUnknown:             "unknown error",
 	}
 
