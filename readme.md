@@ -3,7 +3,7 @@
 
 # What is VBalancer?
 
-VBalancer is a project written in Golang that provides a simple and efficient way to balance traffic between identical servers. It is designed to be lightweight and fast, and can be used for support for multiple protocols including HTTP/HTTPS, TCP/UDP, and WebSockets. With its easy-to-use configuration options, it is an ideal solution for any organization looking to improve their web application performance and reliability. VBalancer is an open source project released under the AGPL-3.0 license.
+VBalancer is a project written in Golang that provides a simple and efficient way to balance traffic between identical servers. It is designed to be lightweight and fast. Vbalancer supports TCP protocol. With its easy-to-use configuration options, it is an ideal solution for any organization looking to improve their network application performance and reliability. VBalancer is an open source project released under the AGPL-3.0 license.
 
 ![Diagram](assets/vbalancer.png)
 
