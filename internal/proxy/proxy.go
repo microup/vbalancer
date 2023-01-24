@@ -112,33 +112,29 @@ func (p *Proxy) copyConn(client net.Conn) {
 	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()),
 		vlog.ProxyHost(pPeer.GetURI()))
 
-	done := make(chan bool, maxCopyChan)
+	done := make(chan struct{}, maxCopyChan)
 	defer close(done)
 
 	go func() {
 		defer func(client net.Conn) {
 			_ = client.Close()
 		}(client)
-		defer func(dst net.Conn) {
-			_ = dst.Close()
-		}(dst)
 
 		_, _ = io.Copy(dst, client)
-		done <- true
+		done <- struct{}{}
 	}()
 
 	go func() {
 		defer func(client net.Conn) {
 			_ = client.Close()
 		}(client)
-		defer func(dst net.Conn) {
-			_ = dst.Close()
-		}(dst)
 
 		_, _ = io.Copy(client, dst)
-		done <- true
+		done <- struct{}{}
 	}()
 
 	<-done
 	<-done
+
+	_ = dst.Close()
 }
