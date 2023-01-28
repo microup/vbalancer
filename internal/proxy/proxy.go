@@ -16,18 +16,17 @@ import (
 
 const (
 	maxCopyChan = 2
+	chunkSize   = 32 * 1024
 )
 
 type Proxy struct {
-	srv    net.Listener
-	logger *vlog.VLog
+	logger vlog.ILog
 	Peers  *peers.Peers
 	cfg    *Config
 }
 
-func New(cfg *Config, listPeer []peer.IPeer, logger *vlog.VLog) *Proxy {
+func New(cfg *Config, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
 	proxy := &Proxy{
-		srv:    nil,
 		logger: logger,
 		Peers:  peers.New(listPeer),
 		cfg:    cfg,
@@ -42,8 +41,6 @@ func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *pee
 		return fmt.Errorf("%w", err)
 	}
 
-	p.srv = proxySrv
-
 	for _, pPeer := range p.Peers.List {
 		pPeer.SetCheckTimeAlive(checkTimeAlive)
 		pPeer.SetLogger(p.logger)
@@ -51,22 +48,28 @@ func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *pee
 		go pPeer.CheckIsAlive(ctx)
 	}
 
+	return p.checkNewConnection(proxySrv)
+}
+
+func (p *Proxy) checkNewConnection(proxySrv net.Listener) error {
 	for {
-		if conn, err := p.srv.Accept(); err == nil {
-			err = conn.SetDeadline(time.Now().Add(time.Duration(p.cfg.TimeDeadLineMS) * time.Millisecond))
-
-			if err != nil {
-				p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
-					fmt.Sprintf("Accept failed: %v\n", err))
-
-				return fmt.Errorf("failed to set deadline: %w", err)
-			}
-
-			go p.copyConn(conn)
-		} else {
+		conn, err := proxySrv.Accept()
+		if err != nil {
 			p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Sprintf("Accept failed, %v\n", err))
+
+			continue
 		}
+
+		err = conn.SetDeadline(time.Now().Add(time.Duration(p.cfg.TimeDeadLineMS) * time.Millisecond))
+		if err != nil {
+			p.logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
+				fmt.Sprintf("Accept failed: %v\n", err))
+
+			return fmt.Errorf("failed to set deadline: %w", err)
+		}
+
+		go p.copyConn(conn)
 	}
 }
 
@@ -74,7 +77,6 @@ func (p *Proxy) Shutdown() error {
 	return nil
 }
 
-//nolint:funlen
 func (p *Proxy) copyConn(client net.Conn) {
 	defer func(client net.Conn) {
 		_ = client.Close()
@@ -112,29 +114,53 @@ func (p *Proxy) copyConn(client net.Conn) {
 	p.logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()),
 		vlog.ProxyHost(pPeer.GetURI()))
 
+	p.proxyDataCopy(client, dst)
+
+}
+
+func (p *Proxy) proxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
 	done := make(chan struct{}, maxCopyChan)
 	defer close(done)
 
-	go func() {
-		defer func(client net.Conn) {
-			_ = client.Close()
-		}(client)
-
-		_, _ = io.Copy(dst, client)
-		done <- struct{}{}
-	}()
-
-	go func() {
-		defer func(client net.Conn) {
-			_ = client.Close()
-		}(client)
-
-		_, _ = io.Copy(client, dst)
-		done <- struct{}{}
-	}()
+	p.copyDataClientToPeer(client, dst, done)
+	p.copyDataPeerToClient(dst, client, done)
 
 	<-done
 	<-done
 
 	_ = dst.Close()
+}
+
+func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.ReadWriteCloser, done chan struct{}) {
+	writeBuffer := make([]byte, chunkSize)
+
+	go func() {
+		var errCopy error
+		_, errCopy = io.CopyBuffer(client, dst, writeBuffer)
+
+		if errCopy != nil {
+			p.logger.Add(vlog.Debug, types.ErrCopyDataClientToPeer, vlog.RemoteAddr(client.RemoteAddr().String()),
+				fmt.Sprintf(types.ErrorCopyDataClientToPeer, errCopy))
+		}
+
+		_ = client.Close()
+		done <- struct{}{}
+	}()
+}
+
+func (p *Proxy) copyDataPeerToClient(dst io.ReadWriteCloser, client net.Conn, done chan struct{}) {
+	readBuffer := make([]byte, chunkSize)
+
+	go func() {
+		var errCopy error
+		_, errCopy = io.CopyBuffer(dst, client, readBuffer)
+
+		if errCopy != nil {
+			p.logger.Add(vlog.Debug, types.ErrCopyDataPeerToClient, vlog.RemoteAddr(client.RemoteAddr().String()),
+				fmt.Sprintf(types.ErrorCopyDataPeerToClient, errCopy))
+		}
+
+		_ = client.Close()
+		done <- struct{}{}
+	}()
 }
