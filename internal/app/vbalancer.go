@@ -40,7 +40,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 	}(logger)
 
 	ctx, proxyWorkCancel := context.WithCancel(context.Background())
-	_, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeout)*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeoutSeconds)*time.Second)
 
 	defer cancel()
 
