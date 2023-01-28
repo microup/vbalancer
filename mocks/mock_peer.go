@@ -36,16 +36,16 @@ func (m *MockIPeer) EXPECT() *MockIPeerMockRecorder {
 	return m.recorder
 }
 
-// CheckIsAlive mocks base method.
-func (m *MockIPeer) CheckIsAlive(arg0 context.Context) {
+// CheckAvailability mocks base method.
+func (m *MockIPeer) CheckAvailability(arg0 context.Context) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CheckIsAlive", arg0)
+	m.ctrl.Call(m, "CheckAvailability", arg0)
 }
 
-// CheckIsAlive indicates an expected call of CheckIsAlive.
-func (mr *MockIPeerMockRecorder) CheckIsAlive(arg0 interface{}) *gomock.Call {
+// CheckAvailability indicates an expected call of CheckAvailability.
+func (mr *MockIPeerMockRecorder) CheckAvailability(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckIsAlive", reflect.TypeOf((*MockIPeer)(nil).CheckIsAlive), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAvailability", reflect.TypeOf((*MockIPeer)(nil).CheckAvailability), arg0)
 }
 
 // GetURI mocks base method.
@@ -62,30 +62,30 @@ func (mr *MockIPeerMockRecorder) GetURI() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURI", reflect.TypeOf((*MockIPeer)(nil).GetURI))
 }
 
-// IsAlive mocks base method.
-func (m *MockIPeer) IsAlive() bool {
+// IsAvailable mocks base method.
+func (m *MockIPeer) IsAvailable() bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAlive")
+	ret := m.ctrl.Call(m, "IsAvailable")
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// IsAlive indicates an expected call of IsAlive.
-func (mr *MockIPeerMockRecorder) IsAlive() *gomock.Call {
+// IsAvailable indicates an expected call of IsAvailable.
+func (mr *MockIPeerMockRecorder) IsAvailable() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAlive", reflect.TypeOf((*MockIPeer)(nil).IsAlive))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAvailable", reflect.TypeOf((*MockIPeer)(nil).IsAvailable))
 }
 
-// SetCheckTimeAlive mocks base method.
-func (m *MockIPeer) SetCheckTimeAlive(arg0 *peer.CheckTimeAlive) {
+// SetAvailabilityCheckInterval mocks base method.
+func (m *MockIPeer) SetAvailabilityCheckInterval(arg0 *peer.CheckTimeAlive) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetCheckTimeAlive", arg0)
+	m.ctrl.Call(m, "SetAvailabilityCheckInterval", arg0)
 }
 
-// SetCheckTimeAlive indicates an expected call of SetCheckTimeAlive.
-func (mr *MockIPeerMockRecorder) SetCheckTimeAlive(arg0 interface{}) *gomock.Call {
+// SetAvailabilityCheckInterval indicates an expected call of SetAvailabilityCheckInterval.
+func (mr *MockIPeerMockRecorder) SetAvailabilityCheckInterval(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCheckTimeAlive", reflect.TypeOf((*MockIPeer)(nil).SetCheckTimeAlive), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAvailabilityCheckInterval", reflect.TypeOf((*MockIPeer)(nil).SetAvailabilityCheckInterval), arg0)
 }
 
 // SetLogger mocks base method.
