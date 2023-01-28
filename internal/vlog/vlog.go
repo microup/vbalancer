@@ -27,7 +27,7 @@ type VLog struct {
 	IsDisabled        bool
 }
 
-func New(cfg *Config) (ILog, error) {
+func New(cfg *Config) (*VLog, error) {
 	vLog := &VLog{
 		wgNewLog:          &sync.WaitGroup{},
 		mu:                &sync.Mutex{},
