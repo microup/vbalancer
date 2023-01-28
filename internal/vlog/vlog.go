@@ -10,6 +10,11 @@ import (
 	"vbalancer/internal/types"
 )
 
+type ILog interface {
+	Add(values ...interface{})
+	Close() error
+}
+
 type VLog struct {
 	cfg               *Config
 	fileLog           *os.File
@@ -22,7 +27,7 @@ type VLog struct {
 	IsDisabled        bool
 }
 
-func New(cfg *Config) (*VLog, error) {
+func New(cfg *Config) (ILog, error) {
 	vLog := &VLog{
 		wgNewLog:          &sync.WaitGroup{},
 		mu:                &sync.Mutex{},
