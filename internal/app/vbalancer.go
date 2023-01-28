@@ -72,20 +72,6 @@ func Run(wgStartApp *sync.WaitGroup) {
 	<-quit
 
 	proxyWorkCancel()
-
-	var srvShutdown sync.WaitGroup
-
-	srvShutdown.Add(1)
-
-	go func() {
-		defer srvShutdown.Done()
-
-		if err = proxyBalancer.Shutdown(); err != nil {
-			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("shutdown proxy err: %s", err))
-		}
-	}()
-
-	srvShutdown.Wait()
 }
 
 func initConfig() *config.Config {
