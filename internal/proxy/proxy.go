@@ -118,7 +118,7 @@ func (p *Proxy) copyConn(client net.Conn) {
 
 }
 
-func (p *Proxy) proxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
+func (p *Proxy) proxyDataCopy(client net.Conn, dst net.Conn) {
 	done := make(chan struct{}, maxCopyChan)
 	defer close(done)
 
@@ -127,11 +127,9 @@ func (p *Proxy) proxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
 
 	<-done
 	<-done
-
-	_ = dst.Close()
 }
 
-func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.Reader, done chan struct{}) {
+func (p *Proxy) copyDataClientToPeer(client net.Conn, dst net.Conn, done chan struct{}) {
 	writeBuffer := make([]byte, chunkSize)
 
 	go func() {
@@ -143,12 +141,13 @@ func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.Reader, done chan s
 				fmt.Sprintf(types.ErrorCopyDataClientToPeer, errCopy))
 		}
 
+		_ = dst.Close()
 		_ = client.Close()
 		done <- struct{}{}
 	}()
 }
 
-func (p *Proxy) copyDataPeerToClient(dst io.Writer, client net.Conn, done chan struct{}) {
+func (p *Proxy) copyDataPeerToClient(dst net.Conn, client net.Conn, done chan struct{}) {
 	readBuffer := make([]byte, chunkSize)
 
 	go func() {
@@ -160,6 +159,7 @@ func (p *Proxy) copyDataPeerToClient(dst io.Writer, client net.Conn, done chan s
 				fmt.Sprintf(types.ErrorCopyDataPeerToClient, errCopy))
 		}
 
+		_ = dst.Close()
 		_ = client.Close()
 		done <- struct{}{}
 	}()
