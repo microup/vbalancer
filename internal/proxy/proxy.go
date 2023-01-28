@@ -131,7 +131,7 @@ func (p *Proxy) proxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
 	_ = dst.Close()
 }
 
-func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.ReadWriteCloser, done chan struct{}) {
+func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.Reader, done chan struct{}) {
 	writeBuffer := make([]byte, chunkSize)
 
 	go func() {
@@ -148,7 +148,7 @@ func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.ReadWriteCloser, do
 	}()
 }
 
-func (p *Proxy) copyDataPeerToClient(dst io.ReadWriteCloser, client net.Conn, done chan struct{}) {
+func (p *Proxy) copyDataPeerToClient(dst io.Writer, client net.Conn, done chan struct{}) {
 	readBuffer := make([]byte, chunkSize)
 
 	go func() {
