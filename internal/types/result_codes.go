@@ -10,6 +10,9 @@ type (
 	ResultStatus uint32
 )
 
+const ErrorCopyDataPeerToClient = "error copying data from peer to client, %v\n"
+const ErrorCopyDataClientToPeer = "error copying data from client to peer, %v\n"
+
 const (
 	ResultOK ResultCode = iota
 	ErrProxy
@@ -20,6 +23,8 @@ const (
 	ErrPeerIsFailed
 	ErrCantMarshalJSON
 	ErrSendResponseToClient
+	ErrCopyDataPeerToClient
+	ErrCopyDataClientToPeer
 	ErrGotPanic
 	StatusBadRequest          ResultCode = http.StatusBadRequest
 	StatusInternalServerError ResultCode = http.StatusInternalServerError
@@ -33,6 +38,8 @@ func (s ResultCode) ToStr() string {
 		ErrProxy:                  "proxy error",
 		ErrClientProxy:            "proxy client error",
 		ErrCantMarshalJSON:        "can't marshal json object",
+		ErrCopyDataPeerToClient:   "error copy data from peer to client",
+		ErrCopyDataClientToPeer:   "error copy data from client to peer",
 		ErrSendResponseToClient:   "proxy err send response to client",
 		StatusBadRequest:          "status bad request",
 		StatusInternalServerError: "status internal server error",
