@@ -47,10 +47,10 @@ func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *pee
 	}(proxySrv)
 
 	for _, pPeer := range p.Peers.List {
-		pPeer.SetCheckTimeAlive(checkTimeAlive)
+		pPeer.SetAvailabilityCheckInterval(checkTimeAlive)
 		pPeer.SetLogger(p.Logger)
 
-		go pPeer.CheckIsAlive(ctx)
+		go pPeer.CheckAvailability(ctx)
 	}
 
 	p.checkNewConnection(proxySrv)
@@ -78,10 +78,6 @@ func (p *Proxy) checkNewConnection(proxySrv net.Listener) {
 
 		go p.handleConnection(conn)
 	}
-}
-
-func (p *Proxy) Shutdown() error {
-	return nil
 }
 
 func (p *Proxy) handleConnection(client net.Conn) {
