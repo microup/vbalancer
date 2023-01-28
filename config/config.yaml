@@ -1,14 +1,9 @@
-logger:
-  dirLog: ./logs/
-  fileSize: 10000000
-  apiShowRecords: 5
-  kindType: csv
-
 proxy:
   defaultPort: 8080
-  timeDeadLineMs: 200
-  shutdownTimeout: 10
-  
+  deadLineTimeMs: 1
+  shutdownTimeoutSeconds: 10
+  sizeCopyBufferIo: 32768
+
 peers:
   - name: test_backend_1
     proto: http
@@ -25,3 +20,9 @@ peers:
 peerCheckTimeAlive:  
   timeCheck: 2
   waitTimeCheck: 2
+
+logger:
+  dirLog: ./logs/
+  fileSize: 10000000
+  apiShowRecords: 5
+  kindType: csv

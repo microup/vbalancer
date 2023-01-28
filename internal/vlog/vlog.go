@@ -10,6 +10,11 @@ import (
 	"vbalancer/internal/types"
 )
 
+type ILog interface {
+	Add(values ...interface{})
+	Close() error
+}
+
 type VLog struct {
 	cfg               *Config
 	fileLog           *os.File

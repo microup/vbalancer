@@ -77,6 +77,8 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 
 	testListPeers := peers.New(nil)
 	ctrl := gomock.NewController(t)
+	
+	defer ctrl.Finish()
 
 	for _, statePeer := range statePeers {
 		var listPeers []peer.IPeer

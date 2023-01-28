@@ -32,7 +32,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 		log.Panicf("create logger: %v", err)
 	}
 
-	defer func(logger *vlog.VLog) {
+	defer func(logger vlog.ILog) {
 		err = logger.Close()
 		if err != nil {
 			log.Fatalf("close logger: %v", err)
@@ -40,7 +40,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 	}(logger)
 
 	ctx, proxyWorkCancel := context.WithCancel(context.Background())
-	_, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeout)*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeoutSeconds)*time.Second)
 
 	defer cancel()
 

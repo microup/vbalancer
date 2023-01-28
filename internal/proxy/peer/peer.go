@@ -15,7 +15,7 @@ type IPeer interface {
 	CheckIsAlive(context.Context)
 	GetURI() string
 	SetCheckTimeAlive(*CheckTimeAlive)
-	SetLogger(*vlog.VLog)
+	SetLogger(vlog.ILog)
 }
 
 type Peer struct {
@@ -24,7 +24,7 @@ type Peer struct {
 	URI            string `yaml:"uri"`
 	alive          bool
 	checkTimeAlive *CheckTimeAlive
-	logger         *vlog.VLog
+	logger         vlog.ILog
 	urlPeer        *url.URL
 	Mu             *sync.RWMutex
 }
@@ -58,7 +58,7 @@ func (p *Peer) SetCheckTimeAlive(value *CheckTimeAlive) {
 	p.checkTimeAlive = value
 }
 
-func (p *Peer) SetLogger(value *vlog.VLog) {
+func (p *Peer) SetLogger(value vlog.ILog) {
 	p.logger = value
 }
 

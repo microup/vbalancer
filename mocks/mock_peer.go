@@ -89,7 +89,7 @@ func (mr *MockIPeerMockRecorder) SetCheckTimeAlive(arg0 interface{}) *gomock.Cal
 }
 
 // SetLogger mocks base method.
-func (m *MockIPeer) SetLogger(arg0 *vlog.VLog) {
+func (m *MockIPeer) SetLogger(arg0 vlog.ILog) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetLogger", arg0)
 }

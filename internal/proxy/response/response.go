@@ -11,10 +11,10 @@ import (
 type Response struct {
 	StatusCode  types.ResultCode `json:"statusCode"`
 	Description string           `json:"description"`
-	logger      *vlog.VLog
+	logger      vlog.ILog
 }
 
-func New(logger *vlog.VLog) *Response {
+func New(logger vlog.ILog) *Response {
 	return &Response{
 		StatusCode:  types.ResultUnknown,
 		Description: "",
