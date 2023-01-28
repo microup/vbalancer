@@ -6,9 +6,10 @@ logger:
 
 proxy:
   defaultPort: 8080
-  timeDeadLineMs: 200
+  deadLineTimeMs: 1
   shutdownTimeout: 10
-  
+  sizeCopyBufferIO: 32768
+
 peers:
   - name: test_backend_1
     proto: http
