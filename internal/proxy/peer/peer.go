@@ -11,10 +11,10 @@ import (
 )
 
 type IPeer interface {
-	IsAlive() bool
-	CheckIsAlive(context.Context)
+	IsAvailable() bool
+	CheckAvailability(context.Context)
 	GetURI() string
-	SetCheckTimeAlive(*CheckTimeAlive)
+	SetAvailabilityCheckInterval(*CheckTimeAlive)
 	SetLogger(vlog.ILog)
 }
 
@@ -29,7 +29,7 @@ type Peer struct {
 	Mu             *sync.RWMutex
 }
 
-func (p *Peer) CheckIsAlive(ctx context.Context) {
+func (p *Peer) CheckAvailability(ctx context.Context) {
 	if p.urlPeer == nil {
 		p.urlPeer, _ = url.Parse(fmt.Sprintf("%s://%s", p.Proto, p.URI))
 	}
@@ -54,7 +54,7 @@ func (p *Peer) CheckIsAlive(ctx context.Context) {
 	}
 }
 
-func (p *Peer) SetCheckTimeAlive(value *CheckTimeAlive) {
+func (p *Peer) SetAvailabilityCheckInterval(value *CheckTimeAlive) {
 	p.checkTimeAlive = value
 }
 
@@ -62,7 +62,7 @@ func (p *Peer) SetLogger(value vlog.ILog) {
 	p.logger = value
 }
 
-func (p *Peer) IsAlive() bool {
+func (p *Peer) IsAvailable() bool {
 	p.Mu.RLock()
 	alive := p.alive
 	p.Mu.RUnlock()

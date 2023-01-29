@@ -17,7 +17,6 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-//nolint:funlen
 func Run(wgStartApp *sync.WaitGroup) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -54,14 +53,14 @@ func Run(wgStartApp *sync.WaitGroup) {
 	proxyBalancer := proxy.New(cfg.Proxy, listPeer, logger)
 
 	go func() {
-		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
+		logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
 
 		if err = proxyBalancer.Start(ctx, cfg.ProxyPort, cfg.CheckTimeAlive); err != nil {
-			logger.Add(vlog.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
+			logger.Add(types.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
 		}
 	}()
 
-	logger.Add(vlog.Info, types.ResultOK, "the balancer is running")
+	logger.Add(types.Info, types.ResultOK, "the balancer is running")
 
 	if wgStartApp != nil {
 		wgStartApp.Done()
@@ -72,20 +71,6 @@ func Run(wgStartApp *sync.WaitGroup) {
 	<-quit
 
 	proxyWorkCancel()
-
-	var srvShutdown sync.WaitGroup
-
-	srvShutdown.Add(1)
-
-	go func() {
-		defer srvShutdown.Done()
-
-		if err = proxyBalancer.Shutdown(); err != nil {
-			logger.Add(vlog.Fatal, types.ResultOK, fmt.Sprintf("shutdown proxy err: %s", err))
-		}
-	}()
-
-	srvShutdown.Wait()
 }
 
 func initConfig() *config.Config {

@@ -32,7 +32,7 @@ func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 	l := len(p.List) + next
 	for i := next; i < l; i++ {
 		idx := i % len(p.List)
-		isAlive := p.List[idx].IsAlive()
+		isAlive := p.List[idx].IsAvailable()
 
 		if isAlive {
 			atomic.StoreUint64(p.CurrentPeerIndex, uint64(idx))

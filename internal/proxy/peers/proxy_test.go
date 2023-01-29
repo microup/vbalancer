@@ -77,7 +77,7 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 
 	testListPeers := peers.New(nil)
 	ctrl := gomock.NewController(t)
-	
+
 	defer ctrl.Finish()
 
 	for _, statePeer := range statePeers {
@@ -85,7 +85,7 @@ func Test_API_Get_Next_Peer(t *testing.T) {
 
 		for _, valIsAlive := range statePeer.isAlive {
 			mockPeer := mocks.NewMockIPeer(ctrl)
-			mockPeer.EXPECT().IsAlive().Return(valIsAlive).AnyTimes()
+			mockPeer.EXPECT().IsAvailable().Return(valIsAlive).AnyTimes()
 			listPeers = append(listPeers, mockPeer)
 		}
 
