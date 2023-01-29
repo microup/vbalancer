@@ -124,7 +124,10 @@ func (v *VLog) checkToCreateNewLogFile() error {
 			return err
 		}
 
-		core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
+		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
+		if err != nil {
+			return fmt.Errorf("failed to archive file: %w", err)
+		}
 
 		fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
 		err = os.Remove(fileCsv)
