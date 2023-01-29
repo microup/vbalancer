@@ -42,8 +42,12 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	}
 
 	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	} else {
+		return nil
+	}
 
-	return fmt.Errorf("%w", err)
 }
 
 func (v *VLog) Close() error {
