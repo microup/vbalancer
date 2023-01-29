@@ -14,7 +14,7 @@ const (
 	maskDefaultDir = 0x666
 )
 
-// nolint
+//nolint
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.mapLastLogRecords = make([]string, 0)
