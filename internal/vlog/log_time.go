@@ -9,7 +9,7 @@ import (
 	"vbalancer/internal/types"
 )
 
-func (v *VLog) New(fileNameDateTime string) {
+func (v *VLog) New(fileNameDateTime string) error {
 	defer func() {
 		v.startTimeLog = time.Now()
 	}()
@@ -27,32 +27,37 @@ func (v *VLog) New(fileNameDateTime string) {
 	if v.fileLog != nil {
 		fileInfo, err = os.Stat(v.fileLog.Name())
 		if err != nil {
-			return
+			return fmt.Errorf("%w", err)
 		}
 	}
 
 	if fileInfo == nil {
 		err = v.newFileLog(fileNameDateTime, false)
 		if err != nil {
-			return
+			return fmt.Errorf("%w", err)
 		}
 
-		return
+		return types.ErrFileIsNil
 	}
 
 	oldFileCSV := v.fileLog.Name()
 
 	err = v.newFileLog(fileNameDateTime, false)
 	if err != nil {
-		return
+		return fmt.Errorf("%w", err)
 	}
 
-	core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
+	err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
 
 	fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
 	err = os.Remove(fileCsv)
 
 	if err != nil {
-		return
+		return fmt.Errorf("%w", err)
 	}
+
+	return nil
 }

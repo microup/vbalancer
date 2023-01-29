@@ -28,13 +28,13 @@ func Run(wgStartApp *sync.WaitGroup) {
 
 	logger, err := vlog.New(cfg.Logger)
 	if err != nil {
-		log.Panicf("create logger: %v", err)
+		log.Panicf("failed created logger: %v", err)
 	}
 
 	defer func(logger vlog.ILog) {
 		err = logger.Close()
 		if err != nil {
-			log.Fatalf("close logger: %v", err)
+			log.Fatalf("failed closed logger: %v", err)
 		}
 	}(logger)
 
