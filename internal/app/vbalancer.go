@@ -17,7 +17,6 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-//nolint:funlen
 func Run(wgStartApp *sync.WaitGroup) {
 	defer func() {
 		if err := recover(); err != nil {
