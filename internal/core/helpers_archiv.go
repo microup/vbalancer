@@ -2,6 +2,7 @@ package core
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 //nolint
-func ArchiveFile(fileName string, extension string) {
+func ArchiveFile(fileName string, extension string) error {
 	file := filepath.Base(fileName)                                 // + ".zip"
 	file = strings.TrimSuffix(file, filepath.Ext(file)) + extension // ".zip"
 	path := filepath.Dir(fileName)
@@ -25,12 +26,12 @@ func ArchiveFile(fileName string, extension string) {
 	}(archive)
 
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("%w", err)
 	}
 
 	csvFileName, err := os.Open(fileName)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("%w", err)
 	}
 
 	defer func(f1 *os.File) {
@@ -51,10 +52,13 @@ func ArchiveFile(fileName string, extension string) {
 	fc := filepath.Base(fileName)
 	fileZip, err := zipWriter.Create(fc)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("%w", err)
 	}
 
 	if _, err := io.Copy(fileZip, csvFileName); err != nil {
-		panic(err)
+		return fmt.Errorf("%w", err)
 	}
+
+
+	return nil
 }
