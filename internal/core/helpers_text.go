@@ -8,13 +8,16 @@ import (
 )
 
 func TrimLastChar(value string) string {
-	for len(value) > 0 {
+	if len(value) > 0 {
 		_, size := utf8.DecodeLastRuneInString(value)
-
+		if size == len(value) {
+			return ""
+		}
+		
 		return value[:len(value)-size]
 	}
 
-	return value
+	return ""
 }
 
 //nolint:cyclop
