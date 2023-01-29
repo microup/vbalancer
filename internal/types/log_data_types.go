@@ -131,7 +131,7 @@ func BuildRecord(typeLog TypeLog, resultCode ResultCode,
 		proxyProto,
 		proxyHost,
 		proxyURI,
-		*resultFmtStr)
+		resultFmtStr)
 
 	return typeLog, recordRow
 }
