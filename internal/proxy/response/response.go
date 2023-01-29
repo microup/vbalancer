@@ -29,7 +29,7 @@ func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) 
 	responseJSON, err := json.Marshal(r)
 
 	if err != nil {
-		r.logger.Add(vlog.Debug, types.ErrCantMarshalJSON, vlog.RemoteAddr(client.RemoteAddr().String()),
+		r.logger.Add(types.Debug, types.ErrCantMarshalJSON, types.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrCantMarshalJSON.ToStr())
 
 		return err //nolint:wrapcheck
@@ -44,7 +44,7 @@ func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) 
 
 	_, err = client.Write([]byte(responseBody))
 	if err != nil {
-		r.logger.Add(vlog.Debug, types.ErrSendResponseToClient, vlog.RemoteAddr(client.RemoteAddr().String()),
+		r.logger.Add(types.Debug, types.ErrSendResponseToClient, types.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrSendResponseToClient.ToStr())
 
 		return err //nolint:wrapcheck

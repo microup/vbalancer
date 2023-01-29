@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 	"vbalancer/internal/core"
+	"vbalancer/internal/types"
 )
 
 func (v *VLog) New(fileNameDateTime string) {
@@ -46,7 +47,7 @@ func (v *VLog) New(fileNameDateTime string) {
 		return
 	}
 
-	core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", v.cfg.KindType))
+	core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
 
 	fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
 	err = os.Remove(fileCsv)

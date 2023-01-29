@@ -2,7 +2,6 @@ package vlog
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"vbalancer/internal/core"
@@ -15,7 +14,7 @@ const (
 	maskDefaultDir = 0x666
 )
 
-//nolint
+// nolint
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.mapLastLogRecords = make([]string, 0)
@@ -52,7 +51,7 @@ func (v *VLog) Close() error {
 
 	if v.fileLog != nil {
 		if err := v.fileLog.Close(); err != nil {
-			log.Fatalf("can't close csv log.")
+			return fmt.Errorf("can't close csv file log: %w", err)
 		}
 	}
 
@@ -66,9 +65,9 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 
 	if newFileName == "" {
 		timeCreateLogFile := v.startTimeLog.Format("20060102150405")
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, v.cfg.KindType)
+		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, types.LogFileExtension)
 	} else {
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, v.cfg.KindType)
+		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, types.LogFileExtension)
 	}
 
 	fileNameLog = filepath.Join(v.cfg.DirLog, fileNameLog)
@@ -95,7 +94,7 @@ func (v *VLog) GetCurrentFileLogInfo() *types.FileInfo {
 	return &types.FileInfo{
 		FileName: v.fileLog.Name(),
 		FileSize: core.HumanFileSize(float64(fileInfo.Size())),
-		Kind:     v.cfg.KindType,
+		Kind:     types.LogFileExtension,
 	}
 }
 
@@ -122,7 +121,7 @@ func (v *VLog) checkToCreateNewLogFile() error {
 			return err
 		}
 
-		core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", v.cfg.KindType))
+		core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
 
 		fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
 		err = os.Remove(fileCsv)
