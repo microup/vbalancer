@@ -8,11 +8,12 @@
             "mode": "auto",
             "program": "${workspaceRoot}/cmd/vbalancer/vbalancer.go",
             "env": {
-                "go.gopath": "$GOPATH",
+                "GOPATH": "${workspaceRoot}/build",
                 "ProxyPort": "8080",
-                "ConfigFile":"../../config",
+                "ConfigFile":"../../config"
             },
             "args": [],
+            "cwd": "${workspaceFolder}/build"
         }
     ]
 }
