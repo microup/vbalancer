@@ -10,15 +10,15 @@ import (
 )
 
 const (
-	maskDir        = 0x755
-	maskDefaultDir = 0x666
+	maskDir                     = 0x755
+	DefaultFilePerm os.FileMode = 0666
 )
 
-//nolint
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.mapLastLogRecords = make([]string, 0)
 		err := v.Close()
+
 		if err != nil {
 			return err
 		}
@@ -43,7 +43,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
 
-	return err
+	return fmt.Errorf("%w", err)
 }
 
 func (v *VLog) Close() error {
@@ -73,7 +73,7 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 	fileNameLog = filepath.Join(v.cfg.DirLog, fileNameLog)
 
 	//nolint:nosnakecase
-	fileLog, err := os.OpenFile(fileNameLog, os.O_APPEND|os.O_CREATE|os.O_RDWR, maskDefaultDir)
+	fileLog, err := os.OpenFile(fileNameLog, os.O_APPEND|os.O_CREATE|os.O_RDWR, DefaultFilePerm)
 
 	if err != nil || fileLog == nil {
 		return nil, fmt.Errorf("%w", err)
