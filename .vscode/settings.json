@@ -1,13 +1,16 @@
 {
     "cSpell.words": [
+        "cyclop",
         "czvf",
         "errcheck",
+        "forbidigo",
         "funlen",
         "goarch",
         "gomock",
         "highload",
         "nolint",
         "nosnakecase",
+        "paralleltest",
         "svenstaro"
     ]
 }
