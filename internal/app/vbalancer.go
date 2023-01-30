@@ -43,18 +43,13 @@ func Run(wgStartApp *sync.WaitGroup) {
 
 	defer cancel()
 
-	listPeer := make([]peer.IPeer, len(cfg.Peers))
-
-	for i, v := range cfg.Peers {
-		v.Mu = &sync.RWMutex{}
-		listPeer[i] = v
-	}
+	listPeer := createPeerList(cfg)
 
 	proxyBalancer := proxy.New(cfg.Proxy, listPeer, logger)
 
-	go func() {
-		logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
+	logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
 
+	go func() {
 		if err = proxyBalancer.Start(ctx, cfg.ProxyPort, cfg.CheckTimeAlive); err != nil {
 			logger.Add(types.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
 		}
@@ -93,4 +88,15 @@ func initConfig() *config.Config {
 	}
 
 	return cfg
+}
+
+func createPeerList(cfg *config.Config) []peer.IPeer {
+	listPeer := make([]peer.IPeer, len(cfg.Peers))
+	
+	for index, valPeer := range cfg.Peers {
+		valPeer.Mu = &sync.RWMutex{}
+		listPeer[index] = valPeer 
+	}
+
+	return listPeer
 }
