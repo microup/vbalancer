@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-//nolint
 func ArchiveFile(fileName string, extension string) error {
 	file := filepath.Base(fileName)                                 // + ".zip"
 	file = strings.TrimSuffix(file, filepath.Ext(file)) + extension // ".zip"
@@ -51,6 +50,7 @@ func ArchiveFile(fileName string, extension string) error {
 
 	fc := filepath.Base(fileName)
 	fileZip, err := zipWriter.Create(fc)
+	
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}

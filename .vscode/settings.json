@@ -8,6 +8,7 @@
         "goarch",
         "gomock",
         "highload",
+        "nestif",
         "nolint",
         "nosnakecase",
         "paralleltest",
