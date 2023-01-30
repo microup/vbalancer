@@ -18,8 +18,8 @@ type VLog struct {
 	cfg               *Config
 	fileLog           *os.File
 	countToLogID      int
-	mapLastLogRecords []string
-	mu                *sync.Mutex
+	MapLastLogRecords []string
+	Mu                *sync.Mutex
 	headerCSV         string
 	startTimeLog      time.Time
 	wgNewLog          *sync.WaitGroup
@@ -29,11 +29,11 @@ type VLog struct {
 func New(cfg *Config) (*VLog, error) {
 	vLog := &VLog{
 		wgNewLog:          &sync.WaitGroup{},
-		mu:                &sync.Mutex{},
+		Mu:                &sync.Mutex{},
 		fileLog:           nil,
 		cfg:               cfg,
 		countToLogID:      -1,
-		mapLastLogRecords: []string{},
+		MapLastLogRecords: []string{},
 		headerCSV: fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;",
 			"Date", "Time", "Type", "ResultCode", "RemoteAddr",
 			"ClientHost", "ClientMethod", "ClientProto", "ClientURI",
@@ -52,14 +52,14 @@ func New(cfg *Config) (*VLog, error) {
 }
 
 func (v *VLog) GetCountRecords() int {
-	v.mu.Lock()
-	defer v.mu.Unlock()
+	v.Mu.Lock()
+	defer v.Mu.Unlock()
 
-	if v.mapLastLogRecords == nil {
+	if v.MapLastLogRecords == nil {
 		return 0
 	}
 
-	return len(v.mapLastLogRecords)
+	return len(v.MapLastLogRecords)
 }
 
 func (v *VLog) Add(values ...interface{}) {
@@ -80,10 +80,10 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 	v.wgNewLog.Wait()
 
-	v.mu.Lock()
-	defer v.mu.Unlock()
+	v.Mu.Lock()
+	defer v.Mu.Unlock()
 
-	if values == nil || v.mapLastLogRecords == nil {
+	if values == nil || v.MapLastLogRecords == nil {
 		return
 	}
 
@@ -104,7 +104,7 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 	v.removeOldRecordsFromMemory()
 
-	v.mapLastLogRecords = append(v.mapLastLogRecords, recordRow)
+	v.MapLastLogRecords = append(v.MapLastLogRecords, recordRow)
 
 	err = v.checkToCreateNewLogFile()
 	if err != nil {

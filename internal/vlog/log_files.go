@@ -16,7 +16,7 @@ const (
 
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
-		v.mapLastLogRecords = make([]string, 0)
+		v.MapLastLogRecords = make([]string, 0)
 		err := v.Close()
 
 		if err != nil {
@@ -86,8 +86,8 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 }
 
 func (v *VLog) GetCurrentFileLogInfo() *types.FileInfo {
-	v.mu.Lock()
-	defer v.mu.Unlock()
+	v.Mu.Lock()
+	defer v.Mu.Unlock()
 
 	fileInfo, err := os.Stat(v.fileLog.Name())
 	if err != nil {
@@ -141,12 +141,12 @@ func (v *VLog) checkToCreateNewLogFile() error {
 }
 
 func (v *VLog) removeOldRecordsFromMemory() {
-	if uint64(len(v.mapLastLogRecords)) > v.cfg.APIShowRecords {
+	if uint64(len(v.MapLastLogRecords)) > v.cfg.APIShowRecords {
 		var xLast string
 
-		_, v.mapLastLogRecords = v.mapLastLogRecords[0], v.mapLastLogRecords[1:]
-		xLast, v.mapLastLogRecords = v.mapLastLogRecords[len(v.mapLastLogRecords)-1],
-			v.mapLastLogRecords[:len(v.mapLastLogRecords)-1]
-		v.mapLastLogRecords = append(v.mapLastLogRecords, xLast)
+		_, v.MapLastLogRecords = v.MapLastLogRecords[0], v.MapLastLogRecords[1:]
+		xLast, v.MapLastLogRecords = v.MapLastLogRecords[len(v.MapLastLogRecords)-1],
+			v.MapLastLogRecords[:len(v.MapLastLogRecords)-1]
+		v.MapLastLogRecords = append(v.MapLastLogRecords, xLast)
 	}
 }
