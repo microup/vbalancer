@@ -88,13 +88,9 @@ func initConfig() *config.Config {
 		log.Fatalf("%v", err)
 	}
 
-	initProxy(cfg)
-
-	return cfg
-}
-
-func initProxy(cfg *config.Config) {
 	if resultCode := cfg.InitProxyPort(); resultCode != types.ResultOK {
 		log.Fatalf("can't init proxy: %s", resultCode.ToStr())
 	}
+
+	return cfg
 }
