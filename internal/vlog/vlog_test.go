@@ -11,17 +11,15 @@ import (
 
 //nolint:paralleltest
 func TestVlogAdd(t *testing.T) {
-	if os.Getenv("CI") != "" {
-		t.Skip("Skipping testing in CI environment")
-
-		return
-	}
-
 	helperVlogAdd(t)
 }
 
 func helperVlogAdd(t *testing.T) {
 	t.Helper()
+
+	if os.Getenv("CI") != "" {
+		return
+	}
 
 	cfg := &vlog.Config{
 		DirLog:         "./logs/",

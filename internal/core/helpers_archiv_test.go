@@ -12,18 +12,16 @@ import (
 
 //nolint:paralleltest
 func TestArchiveFile(t *testing.T) {
-	if os.Getenv("CI") != "" {
-		t.Skip("Skipping testing in CI environment")
-
-		return
-	}
-
 	helperArchiveFile(t)
 }
 
 //nolint:funlen,cyclop
 func helperArchiveFile(t *testing.T) {
 	t.Helper()
+
+	if os.Getenv("CI") != "" {
+		return
+	}
 
 	fileName := "test_file.csv"
 	extension := ".zip"
