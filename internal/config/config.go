@@ -20,7 +20,7 @@ const DefaultProxyPort = 8080
 type Config struct {
 	Logger         *vlog.Config         `yaml:"logger"`
 	Proxy          *proxy.Config        `yaml:"proxy"`
-	Peers          []*peer.Peer         `yaml:"peers"`
+	Peers          []*peer.Peer          `yaml:"peers"`
 	CheckTimeAlive *peer.CheckTimeAlive `yaml:"peerCheckTimeAlive"`
 	ProxyPort      string
 }
@@ -91,7 +91,7 @@ func (c *Config) Load(cfgFileName string) error {
 		}
 	}(fileConfig)
 
-	err = c.decodeConfigFileYaml(fileConfig)
+	err = c.DecodeConfigFileYaml(fileConfig)
 	if err != nil {
 		return fmt.Errorf("can't decode config file: %s, err: %w", cfgFileName, err)
 	}
@@ -99,7 +99,7 @@ func (c *Config) Load(cfgFileName string) error {
 	return nil
 }
 
-func (c *Config) decodeConfigFileYaml(configYaml *os.File) error {
+func (c *Config) DecodeConfigFileYaml(configYaml *os.File) error {
 	decoder := yaml.NewDecoder(configYaml)
 	err := decoder.Decode(c)
 
