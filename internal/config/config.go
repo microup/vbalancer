@@ -15,12 +15,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultProxyPort = 8080
+const DefaultProxyPort = 8080
 
 type Config struct {
 	Logger         *vlog.Config         `yaml:"logger"`
 	Proxy          *proxy.Config        `yaml:"proxy"`
-	Peers          []*peer.Peer         `yaml:"peers"`
+	Peers          []*peer.Peer          `yaml:"peers"`
 	CheckTimeAlive *peer.CheckTimeAlive `yaml:"peerCheckTimeAlive"`
 	ProxyPort      string
 }
@@ -37,11 +37,18 @@ func New() *Config {
 	return cfg
 }
 
-func (c *Config) Init() types.ResultCode {
-	c.ProxyPort = fmt.Sprintf(":%s", os.Getenv("ProxyPort"))
-	if c.ProxyPort == ":" {
-		c.ProxyPort = fmt.Sprintf(":%d", defaultProxyPort)
+func (c *Config) InitProxyPort() types.ResultCode {
+	osEnvValue := os.Getenv("ProxyPort")
+	if osEnvValue == ":" {
+		return types.ErrEmptyValue
 	}
+
+	c.ProxyPort = fmt.Sprintf(":%s", osEnvValue)
+	if c.ProxyPort == ":" {
+		c.ProxyPort = fmt.Sprintf(":%d", DefaultProxyPort)
+	}
+
+	c.ProxyPort = strings.Trim(c.ProxyPort, " ")
 
 	if c.ProxyPort == strings.Trim(":", " ") {
 		return types.ErrEmptyValue
@@ -84,7 +91,7 @@ func (c *Config) Load(cfgFileName string) error {
 		}
 	}(fileConfig)
 
-	err = c.decodeConfigFileYaml(fileConfig)
+	err = c.DecodeConfigFileYaml(fileConfig)
 	if err != nil {
 		return fmt.Errorf("can't decode config file: %s, err: %w", cfgFileName, err)
 	}
@@ -92,7 +99,7 @@ func (c *Config) Load(cfgFileName string) error {
 	return nil
 }
 
-func (c *Config) decodeConfigFileYaml(configYaml *os.File) error {
+func (c *Config) DecodeConfigFileYaml(configYaml *os.File) error {
 	decoder := yaml.NewDecoder(configYaml)
 	err := decoder.Decode(c)
 

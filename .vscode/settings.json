@@ -3,6 +3,8 @@
         "cyclop",
         "czvf",
         "errcheck",
+        "exhaustivestruct",
+        "exhaustruct",
         "forbidigo",
         "funlen",
         "goarch",
