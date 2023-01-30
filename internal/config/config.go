@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultProxyPort = 8080
+const DefaultProxyPort = 8080
 
 type Config struct {
 	Logger         *vlog.Config         `yaml:"logger"`
@@ -38,10 +38,17 @@ func New() *Config {
 }
 
 func (c *Config) Init() types.ResultCode {
-	c.ProxyPort = fmt.Sprintf(":%s", os.Getenv("ProxyPort"))
-	if c.ProxyPort == ":" {
-		c.ProxyPort = fmt.Sprintf(":%d", defaultProxyPort)
+	osEnvValue := os.Getenv("ProxyPort")
+	if osEnvValue == ":" {
+		return types.ErrEmptyValue
 	}
+
+	c.ProxyPort = fmt.Sprintf(":%s", osEnvValue)
+	if c.ProxyPort == ":" {
+		c.ProxyPort = fmt.Sprintf(":%d", DefaultProxyPort)
+	}
+
+ 	c.ProxyPort  =  strings.Trim(c.ProxyPort, " ")
 
 	if c.ProxyPort == strings.Trim(":", " ") {
 		return types.ErrEmptyValue
