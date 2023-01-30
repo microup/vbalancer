@@ -94,7 +94,7 @@ func initConfig() *config.Config {
 }
 
 func initProxy(cfg *config.Config) {
-	if resultCode := cfg.Init(); resultCode != types.ResultOK {
+	if resultCode := cfg.InitProxyPort(); resultCode != types.ResultOK {
 		log.Fatalf("can't init proxy: %s", resultCode.ToStr())
 	}
 }

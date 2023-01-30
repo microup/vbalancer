@@ -37,7 +37,7 @@ func New() *Config {
 	return cfg
 }
 
-func (c *Config) Init() types.ResultCode {
+func (c *Config) InitProxyPort() types.ResultCode {
 	osEnvValue := os.Getenv("ProxyPort")
 	if osEnvValue == ":" {
 		return types.ErrEmptyValue
@@ -48,7 +48,7 @@ func (c *Config) Init() types.ResultCode {
 		c.ProxyPort = fmt.Sprintf(":%d", DefaultProxyPort)
 	}
 
- 	c.ProxyPort  =  strings.Trim(c.ProxyPort, " ")
+	c.ProxyPort = strings.Trim(c.ProxyPort, " ")
 
 	if c.ProxyPort == strings.Trim(":", " ") {
 		return types.ErrEmptyValue

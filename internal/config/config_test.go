@@ -9,7 +9,7 @@ import (
 )
 
 //nolint:funlen
-func TestInit(t *testing.T) {
+func TestInitProxyPort(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -66,11 +66,11 @@ func TestInit(t *testing.T) {
 
 	for _, test := range tests {
 		config.ProxyPort = ""
-		
+
 		os.Clearenv()
 		os.Setenv("ProxyPort", test.envVar)
 
-		result := config.Init()
+		result := config.InitProxyPort()
 
 		if result != test.expected {
 			t.Fatalf("name: %s, expected result %v, got %v", test.name, test.expected, result)
