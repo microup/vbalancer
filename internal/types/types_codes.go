@@ -11,9 +11,6 @@ type (
 	ResultStatus uint32
 )
 
-const ErrorCopyDataPeerToClient = "error copying data from peer to client, %v\n"
-const ErrorCopyDataClientToPeer = "error copying data from client to peer, %v\n"
-
 var ErrFileIsNil = errors.New("file is nil")
 
 const (
