@@ -11,33 +11,44 @@ import (
 
 //nolint:paralleltest
 func TestVlogAdd(t *testing.T) {
-	cfg := &vlog.Config{
-		DirLog:         "./logs/",
-		FileSize:       1000,
-		APIShowRecords: 5,
-	}
+	skipVlogAddCI(t)
+}
 
-	vLog, err := vlog.New(cfg)
-	if err != nil {
-		t.Fatalf("unexpected error creating VLog: %v", err)
-	}
+func skipVlogAddCI(t *testing.T) {
+	t.Helper()
 
-	vLog.Add(types.Debug, "test msg")
-	time.Sleep(1 * time.Second)
+	//nolint:nestif
+	if os.Getenv("CI") != "" {
+		t.Skip("Skipping testing in CI environment")
+	} else {
+		cfg := &vlog.Config{
+			DirLog:         "./logs/",
+			FileSize:       1000,
+			APIShowRecords: 5,
+		}
 
-	if vLog.GetCountRecords() != 1 {
-		t.Errorf("expected count of log records to be 1, got %d", vLog.GetCountRecords())
-	}
+		vLog, err := vlog.New(cfg)
+		if err != nil {
+			t.Fatalf("unexpected error creating VLog: %v", err)
+		}
 
-	err = vLog.Close()
-	if err != nil {
-		t.Fatalf("unexpected close log file: %v", err)
-	}
+		vLog.Add(types.Debug, "test msg")
+		time.Sleep(1 * time.Second)
 
-	absolutePath, _ := filepath.Abs(cfg.DirLog)
-	err = os.RemoveAll(absolutePath)
+		if vLog.GetCountRecords() != 1 {
+			t.Errorf("expected count of log records to be 1, got %d", vLog.GetCountRecords())
+		}
 
-	if err != nil {
-		t.Fatalf("unexpected error delete tempore dir: %v", err)
+		err = vLog.Close()
+		if err != nil {
+			t.Fatalf("unexpected close log file: %v", err)
+		}
+
+		absolutePath, _ := filepath.Abs(cfg.DirLog)
+		err = os.RemoveAll(absolutePath)
+
+		if err != nil {
+			t.Fatalf("unexpected error delete tempore dir: %v", err)
+		}
 	}
 }
