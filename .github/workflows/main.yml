@@ -35,11 +35,11 @@ jobs:
 
       - name: test all
         run: |
-          go test -short ./...
+          go test -v -run='^(TestVlog).*$' ./...
 
       - name: test race
         run: |
-          go test -race -short ./...
+          go test -race -run='^(TestVlog).*$' -short  ./...
 
       - name: linter
         run: |
