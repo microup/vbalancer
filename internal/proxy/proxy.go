@@ -53,17 +53,22 @@ func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *pee
 		go pPeer.CheckAvailability(ctx)
 	}
 
-	p.checkNewConnection(proxySrv)
+	p.CheckNewConnection(ctx, proxySrv)
 
 	return nil
 }
 
-func (p *Proxy) checkNewConnection(proxySrv net.Listener) {
+func (p *Proxy) CheckNewConnection(ctx context.Context, proxySrv net.Listener) {
 	for {
 		conn, err := proxySrv.Accept()
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
-				fmt.Sprintf("Accept failed, %v\n", err))
+			if conn != nil {
+				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
+					fmt.Sprintf("Accept failed, %v\n", err))
+			} else {
+				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr("nil"),
+					fmt.Sprintf("Accept failed, %v\n", err))
+			}
 
 			continue
 		}
@@ -76,7 +81,14 @@ func (p *Proxy) checkNewConnection(proxySrv net.Listener) {
 			continue
 		}
 
-		go p.handleConnection(conn)
+		go func() {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				p.handleConnection(conn)
+			}
+		}()
 	}
 }
 
