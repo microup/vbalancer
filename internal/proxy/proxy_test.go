@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"net"
+	"sync"
 	"testing"
 	"vbalancer/internal/proxy"
+	"vbalancer/internal/proxy/peer"
+	"vbalancer/internal/proxy/peers"
 	"vbalancer/mocks"
 )
 
@@ -18,10 +21,22 @@ func TestCheckNewConnection(t *testing.T) {
 	}
 	defer proxySrv.Close()
 
+	logger := &mocks.MockLogger{}
+
+	listPeer := make([]peer.IPeer, 0)
+	testPeer := peer.Peer{
+		Name:  "test peer",
+		Proto: "http",
+		URI:   "127.0.0.1:0",
+		Mu:    &sync.RWMutex{},
+	}
+	listPeer = append(listPeer, &testPeer)
+
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy := &proxy.Proxy{
 		Cfg:    &proxy.Config{DeadLineTimeMS: 100},
-		Logger: &mocks.MockLogger{},
+		Logger: logger,
+		Peers:  peers.New(listPeer),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -53,11 +68,11 @@ func TestProxyDataCopy(t *testing.T) {
 	}
 
 	for _, cases := range testCases {
-		client := &mocks.MockConn{Data: cases.clientData, IsClient: true, Pos: 0} 
-		peer := &mocks.MockConn{Data: cases.peerData, IsClient: false, Pos: 0}           
+		client := &mocks.MockConn{Data: cases.clientData, IsClient: true, Pos: 0}
+		peer := &mocks.MockConn{Data: cases.peerData, IsClient: false, Pos: 0}
 
 		//nolint:exhaustivestruct,exhaustruct
-		proxyTest := &proxy.Proxy{Cfg: &proxy.Config{SizeCopyBufferIO: 64}} 
+		proxyTest := &proxy.Proxy{Cfg: &proxy.Config{SizeCopyBufferIO: 64}}
 
 		proxyTest.ProxyDataCopy(client, peer)
 
