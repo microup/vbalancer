@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"time"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
@@ -103,10 +104,10 @@ func (p *Proxy) handleConnection(client net.Conn) {
 
 	if resultCode != types.ResultOK || pPeer == nil {
 		if pPeer != nil {
-			p.Logger.Add(types.Debug, resultCode, types.RemoteAddr(client.RemoteAddr().String()),
+			p.Logger.Add(types.ErrCantFindActivePeers, resultCode, types.RemoteAddr(client.RemoteAddr().String()),
 				types.ProxyHost(pPeer.GetURI()), resultCode.ToStr())
 		} else {
-			p.Logger.Add(types.Debug, resultCode, types.RemoteAddr(client.RemoteAddr().String()), resultCode.ToStr())
+			p.Logger.Add(types.ErrEmptyValue, resultCode, types.RemoteAddr(client.RemoteAddr().String()), resultCode.ToStr())
 		}
 
 		responseLogger := response.New(p.Logger)
@@ -133,21 +134,33 @@ func (p *Proxy) handleConnection(client net.Conn) {
 }
 
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
-	p.CopyDataClientToPeer(dst, client)
-	p.CopyDataPeerToClient(client, dst)
+	waitG :=&sync.WaitGroup{}
+	waitG.Add(maxCopyChan)
+
+	go p.copyClientToPeer(client, dst, waitG)
+	go p.copyPeerToClient(dst, client, waitG)
+
+	waitG.Wait()
 }
 
-func (p *Proxy) CopyDataClientToPeer(dst io.WriteCloser, client net.Conn) {
-		readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-		_, _ = io.CopyBuffer(dst, client, readBuffer)
-		_ = dst.Close()
-		_ = client.Close()
-}
+func (p *Proxy) copyClientToPeer(client net.Conn, dst io.ReadCloser, waitG *sync.WaitGroup) {
+	defer func() {
+		dst.Close()
+		client.Close()
+		waitG.Done()
+	}()
 
-func (p *Proxy) CopyDataPeerToClient(client net.Conn, dst io.ReadCloser) {
 	writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
 	_, _ = io.CopyBuffer(client, dst, writeBuffer)
-	_ = dst.Close()
-	_ = client.Close()
 }
 
+func (p *Proxy) copyPeerToClient(dst io.WriteCloser, client net.Conn, waitG *sync.WaitGroup) {
+	defer func() {
+		dst.Close()
+		client.Close()
+		waitG.Done()
+	}()
+
+	readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
+	_, _ = io.CopyBuffer(dst, client, readBuffer)
+}
