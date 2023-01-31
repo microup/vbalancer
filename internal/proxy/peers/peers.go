@@ -38,7 +38,7 @@ func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 			atomic.StoreUint64(p.CurrentPeerIndex, uint64(idx))
 			peerValue, ok := p.List[idx].(*peer.Peer)
 
-			if !ok {
+			if !ok || peerValue == nil {
 				return nil, types.ErrPeerIsFailed
 			}
 

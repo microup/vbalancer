@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"time"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
@@ -53,17 +54,22 @@ func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *pee
 		go pPeer.CheckAvailability(ctx)
 	}
 
-	p.checkNewConnection(proxySrv)
+	p.CheckNewConnection(ctx, proxySrv)
 
 	return nil
 }
 
-func (p *Proxy) checkNewConnection(proxySrv net.Listener) {
+func (p *Proxy) CheckNewConnection(ctx context.Context, proxySrv net.Listener) {
 	for {
 		conn, err := proxySrv.Accept()
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
-				fmt.Sprintf("Accept failed, %v\n", err))
+			if conn != nil {
+				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
+					fmt.Sprintf("Accept failed, %v\n", err))
+			} else {
+				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr("nil"),
+					fmt.Sprintf("Accept failed, %v\n", err))
+			}
 
 			continue
 		}
@@ -76,7 +82,14 @@ func (p *Proxy) checkNewConnection(proxySrv net.Listener) {
 			continue
 		}
 
-		go p.handleConnection(conn)
+		go func() {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				p.handleConnection(conn)
+			}
+		}()
 	}
 }
 
@@ -91,10 +104,10 @@ func (p *Proxy) handleConnection(client net.Conn) {
 
 	if resultCode != types.ResultOK || pPeer == nil {
 		if pPeer != nil {
-			p.Logger.Add(types.Debug, resultCode, types.RemoteAddr(client.RemoteAddr().String()),
+			p.Logger.Add(types.ErrCantFindActivePeers, resultCode, types.RemoteAddr(client.RemoteAddr().String()),
 				types.ProxyHost(pPeer.GetURI()), resultCode.ToStr())
 		} else {
-			p.Logger.Add(types.Debug, resultCode, types.RemoteAddr(client.RemoteAddr().String()), resultCode.ToStr())
+			p.Logger.Add(types.ErrEmptyValue, resultCode, types.RemoteAddr(client.RemoteAddr().String()), resultCode.ToStr())
 		}
 
 		responseLogger := response.New(p.Logger)
@@ -121,34 +134,33 @@ func (p *Proxy) handleConnection(client net.Conn) {
 }
 
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
-	done := make(chan struct{}, maxCopyChan)
-	defer close(done)
+	waitG :=&sync.WaitGroup{}
+	waitG.Add(maxCopyChan)
 
-	p.CopyDataPeerToClient(dst, client, done)
-	p.copyDataClientToPeer(client, dst, done)
+	go p.copyClientToPeer(client, dst, waitG)
+	go p.copyPeerToClient(dst, client, waitG)
 
-	<-done
-	<-done
+	waitG.Wait()
 }
 
-func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.ReadCloser, done chan struct{}) {
-	go func() {
-		writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-		_, _ = io.CopyBuffer(client, dst, writeBuffer)
-
-		_ = dst.Close()
-		_ = client.Close()
-		done <- struct{}{}
+func (p *Proxy) copyClientToPeer(client net.Conn, dst io.ReadCloser, waitG *sync.WaitGroup) {
+	defer func() {
+		dst.Close()
+		client.Close()
+		waitG.Done()
 	}()
+
+	writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
+	_, _ = io.CopyBuffer(client, dst, writeBuffer)
 }
 
-func (p *Proxy) CopyDataPeerToClient(dst io.WriteCloser, client net.Conn, done chan struct{}) {
-	go func() {
-		readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-		_, _ = io.CopyBuffer(dst, client, readBuffer)
-
-		_ = dst.Close()
-		_ = client.Close()
-		done <- struct{}{}
+func (p *Proxy) copyPeerToClient(dst io.WriteCloser, client net.Conn, waitG *sync.WaitGroup) {
+	defer func() {
+		dst.Close()
+		client.Close()
+		waitG.Done()
 	}()
+
+	readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
+	_, _ = io.CopyBuffer(dst, client, readBuffer)
 }
