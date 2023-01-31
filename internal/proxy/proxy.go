@@ -133,34 +133,21 @@ func (p *Proxy) handleConnection(client net.Conn) {
 }
 
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
-	done := make(chan struct{}, maxCopyChan)
-	defer close(done)
-
-	p.CopyDataPeerToClient(dst, client, done)
-	p.copyDataClientToPeer(client, dst, done)
-
-	<-done
-	<-done
+	p.CopyDataClientToPeer(dst, client)
+	p.CopyDataPeerToClient(client, dst)
 }
 
-func (p *Proxy) copyDataClientToPeer(client net.Conn, dst io.ReadCloser, done chan struct{}) {
-	go func() {
-		writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-		_, _ = io.CopyBuffer(client, dst, writeBuffer)
-
-		_ = dst.Close()
-		_ = client.Close()
-		done <- struct{}{}
-	}()
-}
-
-func (p *Proxy) CopyDataPeerToClient(dst io.WriteCloser, client net.Conn, done chan struct{}) {
-	go func() {
+func (p *Proxy) CopyDataClientToPeer(dst io.WriteCloser, client net.Conn) {
 		readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
 		_, _ = io.CopyBuffer(dst, client, readBuffer)
-
 		_ = dst.Close()
 		_ = client.Close()
-		done <- struct{}{}
-	}()
 }
+
+func (p *Proxy) CopyDataPeerToClient(client net.Conn, dst io.ReadCloser) {
+	writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
+	_, _ = io.CopyBuffer(client, dst, writeBuffer)
+	_ = dst.Close()
+	_ = client.Close()
+}
+
