@@ -34,7 +34,7 @@ func TestCheckNewConnection(t *testing.T) {
 
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy := &proxy.Proxy{
-		Cfg:    &proxy.Config{DeadLineTimeMS: 100},
+		Cfg:    &proxy.Config{DeadLineTimeSeconds: 100},
 		Logger: logger,
 		Peers:  peers.New(listPeer),
 	}
