@@ -39,6 +39,7 @@ $docker run --restart=always -p 8080:8080 vbalancer
 ## Features
 
 - The proxy (VBalancer) has realized on TCP net.Listener
+- A limit on connections and a deadline time can be set
 - All log write to 'CSV' file
 - Size log file can be changed in the config file
 
