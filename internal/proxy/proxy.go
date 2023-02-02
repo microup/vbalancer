@@ -60,6 +60,8 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string, checkTimeA
 }
 
 func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
+	semaphore := make(chan struct{}, p.Cfg.ConnectionSemaphore)
+
 	for {
 		conn, err := proxySrv.Accept()
 		if err != nil {
@@ -74,22 +76,29 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			continue
 		}
 
-		err = conn.SetDeadline(time.Now().Add(time.Duration(p.Cfg.DeadLineTimeMS) * time.Millisecond))
+		semaphore <- struct{}{}
+
+		err = conn.SetDeadline(time.Now().Add(time.Duration(p.Cfg.DeadLineTimeSeconds) * time.Second))
 		if err != nil {
 			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Sprintf("failed to set deadline: %v", err))
+			<-semaphore
 
 			continue
 		}
 
-		go func() {
+		go func(conn net.Conn) {
+			defer func() {
+				<-semaphore
+			}()
+
 			select {
 			case <-ctx.Done():
 				return
 			default:
 				p.handleClientConnection(conn)
 			}
-		}()
+		}(conn)
 	}
 }
 
@@ -120,7 +129,7 @@ func (p *Proxy) handleClientConnection(client net.Conn) {
 		return
 	}
 
-	dst, err := net.DialTimeout("tcp", pPeer.GetURI(), time.Duration(p.Cfg.DeadLineTimeMS)*time.Millisecond)
+	dst, err := net.DialTimeout("tcp", pPeer.GetURI(), time.Duration(p.Cfg.DeadLineTimeSeconds)*time.Millisecond)
 	if err != nil {
 		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
 			fmt.Sprintf("failed connecting to target:, %v\n", err))
