@@ -24,9 +24,9 @@ func Run(wgStartApp *sync.WaitGroup) {
 		}
 	}()
 
-	cfg := initConfig()
+	configuration := initializeConfig()
 
-	logger, err := vlog.New(cfg.Logger)
+	logger, err := vlog.New(configuration.Logger)
 	if err != nil {
 		log.Panicf("failed created logger: %v", err)
 	}
@@ -39,18 +39,19 @@ func Run(wgStartApp *sync.WaitGroup) {
 	}(logger)
 
 	ctx, proxyWorkCancel := context.WithCancel(context.Background())
-	_, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Proxy.ShutdownTimeoutSeconds)*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 
+		time.Duration(configuration.Proxy.ShutdownTimeoutSeconds)*time.Second)
 
 	defer cancel()
 
-	listPeer := createPeerList(cfg)
+	peerList := createPeerListForBalancer(configuration)
 
-	proxyBalancer := proxy.New(cfg.Proxy, listPeer, logger)
+	proxyBalancer := proxy.New(configuration.Proxy, peerList, logger)
 
-	logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
+	logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", configuration.ProxyPort))
 
 	go func() {
-		if err = proxyBalancer.Start(ctx, cfg.ProxyPort, cfg.CheckTimeAlive); err != nil {
+		if err = proxyBalancer.ListenAndServe(ctx, configuration.ProxyPort, configuration.CheckTimeAlive); err != nil {
 			logger.Add(types.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
 		}
 	}()
@@ -61,14 +62,14 @@ func Run(wgStartApp *sync.WaitGroup) {
 		wgStartApp.Done()
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
+	stopSignal := make(chan os.Signal, 1)
+	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
+	<-stopSignal
 
 	proxyWorkCancel()
 }
 
-func initConfig() *config.Config {
+func initializeConfig() *config.Config {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	configFile := os.Getenv("ConfigFile")
@@ -90,12 +91,12 @@ func initConfig() *config.Config {
 	return cfg
 }
 
-func createPeerList(cfg *config.Config) []peer.IPeer {
+func createPeerListForBalancer(cfg *config.Config) []peer.IPeer {
 	listPeer := make([]peer.IPeer, len(cfg.Peers))
-	
+
 	for index, valPeer := range cfg.Peers {
 		valPeer.Mu = &sync.RWMutex{}
-		listPeer[index] = valPeer 
+		listPeer[index] = valPeer
 	}
 
 	return listPeer

@@ -34,7 +34,7 @@ func TestCheckNewConnection(t *testing.T) {
 
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy := &proxy.Proxy{
-		Cfg:    &proxy.Config{DeadLineTimeMS: 100},
+		Cfg:    &proxy.Config{DeadLineTimeSeconds: 100},
 		Logger: logger,
 		Peers:  peers.New(listPeer),
 	}
@@ -42,7 +42,7 @@ func TestCheckNewConnection(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go testProxy.CheckNewConnection(ctx, proxySrv)
+	go testProxy.AcceptConnections(ctx, proxySrv)
 
 	conn, err := net.Dial("tcp", proxySrv.Addr().String())
 	if err != nil {
