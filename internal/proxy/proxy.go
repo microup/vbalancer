@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	maxCopyChan = 2
+	maxCopyChannel = 2
 )
 
 type Proxy struct {
@@ -34,7 +34,7 @@ func New(cfg *Config, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
 	return proxy
 }
 
-func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *peer.CheckTimeAlive) error {
+func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string, checkTimeAlive *peer.CheckTimeAlive) error {
 	proxySrv, err := net.Listen("tcp", proxyPort)
 	if err != nil {
 		return fmt.Errorf("%w", err)
@@ -54,12 +54,12 @@ func (p *Proxy) Start(ctx context.Context, proxyPort string, checkTimeAlive *pee
 		go pPeer.CheckAvailability(ctx)
 	}
 
-	p.CheckNewConnection(ctx, proxySrv)
+	p.AcceptConnections(ctx, proxySrv)
 
 	return nil
 }
 
-func (p *Proxy) CheckNewConnection(ctx context.Context, proxySrv net.Listener) {
+func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 	for {
 		conn, err := proxySrv.Accept()
 		if err != nil {
@@ -87,15 +87,17 @@ func (p *Proxy) CheckNewConnection(ctx context.Context, proxySrv net.Listener) {
 			case <-ctx.Done():
 				return
 			default:
-				p.handleConnection(conn)
+				p.handleClientConnection(conn)
 			}
 		}()
 	}
 }
 
-func (p *Proxy) handleConnection(client net.Conn) {
+func (p *Proxy) handleClientConnection(client net.Conn) {
 	defer func(client net.Conn) {
-		_ = client.Close()
+		err := client.Close()
+		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
+			fmt.Sprintf("failed client close %v\n", err))
 	}(client)
 
 	p.Logger.Add(types.Debug, types.ResultOK, types.RemoteAddr(client.RemoteAddr().String()))
@@ -111,7 +113,9 @@ func (p *Proxy) handleConnection(client net.Conn) {
 		}
 
 		responseLogger := response.New(p.Logger)
-		_ = responseLogger.SentResponse(client, resultCode)
+		err := responseLogger.SentResponse(client, resultCode)
+		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
+			fmt.Sprintf("failed send response %v\n", err))
 
 		return
 	}
@@ -122,7 +126,9 @@ func (p *Proxy) handleConnection(client net.Conn) {
 			fmt.Sprintf("failed connecting to target:, %v\n", err))
 
 		responseLogger := response.New(p.Logger)
-		_ = responseLogger.SentResponse(client, types.ErrProxy)
+		err = responseLogger.SentResponse(client, types.ErrProxy)
+		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
+			fmt.Sprintf("failed send response %v\n", err))
 
 		return
 	}
@@ -134,8 +140,8 @@ func (p *Proxy) handleConnection(client net.Conn) {
 }
 
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
-	waitG :=&sync.WaitGroup{}
-	waitG.Add(maxCopyChan)
+	waitG := &sync.WaitGroup{}
+	waitG.Add(maxCopyChannel)
 
 	go p.copyClientToPeer(client, dst, waitG)
 	go p.copyPeerToClient(dst, client, waitG)
