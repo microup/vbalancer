@@ -1,5 +1,5 @@
 [![test-and-linter](https://github.com/microup/vbalancer/actions/workflows/main.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/main.yml)
-[![Release](https://github.com/microup/vbalancer/actions/workflows/release.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/release.yml)
+[![Release](https://github.com/microup/vbalancer/actions/workflows/release.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/release.yml)[![Docker CI](https://github.com/microup/vbalancer/actions/workflows/docker-ci.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/docker-ci.yml)
 
 # What is VBalancer?
 
@@ -24,16 +24,53 @@ This solution it allows users to easily configure and manage their load balancer
 
 Using VBalancer, you can quickly set up a load balancing solution for your Docker containers. It allows you to easily configure the rules for routing traffic between containers, as well as set up health checks to ensure that the containers are running properly. 
 
-### build
+### You can build manually
+
+#### build
 
 ```bash
 $docker build --tag vbalancer . -f Dockerfile
 ```
 
-### run
+#### run
 
 ```bash
 $docker run --restart=always -p 8080:8080 vbalancer
+```
+### You can take a ready-made image.
+
+#### Login to Github 
+
+```bash
+$docker login docker.pkg.github.com -u USERNAME -p ${{ secrets.TOKEN }}
+```
+
+#### Pull the image from GitHub Packages
+
+```bash
+$docker pull docker.pkg.github.com/microup/vbalancer/vbalancer:latest
+```
+#### Then start it
+
+before using the ready-made image, you need to enter the container and modify the configuration file by adding or removing the required hosts
+
+```bash
+$docker run -d -e PORT=8080 -p 8080:8080 docker.pkg.github.com/microup/vbalancer/vbalancer:latest
+```
+Congratulations! Now you can use the high-load balancer by sending network requests to it.
+
+#### To stop it, get the container id:
+
+```bash
+$ docker container ls
+
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                    NAMES
+271b4abb963s        vbalancer            ./vbalancer"       7 minutes ago       Up 7 minutes        0.0.0.0:8080->8080/tcp   beeraf_skills
+```
+#### and stop it
+
+```bash
+$ docker container stop 271b4abb963s
 ```
 
 ## Features
