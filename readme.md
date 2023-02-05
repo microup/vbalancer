@@ -37,20 +37,20 @@ $docker build --tag vbalancer . -f Dockerfile
 ```bash
 $docker run --restart=always -p 8080:8080 vbalancer
 ```
-### You can take a ready-made image.
+### You can take a ready image.
 
-#### Login to Github 
+#### login to Github 
 
 ```bash
 $docker login docker.pkg.github.com -u USERNAME -p ${{ secrets.TOKEN }}
 ```
 
-#### Pull the image from GitHub Packages
+#### pull the image from GitHub Packages
 
 ```bash
 $docker pull docker.pkg.github.com/microup/vbalancer/vbalancer:latest
 ```
-#### Then start it
+#### then start it
 
 before using the ready-made image, you need to enter the container and modify the configuration file by adding or removing the required hosts
 
@@ -59,7 +59,7 @@ $docker run -d -e PORT=8080 -p 8080:8080 docker.pkg.github.com/microup/vbalancer
 ```
 Congratulations! Now you can use the high-load balancer by sending network requests to it.
 
-#### To stop it, get the container id:
+#### to stop it, get the container id:
 
 ```bash
 $ docker container ls
