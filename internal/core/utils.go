@@ -36,6 +36,6 @@ func HumanFileSize(size float64) string {
 
 func Round(val float64, roundOn float64, places int) float64 {
 	pow := math.Pow(powX, float64(places))
-	
+
 	return math.Round(val*pow) / pow
 }

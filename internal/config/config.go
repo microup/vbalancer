@@ -20,7 +20,7 @@ const DefaultProxyPort = 8080
 type Config struct {
 	Logger         *vlog.Config         `yaml:"logger"`
 	Proxy          *proxy.Config        `yaml:"proxy"`
-	Peers          []*peer.Peer          `yaml:"peers"`
+	Peers          []*peer.Peer         `yaml:"peers"`
 	CheckTimeAlive *peer.CheckTimeAlive `yaml:"peerCheckTimeAlive"`
 	ProxyPort      string
 }

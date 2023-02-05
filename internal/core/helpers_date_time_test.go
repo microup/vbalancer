@@ -8,9 +8,9 @@ import (
 
 func TestGetDateTimeStr(t *testing.T) {
 	t.Parallel()
-	
+
 	testCases := []struct {
-		recordTime time.Time
+		recordTime      time.Time
 		expectedDateStr string
 		expectedTimeStr string
 	}{

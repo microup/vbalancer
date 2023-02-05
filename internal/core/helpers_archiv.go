@@ -50,7 +50,7 @@ func ArchiveFile(fileName string, extension string) error {
 
 	fc := filepath.Base(fileName)
 	fileZip, err := zipWriter.Create(fc)
-	
+
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -58,7 +58,6 @@ func ArchiveFile(fileName string, extension string) error {
 	if _, err := io.Copy(fileZip, csvFileName); err != nil {
 		return fmt.Errorf("%w", err)
 	}
-
 
 	return nil
 }

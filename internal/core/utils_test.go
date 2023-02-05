@@ -33,11 +33,11 @@ func TestHumanFileSize(t *testing.T) {
 
 func TestRound(t *testing.T) {
 	t.Parallel()
-	
+
 	testCases := []struct {
-		val float64
-		roundOn float64
-		places int
+		val      float64
+		roundOn  float64
+		places   int
 		expected float64
 	}{
 		{3.1415, 0.5, 2, 3.14},
@@ -49,8 +49,8 @@ func TestRound(t *testing.T) {
 
 	for _, tc := range testCases {
 		actual := core.Round(tc.val, tc.roundOn, tc.places)
-		if math.Abs(actual - tc.expected) > 0.0001 {
-			t.Errorf("For val %v, roundOn %v and places %v, expected %v but got %v", 
+		if math.Abs(actual-tc.expected) > 0.0001 {
+			t.Errorf("For val %v, roundOn %v and places %v, expected %v but got %v",
 				tc.val, tc.roundOn, tc.places, tc.expected, actual)
 		}
 	}
