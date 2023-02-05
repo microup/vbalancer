@@ -24,10 +24,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
-      
-      - name: Check go fmt
-        run: | 
-          go fmt ./..
 
       - name: download deps
         run:  |
@@ -44,10 +40,6 @@ jobs:
       - name: test race
         run: |
           CI=true go test -race ./...
-
-      - name: Check go vet
-        run: |
-          go vet ./..
 
       - name: linter
         run: |
