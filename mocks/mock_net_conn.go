@@ -8,10 +8,10 @@ import (
 )
 
 type MockConn struct {
-	Data []byte
-	Pos  int
+	Data     []byte
+	Pos      int
 	IsClient bool
-	mu sync.Mutex // guards
+	mu       sync.Mutex // guards
 }
 
 func (c *MockConn) Read(inBytes []byte) (int, error) {
@@ -19,7 +19,7 @@ func (c *MockConn) Read(inBytes []byte) (int, error) {
 	defer c.mu.Unlock()
 
 	if c.Pos >= len(c.Data) {
-	 	return 0, io.EOF
+		return 0, io.EOF
 	}
 
 	n := copy(inBytes, c.Data[c.Pos:])

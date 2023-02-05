@@ -4,7 +4,10 @@ PROJECT_NAME = "vbalancer"
 
 all: lint test race build
 
-pre-push: lint test race 
+pre-push: fmt lint test race 
+
+fmt:
+  go fmt ./...
 
 build-mocks:
   go get github.com/golang/mock/gomock
@@ -15,6 +18,7 @@ mocks:
   mockgen -destination=mocks/mock_vlog.go -package=mocks -source=./internal/vlog/vlog.go ILog
 
 lint: 
+  go vet ./...
   golangci-lint run -v ./...
 
 test: 
@@ -24,7 +28,7 @@ race: dep ## Run data race detector
   go test -race -v ./...
 
 dep: ## Get the dependencies
-  go get -v -d ./...
+  go mod tidy
 
 build: 
   go build -o build/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/$(PROJECT_NAME).go

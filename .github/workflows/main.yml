@@ -35,11 +35,11 @@ jobs:
 
       - name: test all
         run: |
-          CI=true go test -short ./...
+          CI=true go test ./...
 
       - name: test race
         run: |
-          CI=true go test -race -short  ./...
+          CI=true go test -race ./...
 
       - name: linter
         run: |
