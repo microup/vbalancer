@@ -34,5 +34,4 @@ jobs:
       - name: Login to docker.pkg.github.com
         run: echo ${{ secrets.TOKEN }} | docker login docker.pkg.github.com --username ${{ secrets.USERNAME }} --password-stdin
       - name: Publish the image
-        run: docker push docker.pkg.github.com/microup/vbalancer/vbalancer:latest
-        
+        run: docker push docker.pkg.github.com/microup/vbalancer/vbalancer:latest      
