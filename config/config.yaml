@@ -1,6 +1,6 @@
 proxy:
   defaultPort: 8080
-  deadLineTimeSeconds: 2
+  deadLineTimeSeconds: 1
   shutdownTimeoutSeconds: 10
   sizeCopyBufferIo: 32768
   connectionSemaphore: 200

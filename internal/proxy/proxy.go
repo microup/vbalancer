@@ -1,11 +1,13 @@
 package proxy
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"net"
-	"sync"
+
+	//"sync"
 	"time"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
@@ -103,6 +105,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 }
 
 func (p *Proxy) handleClientConnection(client net.Conn) {
+
 	defer func(client net.Conn) {
 		err := client.Close()
 		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
@@ -149,33 +152,49 @@ func (p *Proxy) handleClientConnection(client net.Conn) {
 }
 
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
-	waitG := &sync.WaitGroup{}
-	waitG.Add(maxCopyChannel)
+	defer client.Close()
 
-	go p.copyClientToPeer(client, dst, waitG)
-	go p.copyPeerToClient(dst, client, waitG)
+	//waitG := &sync.WaitGroup{}
+	//waitG.Add(maxCopyChannel)
 
-	waitG.Wait()
-}
+	//go p.copyClientToPeer(client, dst, waitG)
+	//go p.copyPeerToClient(dst, client, waitG)
 
-func (p *Proxy) copyClientToPeer(client net.Conn, dst io.ReadCloser, waitG *sync.WaitGroup) {
-	defer func() {
+	go func() {
+		_, err := bufio.NewReader(client).WriteTo(dst)
+		if err != nil {
+			fmt.Println("Error forwarding data from client to remote host:", err)
+		}
 		dst.Close()
-		client.Close()
-		waitG.Done()
 	}()
 
-	writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-	_, _ = io.CopyBuffer(client, dst, writeBuffer)
+	_, err := bufio.NewReader(dst).WriteTo(client)
+	if err != nil {
+		fmt.Println("Error forwarding data from remote host to client:", err)
+	}
+
+	dst.Close()
+	//waitG.Wait()
 }
 
-func (p *Proxy) copyPeerToClient(dst io.WriteCloser, client net.Conn, waitG *sync.WaitGroup) {
-	defer func() {
-		dst.Close()
-		client.Close()
-		waitG.Done()
-	}()
+// func (p *Proxy) copyClientToPeer(client net.Conn, dst io.ReadCloser, waitG *sync.WaitGroup) {
+// 	defer func() {
+// 		dst.Close()
+// 		client.Close()
+// 		waitG.Done()
+// 	}()
 
-	readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-	_, _ = io.CopyBuffer(dst, client, readBuffer)
-}
+// 	writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
+// 	_, _ = io.CopyBuffer(client, dst, writeBuffer)
+// }
+
+// func (p *Proxy) copyPeerToClient(dst io.WriteCloser, client net.Conn, waitG *sync.WaitGroup) {
+// 	defer func() {
+// 		dst.Close()
+// 		client.Close()
+// 		waitG.Done()
+// 	}()
+
+// 	readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
+// 	_, _ = io.CopyBuffer(dst, client, readBuffer)
+// }
