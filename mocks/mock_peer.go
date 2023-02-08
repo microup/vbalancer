@@ -5,7 +5,9 @@
 package mocks
 
 import (
+	net "net"
 	reflect "reflect"
+	time "time"
 	vlog "vbalancer/internal/vlog"
 
 	gomock "github.com/golang/mock/gomock"
@@ -32,6 +34,21 @@ func NewMockIPeer(ctrl *gomock.Controller) *MockIPeer {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockIPeer) EXPECT() *MockIPeerMockRecorder {
 	return m.recorder
+}
+
+// Dial mocks base method.
+func (m *MockIPeer) Dial(timeOut, timeOutDeadLine time.Duration) (net.Conn, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Dial", timeOut, timeOutDeadLine)
+	ret0, _ := ret[0].(net.Conn)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Dial indicates an expected call of Dial.
+func (mr *MockIPeerMockRecorder) Dial(timeOut, timeOutDeadLine interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dial", reflect.TypeOf((*MockIPeer)(nil).Dial), timeOut, timeOutDeadLine)
 }
 
 // GetURI mocks base method.
