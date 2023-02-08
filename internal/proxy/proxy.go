@@ -152,6 +152,7 @@ func (p *Proxy) handleClientConnection(client net.Conn, numberOfAttempts int, ma
 
 		return
 	}
+	defer dst.Close()
 
 	err = dst.SetDeadline(time.Now().Add(time.Duration(p.Cfg.DestinationHostDeadLineSec) * time.Second))
 	if err != nil {
@@ -168,9 +169,7 @@ func (p *Proxy) handleClientConnection(client net.Conn, numberOfAttempts int, ma
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst net.Conn) {
 	go func() {
 		_, _ = bufio.NewReader(client).WriteTo(dst)
-		dst.Close()
 	}()
 
 	_, _ = bufio.NewReader(dst).WriteTo(client)
-	dst.Close()
 }
