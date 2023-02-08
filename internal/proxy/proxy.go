@@ -1,21 +1,17 @@
 package proxy
 
 import (
+	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"net"
-	"sync"
+
 	"time"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/proxy/response"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
-)
-
-const (
-	maxCopyChannel = 2
 )
 
 type Proxy struct {
@@ -34,7 +30,7 @@ func New(cfg *Config, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
 	return proxy
 }
 
-func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string, checkTimeAlive *peer.CheckTimeAlive) error {
+func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 	proxySrv, err := net.Listen("tcp", proxyPort)
 	if err != nil {
 		return fmt.Errorf("%w", err)
@@ -48,10 +44,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string, checkTimeA
 	}(proxySrv)
 
 	for _, pPeer := range p.Peers.List {
-		pPeer.SetAvailabilityCheckInterval(checkTimeAlive)
 		pPeer.SetLogger(p.Logger)
-
-		go pPeer.CheckAvailability(ctx)
 	}
 
 	p.AcceptConnections(ctx, proxySrv)
@@ -78,7 +71,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 
 		semaphore <- struct{}{}
 
-		err = conn.SetDeadline(time.Now().Add(time.Duration(p.Cfg.DeadLineTimeSeconds) * time.Second))
+		err = conn.SetDeadline(time.Now().Add(time.Duration(p.Cfg.ClientDeadLineTimeSec) * time.Second))
 		if err != nil {
 			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Sprintf("failed to set deadline: %v", err))
@@ -96,23 +89,43 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			case <-ctx.Done():
 				return
 			default:
-				p.handleClientConnection(conn)
+				p.Logger.Add(types.Debug, types.ResultOK, types.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
+				p.handleClientConnection(conn, 0, len(p.Peers.List))
+				clientAddr := conn.RemoteAddr().String()
+				err = conn.Close()
+
+				if err != nil {
+					p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(clientAddr),
+						fmt.Errorf("failed client close %w", err))
+				} else {
+					p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(clientAddr),
+						"the connection with the client was closed successfully")
+				}
 			}
 		}(conn)
 	}
 }
 
-func (p *Proxy) handleClientConnection(client net.Conn) {
-	defer func(client net.Conn) {
-		err := client.Close()
-		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
-			fmt.Sprintf("failed client close %v\n", err))
-	}(client)
+func (p *Proxy) handleClientConnection(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) {
+	if numberOfAttempts >= maxNumberOfAttempts {
+		p.Logger.Add(
+			types.ErrEmptyValue,
+			types.ErrCantFindActivePeers,
+			types.RemoteAddr(client.RemoteAddr().String()),
+			types.ErrCantFindActivePeers)
 
-	p.Logger.Add(types.Debug, types.ResultOK, types.RemoteAddr(client.RemoteAddr().String()))
+		responseLogger := response.New(p.Logger)
+		err := responseLogger.SentResponse(client, types.ErrProxy)
+
+		if err != nil {
+			p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
+				fmt.Errorf("failed send response %w", err))
+		}
+
+		return
+	}
 
 	pPeer, resultCode := p.Peers.GetNextPeer()
-
 	if resultCode != types.ResultOK || pPeer == nil {
 		if pPeer != nil {
 			p.Logger.Add(types.ErrCantFindActivePeers, resultCode, types.RemoteAddr(client.RemoteAddr().String()),
@@ -123,59 +136,41 @@ func (p *Proxy) handleClientConnection(client net.Conn) {
 
 		responseLogger := response.New(p.Logger)
 		err := responseLogger.SentResponse(client, resultCode)
-		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
-			fmt.Sprintf("failed send response %v\n", err))
+
+		if err != nil {
+			p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
+				fmt.Errorf("failed send response %w", err))
+		}
 
 		return
 	}
 
-	dst, err := net.DialTimeout("tcp", pPeer.GetURI(), time.Duration(p.Cfg.DeadLineTimeSeconds)*time.Millisecond)
+	dst, err := net.DialTimeout("tcp", pPeer.GetURI(), time.Duration(p.Cfg.DestinationHostTimeoutMS)*time.Millisecond)
 	if err != nil {
-		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
-			fmt.Sprintf("failed connecting to target:, %v\n", err))
-
-		responseLogger := response.New(p.Logger)
-		err = responseLogger.SentResponse(client, types.ErrProxy)
-		p.Logger.Add(types.ErrCantFindActivePeers, types.ErrProxy, types.RemoteAddr(client.RemoteAddr().String()),
-			fmt.Sprintf("failed send response %v\n", err))
+		numberOfAttempts++
+		p.handleClientConnection(client, numberOfAttempts, maxNumberOfAttempts)
 
 		return
 	}
 
-	p.Logger.Add(types.Debug, types.ResultOK, types.RemoteAddr(client.RemoteAddr().String()),
-		types.ProxyHost(pPeer.GetURI()))
+	err = dst.SetDeadline(time.Now().Add(time.Duration(p.Cfg.DestinationHostDeadLineSec) * time.Second))
+	if err != nil {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(dst.LocalAddr().String()),
+			fmt.Errorf("failed to set deadline: %w", err))
+
+		return
+	}
 
 	p.ProxyDataCopy(client, dst)
 }
 
-func (p *Proxy) ProxyDataCopy(client net.Conn, dst io.ReadWriteCloser) {
-	waitG := &sync.WaitGroup{}
-	waitG.Add(maxCopyChannel)
-
-	go p.copyClientToPeer(client, dst, waitG)
-	go p.copyPeerToClient(dst, client, waitG)
-
-	waitG.Wait()
-}
-
-func (p *Proxy) copyClientToPeer(client net.Conn, dst io.ReadCloser, waitG *sync.WaitGroup) {
-	defer func() {
+//nolint:interfacer
+func (p *Proxy) ProxyDataCopy(client net.Conn, dst net.Conn) {
+	go func() {
+		_, _ = bufio.NewReader(client).WriteTo(dst)
 		dst.Close()
-		client.Close()
-		waitG.Done()
 	}()
 
-	writeBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-	_, _ = io.CopyBuffer(client, dst, writeBuffer)
-}
-
-func (p *Proxy) copyPeerToClient(dst io.WriteCloser, client net.Conn, waitG *sync.WaitGroup) {
-	defer func() {
-		dst.Close()
-		client.Close()
-		waitG.Done()
-	}()
-
-	readBuffer := make([]byte, p.Cfg.SizeCopyBufferIO)
-	_, _ = io.CopyBuffer(dst, client, readBuffer)
+	_, _ = bufio.NewReader(dst).WriteTo(client)
+	dst.Close()
 }

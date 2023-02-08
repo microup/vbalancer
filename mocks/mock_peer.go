@@ -5,9 +5,7 @@
 package mocks
 
 import (
-	context "context"
 	reflect "reflect"
-	peer "vbalancer/internal/proxy/peer"
 	vlog "vbalancer/internal/vlog"
 
 	gomock "github.com/golang/mock/gomock"
@@ -36,18 +34,6 @@ func (m *MockIPeer) EXPECT() *MockIPeerMockRecorder {
 	return m.recorder
 }
 
-// CheckAvailability mocks base method.
-func (m *MockIPeer) CheckAvailability(arg0 context.Context) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "CheckAvailability", arg0)
-}
-
-// CheckAvailability indicates an expected call of CheckAvailability.
-func (mr *MockIPeerMockRecorder) CheckAvailability(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAvailability", reflect.TypeOf((*MockIPeer)(nil).CheckAvailability), arg0)
-}
-
 // GetURI mocks base method.
 func (m *MockIPeer) GetURI() string {
 	m.ctrl.T.Helper()
@@ -60,32 +46,6 @@ func (m *MockIPeer) GetURI() string {
 func (mr *MockIPeerMockRecorder) GetURI() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURI", reflect.TypeOf((*MockIPeer)(nil).GetURI))
-}
-
-// IsAvailable mocks base method.
-func (m *MockIPeer) IsAvailable() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAvailable")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsAvailable indicates an expected call of IsAvailable.
-func (mr *MockIPeerMockRecorder) IsAvailable() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAvailable", reflect.TypeOf((*MockIPeer)(nil).IsAvailable))
-}
-
-// SetAvailabilityCheckInterval mocks base method.
-func (m *MockIPeer) SetAvailabilityCheckInterval(arg0 *peer.CheckTimeAlive) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetAvailabilityCheckInterval", arg0)
-}
-
-// SetAvailabilityCheckInterval indicates an expected call of SetAvailabilityCheckInterval.
-func (mr *MockIPeerMockRecorder) SetAvailabilityCheckInterval(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAvailabilityCheckInterval", reflect.TypeOf((*MockIPeer)(nil).SetAvailabilityCheckInterval), arg0)
 }
 
 // SetLogger mocks base method.

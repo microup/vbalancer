@@ -10,6 +10,7 @@
         "goarch",
         "gomock",
         "highload",
+        "interfacer",
         "nestif",
         "nolint",
         "nosnakecase",

@@ -1,9 +1,10 @@
 proxy:
   defaultPort: 8080
-  deadLineTimeSeconds: 2
+  clientDeadLineTimeSec: 4
+  destinationHostTimeoutMs: 2
+  destinationHostDeadLineSec: 1
   shutdownTimeoutSeconds: 10
-  sizeCopyBufferIo: 32768
-  connectionSemaphore: 200
+  connectionSemaphore: 500
 
 peers:
   - name: test_backend_1
@@ -17,10 +18,6 @@ peers:
   - name: test_backend_3
     proto: http
     uri: 127.0.0.1:8020    
-
-peerCheckTimeAlive:  
-  timeCheck: 2
-  waitTimeCheck: 2
 
 logger:
   dirLog: ./logs/

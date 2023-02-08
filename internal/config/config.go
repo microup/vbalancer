@@ -18,20 +18,18 @@ import (
 const DefaultProxyPort = 8080
 
 type Config struct {
-	Logger         *vlog.Config         `yaml:"logger"`
-	Proxy          *proxy.Config        `yaml:"proxy"`
-	Peers          []*peer.Peer         `yaml:"peers"`
-	CheckTimeAlive *peer.CheckTimeAlive `yaml:"peerCheckTimeAlive"`
-	ProxyPort      string
+	Logger    *vlog.Config  `yaml:"logger"`
+	Proxy     *proxy.Config `yaml:"proxy"`
+	Peers     []*peer.Peer  `yaml:"peers"`
+	ProxyPort string
 }
 
 func New() *Config {
 	cfg := &Config{
-		Logger:         nil,
-		Proxy:          nil,
-		Peers:          nil,
-		CheckTimeAlive: nil,
-		ProxyPort:      "",
+		Logger:    nil,
+		Proxy:     nil,
+		Peers:     nil,
+		ProxyPort: "",
 	}
 
 	return cfg

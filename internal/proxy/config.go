@@ -1,9 +1,10 @@
 package proxy
 
 type Config struct {
-	DefaultPort            string `yaml:"defaultPort"`
-	DeadLineTimeSeconds    uint   `yaml:"deadLineTimeSeconds"`
-	ShutdownTimeoutSeconds uint   `yaml:"shutdownTimeoutSeconds"`
-	SizeCopyBufferIO       uint   `yaml:"sizeCopyBufferIo"`
-	ConnectionSemaphore    uint   `yaml:"connectionSemaphore"`
+	DefaultPort                string `yaml:"defaultPort"`
+	ClientDeadLineTimeSec      uint   `yaml:"clientDeadLineTimeSec"`
+	DestinationHostTimeoutMS   uint   `yaml:"destinationHostTimeoutMs"`
+	DestinationHostDeadLineSec uint   `yaml:"destinationHostDeadLineSec"`
+	ShutdownTimeoutSeconds     uint   `yaml:"shutdownTimeoutSeconds"`
+	ConnectionSemaphore        uint   `yaml:"connectionSemaphore"`
 }
