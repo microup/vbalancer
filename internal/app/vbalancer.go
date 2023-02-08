@@ -51,7 +51,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 	logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", configuration.ProxyPort))
 
 	go func() {
-		if err = proxyBalancer.ListenAndServe(ctx, configuration.ProxyPort, configuration.CheckTimeAlive); err != nil {
+		if err = proxyBalancer.ListenAndServe(ctx, configuration.ProxyPort); err != nil {
 			logger.Add(types.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
 		}
 	}()
@@ -95,7 +95,6 @@ func createPeerListForBalancer(cfg *config.Config) []peer.IPeer {
 	listPeer := make([]peer.IPeer, len(cfg.Peers))
 
 	for index, valPeer := range cfg.Peers {
-		valPeer.Mu = &sync.RWMutex{}
 		listPeer[index] = valPeer
 	}
 
