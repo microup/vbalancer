@@ -10,10 +10,10 @@ type IPeer interface {
 }
 
 type Peer struct {
-	Name           string `yaml:"name"`
-	Proto          string `yaml:"proto"`
-	URI            string `yaml:"uri"`
-	logger         vlog.ILog
+	Name   string `yaml:"name"`
+	Proto  string `yaml:"proto"`
+	URI    string `yaml:"uri"`
+	logger vlog.ILog
 }
 
 func (p *Peer) SetLogger(value vlog.ILog) {
@@ -23,4 +23,3 @@ func (p *Peer) SetLogger(value vlog.ILog) {
 func (p *Peer) GetURI() string {
 	return p.URI
 }
-

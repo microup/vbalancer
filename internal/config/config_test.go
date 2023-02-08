@@ -57,10 +57,10 @@ func TestInitProxyPort(t *testing.T) {
 	}
 
 	config := &config.Config{
-		Logger:         nil,
-		Proxy:          nil,
-		Peers:          nil,
-		ProxyPort:      "",
+		Logger:    nil,
+		Proxy:     nil,
+		Peers:     nil,
+		ProxyPort: "",
 	}
 
 	for _, test := range tests {
