@@ -2,7 +2,7 @@ proxy:
   defaultPort: 8080
   clientDeadLineTimeSec: 4
   destinationHostTimeoutMs: 2
-  destinationHostDeadLineSec: 1
+  destinationHostDeadLineSec: 4
   shutdownTimeoutSeconds: 10
   connectionSemaphore: 500
 
