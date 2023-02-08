@@ -52,7 +52,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 
 	go func() {
 		if err = proxyBalancer.ListenAndServe(ctx, configuration.ProxyPort); err != nil {
-			logger.Add(types.Fatal, types.ErrProxy, fmt.Sprintf("can't start proxy %s", err))
+			logger.Add(types.Fatal, types.ErrProxy, fmt.Errorf("can't start proxy %w", err))
 		}
 	}()
 

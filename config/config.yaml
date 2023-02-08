@@ -1,10 +1,10 @@
 proxy:
   defaultPort: 8080
-  clientDeadLineTimeSec: 4
-  destinationHostTimeoutMs: 2
-  destinationHostDeadLineSec: 4
+  clientDeadLineTimeSec: 10
+  destinationHostTimeoutMs: 1
+  destinationHostDeadLineSec: 10
   shutdownTimeoutSeconds: 10
-  connectionSemaphore: 500
+  connectionSemaphore: 300
 
 peers:
   - name: test_backend_1
