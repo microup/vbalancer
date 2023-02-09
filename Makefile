@@ -32,3 +32,12 @@ dep: ## Get the dependencies
 
 build: 
 	go build -o build/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/$(PROJECT_NAME).go
+
+docker-create:
+	docker build --tag vbalancer . -f Dockerfile
+
+docker-start:
+	docker run --restart=always -p 8080:8080 vbalancer
+
+docker-rm:
+
