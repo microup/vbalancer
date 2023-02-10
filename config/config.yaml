@@ -8,16 +8,20 @@ proxy:
 
 peers:
   - name: test_backend_1
-    proto: http
     uri: 127.0.0.1:8040
 
   - name: test_backend_2
-    proto: http
     uri: 127.0.0.1:8030
 
   - name: test_backend_3
-    proto: http
-    uri: 127.0.0.1:8020    
+    uri: 127.0.0.1:8020
+
+  - name: test_backend_4
+    uri: 127.0.0.1:8050    
+
+  - name: test_backend_5
+    uri: 127.0.0.1:8060    
+
 
 logger:
   dirLog: ./logs/
