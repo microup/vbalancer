@@ -1,13 +1,10 @@
-PROJECT_NAME = "vbalancer"
+PROJECT_NAME="vbalancer"
 
 .PHONY: all dep build test lint mocks
 
 all: lint test race build
 
 pre-push: fmt lint test race 
-
-fmt:
-	go fmt ./... 
 
 build-mocks:
 	go get github.com/golang/mock/gomock
@@ -16,6 +13,13 @@ build-mocks:
 mocks:
 	mockgen -destination=mocks/mock_peer.go -package=mocks -source=./internal/proxy/peer/peer.go Peer
 	mockgen -destination=mocks/mock_vlog.go -package=mocks -source=./internal/vlog/vlog.go ILog
+
+init: 
+	go mod tidy
+	go mod vendor
+
+fmt:
+	go fmt ./... 
 
 lint: 
 	go vet ./...
@@ -27,17 +31,11 @@ test:
 race: dep ## Run data race detector
 	go test -race -v ./...
 
-dep: ## Get the dependencies
-	go mod tidy
-
 build: 
 	go build -o build/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/$(PROJECT_NAME).go
 
 docker-create:
 	docker build --tag vbalancer . -f Dockerfile
 
-docker-start:
-	docker run --restart=always -p 8080:8080 vbalancer
-
-docker-rm:
-
+docker-run:
+	docker run --restart=always -p 8080:8080 vbalancer 
