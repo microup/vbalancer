@@ -15,7 +15,6 @@ type IPeer interface {
 
 type Peer struct {
 	Name   string `yaml:"name"`
-	Proto  string `yaml:"proto"`
 	URI    string `yaml:"uri"`
 	logger vlog.ILog
 }
