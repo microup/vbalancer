@@ -10,6 +10,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
 	"vbalancer/internal/config"
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/proxy/peer"
