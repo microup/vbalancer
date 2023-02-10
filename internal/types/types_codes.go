@@ -12,6 +12,7 @@ type (
 )
 
 var ErrFileIsNil = errors.New("file is nil")
+var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
 
 const (
 	ResultOK ResultCode = iota

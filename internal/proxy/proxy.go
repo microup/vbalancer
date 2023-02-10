@@ -89,46 +89,49 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			case <-ctx.Done():
 				return
 			default:
-				p.Logger.Add(types.Debug, types.ResultOK, types.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
-
-				p.handleClientConnection(conn, 0, len(p.Peers.List))
-
-				clientAddr := conn.RemoteAddr().String()
-				err = conn.Close()
-
-				if err != nil {
-					p.Logger.Add(types.Debug, types.ErrCantFindActivePeers, types.ErrProxy,
-						types.RemoteAddr(clientAddr),
-						fmt.Errorf("failed client close %w", err))
-
-					return
-				}
-
-				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
-					"the connection with the client was closed successfully")
+				p.executeConnection(conn)
 			}
 		}(conn)
 	}
 }
 
-func (p *Proxy) handleClientConnection(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) {
-	if numberOfAttempts >= maxNumberOfAttempts {
-		p.Logger.Add(
-			types.ErrEmptyValue,
-			types.ErrCantFindActivePeers,
-			types.RemoteAddr(client.RemoteAddr().String()),
-			types.ErrCantFindActivePeers)
+func (p *Proxy) executeConnection(conn net.Conn) {
+	clientAddr := conn.RemoteAddr().String()
 
+	p.Logger.Add(types.Debug, types.ResultOK, 
+		types.RemoteAddr(conn.RemoteAddr().String()),
+		"starting connection")
+
+	err := p.handleConnection(conn, 0, len(p.Peers.List))
+
+	if err != nil {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
+			"failed in handleClientConnection %w", err)
+	}
+
+	err = conn.Close()
+
+	if err != nil {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.ErrProxy,
+			types.RemoteAddr(clientAddr), 
+			fmt.Errorf("failed client close %w", err))
+	} else {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
+			"the connection with the client was closed successfully")
+	}
+}
+
+func (p *Proxy) handleConnection(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) error {
+	
+	if numberOfAttempts >= maxNumberOfAttempts {
 		responseLogger := response.New(p.Logger)
 		err := responseLogger.SentResponse(client, types.ErrProxy)
 
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrCantFindActivePeers,
-				types.RemoteAddr(client.RemoteAddr().String()),
-				fmt.Errorf("failed send response %w", err))
+			return fmt.Errorf("%w", err)
 		}
 
-		return
+		return types.ErrMaxCountAttempts
 	}
 
 	pPeer, resultCode := p.Peers.GetNextPeer()
@@ -149,33 +152,33 @@ func (p *Proxy) handleClientConnection(client net.Conn, numberOfAttempts int, ma
 		err := responseLogger.SentResponse(client, resultCode)
 
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrCantFindActivePeers,
-				types.RemoteAddr(pPeer.GetURI()),
-				types.ProxyHost(client.LocalAddr().String()),
-				fmt.Errorf("failed send response %w", err))
+			return fmt.Errorf("%w", err)
 		}
 
-		return
+		//nolint:goerr113
+		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
 	dst, err := pPeer.Dial(
 		time.Duration(p.Cfg.DestinationHostTimeOutMs)*time.Millisecond,
 		time.Duration(p.Cfg.DestinationHostDeadLineSec)*time.Second)
 	if err != nil {
-		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(pPeer.GetURI()),
-			fmt.Errorf("%w", err))
 		numberOfAttempts++
-		p.handleClientConnection(client, numberOfAttempts, maxNumberOfAttempts)
-		
-		return
+
+		return p.handleConnection(client, numberOfAttempts, maxNumberOfAttempts)
 	}
 	defer dst.Close()
 
 	p.ProxyDataCopy(client, dst)
+
+	return nil
 }
 
-//nolint:interfacer
 func (p *Proxy) ProxyDataCopy(client net.Conn, dst net.Conn) {
+	p.Logger.Add(types.Debug, types.ResultOK,
+		types.RemoteAddr(dst.RemoteAddr().String()),
+		types.ProxyHost(client.LocalAddr().String()), "try to send data")
+
 	go func() {
 		_, _ = bufio.NewReader(client).WriteTo(dst)
 	}()
