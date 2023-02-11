@@ -22,22 +22,25 @@ func New(logger vlog.ILog) *Response {
 	}
 }
 
-func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) error {
-	r.StatusCode = codeResponse
-	r.Description = codeResponse.ToStr()
+func (r *Response) SentResponseToClient(client net.Conn, err error) error {
+	r.StatusCode = types.ErrProxy
+	r.Description = err.Error()
 
 	responseJSON, err := json.Marshal(r)
 
 	if err != nil {
-		r.logger.Add(types.Debug, types.ErrCantMarshalJSON, types.RemoteAddr(client.RemoteAddr().String()),
+		r.logger.Add(types.Debug,
+			types.ErrCantMarshalJSON,
+			types.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrCantMarshalJSON.ToStr())
 
-		return err //nolint:wrapcheck
+		return fmt.Errorf("%w", err)
 	}
 
 	responseLen := len(responseJSON)
 	responseBody :=
-		fmt.Sprintf("HTTP/1.1 200 OK\r\nConnection: close\r\n"+
+		fmt.Sprintf(
+			"HTTP/1.1 200 OK\r\nConnection: close\r\n"+
 			"Content-Type: application/json\r\n"+
 			"Content-Length: %d\r\n\r\n"+
 			"%s", responseLen, responseJSON)
@@ -47,7 +50,7 @@ func (r *Response) SentResponse(client net.Conn, codeResponse types.ResultCode) 
 		r.logger.Add(types.Debug, types.ErrSendResponseToClient, types.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrSendResponseToClient.ToStr())
 
-		return err //nolint:wrapcheck
+		return fmt.Errorf("%w", err )
 	}
 
 	return nil
