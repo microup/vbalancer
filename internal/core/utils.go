@@ -6,12 +6,8 @@ import (
 )
 
 const (
-	lengthByte = 1024
-	powX       = 10
-	roundOne   = .5
 	place      = 2
 	prec       = -1
-	bitSize    = 64
 )
 
 func HumanFileSize(size float64) string {
@@ -23,19 +19,19 @@ func HumanFileSize(size float64) string {
 	suffixes[3] = "GB"
 	suffixes[4] = "TB"
 
-	base := math.Log(size) / math.Log(lengthByte)
-	getSize := Round(math.Pow(lengthByte, base-math.Floor(base)), roundOne, place)
+	base := math.Log(size) / math.Log(LengthByte)
+	getSize := Round(math.Pow(LengthByte, base-math.Floor(base)), RoundOne, place)
 
 	var suffix string
 	if base > 0 {
 		suffix = suffixes[int(math.Floor(base))]
 	}
 
-	return strconv.FormatFloat(getSize, 'f', prec, bitSize) + " " + suffix
+	return strconv.FormatFloat(getSize, 'f', prec, BitSize) + " " + suffix
 }
 
 func Round(val float64, roundOn float64, places int) float64 {
-	pow := math.Pow(powX, float64(places))
+	pow := math.Pow(PowX, float64(places))
 
 	return math.Round(val*pow) / pow
 }
