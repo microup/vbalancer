@@ -71,7 +71,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 
 		semaphore <- struct{}{}
 
-		err = conn.SetDeadline(time.Now().Add(time.Duration(p.Cfg.ClientDeadLineTimeSec) * time.Second))
+		err = conn.SetDeadline(time.Now().Add(p.Cfg.ClientDeadLineTime))
 		if err != nil {
 			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Errorf("failed to set deadline: %w", err))
@@ -89,93 +89,76 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			case <-ctx.Done():
 				return
 			default:
-				p.Logger.Add(types.Debug, types.ResultOK, types.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
-
-				p.handleClientConnection(conn, 0, len(p.Peers.List))
-
-				clientAddr := conn.RemoteAddr().String()
-				err = conn.Close()
-
-				if err != nil {
-					p.Logger.Add(types.Debug, types.ErrCantFindActivePeers, types.ErrProxy,
-						types.RemoteAddr(clientAddr),
-						fmt.Errorf("failed client close %w", err))
-
-					return
-				}
-
-				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
-					"the connection with the client was closed successfully")
+				p.executeConnection(conn)
 			}
 		}(conn)
 	}
 }
 
-func (p *Proxy) handleClientConnection(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) {
-	if numberOfAttempts >= maxNumberOfAttempts {
-		p.Logger.Add(
-			types.ErrEmptyValue,
-			types.ErrCantFindActivePeers,
-			types.RemoteAddr(client.RemoteAddr().String()),
-			types.ErrCantFindActivePeers)
+func (p *Proxy) executeConnection(conn net.Conn) {
+	clientAddr := conn.RemoteAddr().String()
+
+	p.Logger.Add(types.Debug, types.ResultOK,
+		types.RemoteAddr(conn.RemoteAddr().String()),
+		"starting connection")
+
+	err := p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
+	if err != nil {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
+			"failed in reverseData() %w", err)
 
 		responseLogger := response.New(p.Logger)
-		err := responseLogger.SentResponse(client, types.ErrProxy)
+		
+		err = responseLogger.SentResponseToClient(conn, err)
 
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrCantFindActivePeers,
-				types.RemoteAddr(client.RemoteAddr().String()),
-				fmt.Errorf("failed send response %w", err))
+			p.Logger.Add(types.Debug, types.ErrSendResponseToClient, types.ErrProxy,
+				types.RemoteAddr(clientAddr),
+				fmt.Errorf("failed send response to client %w", err))
 		}
+	}
 
-		return
+	err = conn.Close()
+
+	if err != nil {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.ErrProxy,
+			types.RemoteAddr(clientAddr),
+			fmt.Errorf("failed client close %w", err))
+	} else {
+		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
+			"the connection with the client was closed successfully")
+	}
+}
+
+func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfAttempts uint) error {
+	if numberOfAttempts >= maxNumberOfAttempts {
+		return types.ErrMaxCountAttempts
 	}
 
 	pPeer, resultCode := p.Peers.GetNextPeer()
-
 	if resultCode != types.ResultOK || pPeer == nil {
-		if pPeer != nil {
-			p.Logger.Add(types.Debug, types.ErrCantFindActivePeers, resultCode,
-				types.RemoteAddr(pPeer.GetURI()),
-				types.ProxyHost(client.LocalAddr().String()), resultCode.ToStr())
-		} else {
-			p.Logger.Add(types.Debug, types.ErrEmptyValue, resultCode,
-				types.RemoteAddr(pPeer.GetURI()),
-				types.ProxyHost(client.LocalAddr().String()),
-				resultCode.ToStr())
-		}
-
-		responseLogger := response.New(p.Logger)
-		err := responseLogger.SentResponse(client, resultCode)
-
-		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrCantFindActivePeers,
-				types.RemoteAddr(pPeer.GetURI()),
-				types.ProxyHost(client.LocalAddr().String()),
-				fmt.Errorf("failed send response %w", err))
-		}
-
-		return
+		//nolint:goerr113
+		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	dst, err := pPeer.Dial(
-		time.Duration(p.Cfg.DestinationHostTimeOutMs)*time.Millisecond,
-		time.Duration(p.Cfg.DestinationHostDeadLineSec)*time.Second)
+	dst, err := pPeer.Dial(p.Cfg.DestinationHostTimeOut, p.Cfg.DestinationHostDeadLine)
 	if err != nil {
-		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(pPeer.GetURI()),
-			fmt.Errorf("%w", err))
 		numberOfAttempts++
-		p.handleClientConnection(client, numberOfAttempts, maxNumberOfAttempts)
-		
-		return
+
+		return p.reverseData(client, numberOfAttempts, maxNumberOfAttempts)
 	}
 	defer dst.Close()
 
-	p.ProxyDataCopy(client, dst)
+	p.proxyDataCopy(client, dst)
+
+	return nil
 }
 
-//nolint:interfacer
-func (p *Proxy) ProxyDataCopy(client net.Conn, dst net.Conn) {
+func (p *Proxy) proxyDataCopy(client net.Conn, dst net.Conn) {
+	p.Logger.Add(types.Debug, types.ResultOK,
+		types.RemoteAddr(dst.RemoteAddr().String()),
+		types.ProxyHost(client.LocalAddr().String()), "try to send data")
+
 	go func() {
 		_, _ = bufio.NewReader(client).WriteTo(dst)
 	}()

@@ -12,6 +12,7 @@ type (
 )
 
 var ErrFileIsNil = errors.New("file is nil")
+var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
 
 const (
 	ResultOK ResultCode = iota
@@ -25,6 +26,7 @@ const (
 	ErrSendResponseToClient
 	ErrCopyDataPeerToClient
 	ErrCopyDataClientToPeer
+	ErrCountAttempts
 	ErrGotPanic
 	StatusBadRequest          ResultCode = http.StatusBadRequest
 	StatusInternalServerError ResultCode = http.StatusInternalServerError
@@ -40,6 +42,7 @@ func (s ResultCode) ToStr() string {
 		ErrCantMarshalJSON:        "can't marshal json object",
 		ErrCopyDataPeerToClient:   "error copy data from peer to client",
 		ErrCopyDataClientToPeer:   "error copy data from client to peer",
+		ErrCountAttempts:          "exceeded maximum number of attempts",
 		ErrSendResponseToClient:   "proxy err send response to client",
 		StatusBadRequest:          "status bad request",
 		StatusInternalServerError: "status internal server error",

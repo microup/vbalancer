@@ -25,7 +25,6 @@ func TestCheckNewConnection(t *testing.T) {
 	listPeer := make([]peer.IPeer, 0)
 	testPeer := peer.Peer{
 		Name:  "test peer",
-		Proto: "http",
 		URI:   "127.0.0.1:0",
 	}
 	listPeer = append(listPeer, &testPeer)
