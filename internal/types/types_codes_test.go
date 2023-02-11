@@ -57,7 +57,7 @@ func TestResultCodeToUint(t *testing.T) {
 		{types.ErrEmptyValue, 3},
 		{types.ErrCantFindFile, 4},
 		{types.ErrCantFindActivePeers, 5},
-		{types.ErrGotPanic, 11},
+		{types.ErrGotPanic, 12},
 		{types.ResultUnknown, 4294967295},
 		{types.ResultCode(0xABC), 2748},
 	}
