@@ -98,22 +98,31 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 func (p *Proxy) executeConnection(conn net.Conn) {
 	clientAddr := conn.RemoteAddr().String()
 
-	p.Logger.Add(types.Debug, types.ResultOK, 
+	p.Logger.Add(types.Debug, types.ResultOK,
 		types.RemoteAddr(conn.RemoteAddr().String()),
 		"starting connection")
 
-	err := p.handleConnection(conn, 0, len(p.Peers.List))
-
+	err := p.reverseData(conn, 0, len(p.Peers.List))
 	if err != nil {
 		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
-			"failed in handleClientConnection %w", err)
+			"failed in reverseData() %w", err)
+
+		responseLogger := response.New(p.Logger)
+		
+		err = responseLogger.SentResponseToClient(conn, err)
+
+		if err != nil {
+			p.Logger.Add(types.Debug, types.ErrSendResponseToClient, types.ErrProxy,
+				types.RemoteAddr(clientAddr),
+				fmt.Errorf("failed send response to client %w", err))
+		}
 	}
 
 	err = conn.Close()
 
 	if err != nil {
 		p.Logger.Add(types.Debug, types.ErrProxy, types.ErrProxy,
-			types.RemoteAddr(clientAddr), 
+			types.RemoteAddr(clientAddr),
 			fmt.Errorf("failed client close %w", err))
 	} else {
 		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
@@ -121,40 +130,13 @@ func (p *Proxy) executeConnection(conn net.Conn) {
 	}
 }
 
-func (p *Proxy) handleConnection(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) error {
-	
+func (p *Proxy) reverseData(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) error {
 	if numberOfAttempts >= maxNumberOfAttempts {
-		responseLogger := response.New(p.Logger)
-		err := responseLogger.SentResponse(client, types.ErrProxy)
-
-		if err != nil {
-			return fmt.Errorf("%w", err)
-		}
-
 		return types.ErrMaxCountAttempts
 	}
 
 	pPeer, resultCode := p.Peers.GetNextPeer()
-
 	if resultCode != types.ResultOK || pPeer == nil {
-		if pPeer != nil {
-			p.Logger.Add(types.Debug, types.ErrCantFindActivePeers, resultCode,
-				types.RemoteAddr(pPeer.GetURI()),
-				types.ProxyHost(client.LocalAddr().String()), resultCode.ToStr())
-		} else {
-			p.Logger.Add(types.Debug, types.ErrEmptyValue, resultCode,
-				types.RemoteAddr(pPeer.GetURI()),
-				types.ProxyHost(client.LocalAddr().String()),
-				resultCode.ToStr())
-		}
-
-		responseLogger := response.New(p.Logger)
-		err := responseLogger.SentResponse(client, resultCode)
-
-		if err != nil {
-			return fmt.Errorf("%w", err)
-		}
-
 		//nolint:goerr113
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
@@ -165,16 +147,16 @@ func (p *Proxy) handleConnection(client net.Conn, numberOfAttempts int, maxNumbe
 	if err != nil {
 		numberOfAttempts++
 
-		return p.handleConnection(client, numberOfAttempts, maxNumberOfAttempts)
+		return p.reverseData(client, numberOfAttempts, maxNumberOfAttempts)
 	}
 	defer dst.Close()
 
-	p.ProxyDataCopy(client, dst)
+	p.proxyDataCopy(client, dst)
 
 	return nil
 }
 
-func (p *Proxy) ProxyDataCopy(client net.Conn, dst net.Conn) {
+func (p *Proxy) proxyDataCopy(client net.Conn, dst net.Conn) {
 	p.Logger.Add(types.Debug, types.ResultOK,
 		types.RemoteAddr(dst.RemoteAddr().String()),
 		types.ProxyHost(client.LocalAddr().String()), "try to send data")
