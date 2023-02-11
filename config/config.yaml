@@ -4,17 +4,18 @@ proxy:
   destinationHostTimeoutMs: 1
   destinationHostDeadLineSec: 10
   shutdownTimeoutSeconds: 10
-  connectionSemaphore: 300
+  connectionSemaphore: 500
 
 peers:
+
   - name: test_backend_1
-    uri: 127.0.0.1:8040
+    uri: 127.0.0.1:8020
 
   - name: test_backend_2
     uri: 127.0.0.1:8030
 
   - name: test_backend_3
-    uri: 127.0.0.1:8020
+    uri: 127.0.0.1:8040
 
   - name: test_backend_4
     uri: 127.0.0.1:8050    
@@ -22,6 +23,11 @@ peers:
   - name: test_backend_5
     uri: 127.0.0.1:8060    
 
+  - name: test_backend_6
+    uri: 127.0.0.1:8070 
+
+  - name: test_backend_7
+    uri: 127.0.0.1:8090    
 
 logger:
   dirLog: ./logs/
