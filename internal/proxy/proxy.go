@@ -71,7 +71,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 
 		semaphore <- struct{}{}
 
-		err = conn.SetDeadline(time.Now().Add(time.Duration(p.Cfg.ClientDeadLineTimeSec) * time.Second))
+		err = conn.SetDeadline(time.Now().Add(p.Cfg.ClientDeadLineTime))
 		if err != nil {
 			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Errorf("failed to set deadline: %w", err))
@@ -141,9 +141,7 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	dst, err := pPeer.Dial(
-		time.Duration(p.Cfg.DestinationHostTimeOutMs)*time.Millisecond,
-		time.Duration(p.Cfg.DestinationHostDeadLineSec)*time.Second)
+	dst, err := pPeer.Dial(p.Cfg.DestinationHostTimeOut, p.Cfg.DestinationHostDeadLine)
 	if err != nil {
 		numberOfAttempts++
 

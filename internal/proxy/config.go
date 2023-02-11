@@ -1,11 +1,13 @@
 package proxy
 
+import "time"
+
 type Config struct {
-	DefaultPort                string `yaml:"defaultPort"`
-	ClientDeadLineTimeSec      uint   `yaml:"clientDeadLineTimeSec"`
-	DestinationHostTimeOutMs   uint   `yaml:"destinationHostTimeoutMs"`
-	DestinationHostDeadLineSec uint   `yaml:"destinationHostDeadLineSec"`
-	ShutdownTimeoutSeconds     uint   `yaml:"shutdownTimeoutSeconds"`
-	ConnectionSemaphore        uint   `yaml:"connectionSemaphore"`
-	CountDialAttemptsToPeer    uint   `yaml:"countDialAttemptsToPeer"`
+	DefaultPort             string        `yaml:"defaultPort"`
+	ClientDeadLineTime      time.Duration `yaml:"clientDeadLineTime"`
+	DestinationHostTimeOut  time.Duration `yaml:"destinationHostTimeout"`
+	DestinationHostDeadLine time.Duration `yaml:"destinationHostDeadLine"`
+	ShutdownTimeout         time.Duration `yaml:"shutdownTimeout"`
+	ConnectionSemaphore     uint          `yaml:"connectionSemaphore"`
+	CountDialAttemptsToPeer uint          `yaml:"countDialAttemptsToPeer"`
 }

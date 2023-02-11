@@ -1,10 +1,10 @@
 proxy:
   defaultPort: 8080
-  clientDeadLineTimeSec: 10
-  destinationHostTimeoutMs: 1
-  destinationHostDeadLineSec: 10
-  shutdownTimeoutSeconds: 10
-  connectionSemaphore: 500
+  clientDeadLineTime: 10s
+  destinationHostTimeout: 1ms
+  destinationHostDeadLine: 10s
+  shutdownTimeout: 10s
+  connectionSemaphore: 1000
   countDialAttemptsToPeer: 30
 
 peers:

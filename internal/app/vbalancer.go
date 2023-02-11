@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
-	"time"
 
 	"vbalancer/internal/config"
 	"vbalancer/internal/proxy"
@@ -40,8 +39,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 	}(logger)
 
 	ctx, proxyWorkCancel := context.WithCancel(context.Background())
-	_, cancel := context.WithTimeout(context.Background(),
-		time.Duration(configuration.Proxy.ShutdownTimeoutSeconds)*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), configuration.Proxy.ShutdownTimeout)
 
 	defer cancel()
 
