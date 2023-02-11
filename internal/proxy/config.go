@@ -7,4 +7,5 @@ type Config struct {
 	DestinationHostDeadLineSec uint   `yaml:"destinationHostDeadLineSec"`
 	ShutdownTimeoutSeconds     uint   `yaml:"shutdownTimeoutSeconds"`
 	ConnectionSemaphore        uint   `yaml:"connectionSemaphore"`
+	CountDialAttemptsToPeer    uint   `yaml:"countDialAttemptsToPeer"`
 }

@@ -5,6 +5,7 @@ proxy:
   destinationHostDeadLineSec: 10
   shutdownTimeoutSeconds: 10
   connectionSemaphore: 500
+  countDialAttemptsToPeer: 30
 
 peers:
 

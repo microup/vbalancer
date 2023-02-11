@@ -102,7 +102,7 @@ func (p *Proxy) executeConnection(conn net.Conn) {
 		types.RemoteAddr(conn.RemoteAddr().String()),
 		"starting connection")
 
-	err := p.reverseData(conn, 0, len(p.Peers.List))
+	err := p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
 	if err != nil {
 		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
 			"failed in reverseData() %w", err)
@@ -130,7 +130,7 @@ func (p *Proxy) executeConnection(conn net.Conn) {
 	}
 }
 
-func (p *Proxy) reverseData(client net.Conn, numberOfAttempts int, maxNumberOfAttempts int) error {
+func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfAttempts uint) error {
 	if numberOfAttempts >= maxNumberOfAttempts {
 		return types.ErrMaxCountAttempts
 	}
