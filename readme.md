@@ -1,5 +1,5 @@
-[![test-and-linter](https://github.com/microup/vbalancer/actions/workflows/main.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/main.yml)
-[![Release](https://github.com/microup/vbalancer/actions/workflows/release.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/release.yml)[![Docker CI](https://github.com/microup/vbalancer/actions/workflows/docker-ci.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/docker-ci.yml)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/microup/vbalancer) ![GitHub repo file count](https://img.shields.io/github/directory-file-count/microup/vbalancer) [![test-and-linter](https://github.com/microup/vbalancer/actions/workflows/main.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/main.yml) 
+[![Release](https://github.com/microup/vbalancer/actions/workflows/release.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/release.yml) [![Docker CI](https://github.com/microup/vbalancer/actions/workflows/docker-ci.yml/badge.svg)](https://github.com/microup/vbalancer/actions/workflows/docker-ci.yml)
 
 # What is VBalancer?
 
