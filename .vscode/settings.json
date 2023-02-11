@@ -15,6 +15,7 @@
         "nolint",
         "nosnakecase",
         "paralleltest",
-        "svenstaro"
+        "svenstaro",
+        "wrapcheck"
     ]
 }
