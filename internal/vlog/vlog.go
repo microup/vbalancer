@@ -9,6 +9,7 @@ import (
 	"vbalancer/internal/types"
 )
 
+// Ilog is the interface for log. 
 type ILog interface {
 	Add(values ...interface{})
 	Close() error
@@ -51,6 +52,7 @@ func New(cfg *Config) (*VLog, error) {
 	return vLog, nil
 }
 
+// GetCountRecords returns the number of records in the log file.
 func (v *VLog) GetCountRecords() int {
 	v.Mu.Lock()
 	defer v.Mu.Unlock()
@@ -62,6 +64,7 @@ func (v *VLog) GetCountRecords() int {
 	return len(v.MapLastLogRecords)
 }
 
+// Add adds a log record to the log file.
 func (v *VLog) Add(values ...interface{}) {
 	go v.addInThread(values...)
 }
@@ -87,11 +90,11 @@ func (v *VLog) addInThread(values ...interface{}) {
 		return
 	}
 
-	typeLog, recordRow := types.BuildRecord(types.ParseValues(values))
+	typeLog, recordRow := BuildRecord(ParseValues(values))
 
 	//nolint:exhaustive
 	switch typeLog {
-	case types.Fatal:
+	case Fatal:
 		log.Panic(recordRow)
 	default:
 		log.Print(recordRow)

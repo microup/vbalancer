@@ -43,27 +43,26 @@ func Run(wgStartApp *sync.WaitGroup) {
 
 	// The function creates a context with a cancel function for proxy work 
 	ctx, proxyWorkCancel := context.WithCancel(context.Background())
-	// and another context with a timeout for shutting down the application
+	// and another context with a timeout for shutting down the proxy
 	_, cancel := context.WithTimeout(context.Background(), configuration.Proxy.ShutdownTimeout)
 
 	defer cancel()
 
-	// The function then creates a list of peers for the proxy balancer using `createPeerListForBalancer(configuration)`
+	// The function then creates a list of peers for the proxy balancer using 
 	peerList := createPeerListForBalancer(configuration)
 
 	proxyBalancer := proxy.New(configuration.Proxy, peerList, logger)
 
-	logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", configuration.ProxyPort))
+	logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", configuration.ProxyPort))
 
-	// The proxy server is started by calling `proxyBalancer.ListenAndServe(ctx, configuration.ProxyPort)`
-	// in a separate goroutine
+	// The proxy server is started by calling in a separate goroutine
 	go func() {
 		if err = proxyBalancer.ListenAndServe(ctx, configuration.ProxyPort); err != nil {
-			logger.Add(types.Fatal, types.ErrProxy, fmt.Errorf("can't start proxy %w", err))
+			logger.Add(vlog.Fatal, types.ErrProxy, fmt.Errorf("can't start proxy %w", err))
 		}
 	}()
 
-	logger.Add(types.Info, types.ResultOK, "the balancer is running")
+	logger.Add(vlog.Info, types.ResultOK, "the balancer is running")
 
 	if wgStartApp != nil {
 		wgStartApp.Done()

@@ -7,19 +7,26 @@ import (
 	"unicode/utf8"
 )
 
+// TrimLastChar removes the last character from a string.
 func TrimLastChar(value string) string {
+	// If the string is not empty.
 	if len(value) > 0 {
+		// Get the last rune and its size.
 		_, size := utf8.DecodeLastRuneInString(value)
+		// If the size is the same as the length of the string.
 		if size == len(value) {
+			// Return an empty string.
 			return ""
 		}
-
+		// Return the string without the last rune.
 		return value[:len(value)-size]
 	}
 
+	// Return an empty string.
 	return ""
 }
 
+// FmtStringWithDelimiter formats a string with a delimiter.
 func FmtStringWithDelimiter(delimiter string, values ...interface{}) string {
 	resultStr := ""
 
@@ -56,6 +63,7 @@ func FmtStringWithDelimiter(delimiter string, values ...interface{}) string {
 	return resultStr
 }
 
+// getValueStr - convert a value of any type into a string representation, depending on its type.
 func getValueStr(delimiter string, value interface{}) string {
 	valueStr := ""
 
