@@ -10,11 +10,13 @@
         "goarch",
         "gomock",
         "highload",
+        "Ilog",
         "interfacer",
         "nestif",
         "nolint",
         "nosnakecase",
         "paralleltest",
+        "rwxr",
         "svenstaro",
         "wrapcheck"
     ]
