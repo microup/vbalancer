@@ -11,6 +11,7 @@ import (
 	"vbalancer/mocks"
 )
 
+// TestProxyServer - this is the `TestProxyServer` function of the proxy server.
 func TestCheckNewConnection(t *testing.T) {
 	t.Parallel()
 

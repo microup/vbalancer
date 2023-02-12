@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
 
+// TestVlogAdd is a test case for vlog.Add.
 //nolint:paralleltest
 func TestVlogAdd(t *testing.T) {
 	helperVlogAdd(t)
@@ -32,7 +32,7 @@ func helperVlogAdd(t *testing.T) {
 		t.Fatalf("unexpected error creating VLog: %v", err)
 	}
 
-	vLog.Add(types.Debug, "test msg")
+	vLog.Add(vlog.Debug, "test msg")
 	time.Sleep(1 * time.Second)
 
 	if vLog.GetCountRecords() != 1 {

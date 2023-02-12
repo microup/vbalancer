@@ -1,4 +1,4 @@
-package types_test
+package vlog_test
 
 import (
 	"strconv"
@@ -6,32 +6,34 @@ import (
 	"testing"
 	"time"
 	"vbalancer/internal/types"
+	"vbalancer/internal/vlog"
 )
 
+// TestBuildRecord.
 func TestBuildRecord(t *testing.T) {
 	t.Parallel()
 
-	typeLog := types.Info
+	typeLog := vlog.Info
 	resultCode := types.ResultCode(200)
-	remoteAddr := types.RemoteAddr("127.0.0.1")
-	clientHost := types.ClientHost("client.com")
-	clientMethod := types.ClientMethod("GET")
-	clientProto := types.ClientProto("HTTP/1.1")
-	clientURI := types.ClientURI("/client")
-	proxyHost := types.ProxyHost("proxy.com")
-	proxyMethod := types.ProxyMethod("GET")
-	proxyProto := types.ProxyProto("HTTP/1.1")
-	proxyURI := types.ProxyURI("/proxy")
+	remoteAddr := vlog.RemoteAddr("127.0.0.1")
+	clientHost := vlog.ClientHost("client.com")
+	clientMethod := vlog.ClientMethod("GET")
+	clientProto := vlog.ClientProto("HTTP/1.1")
+	clientURI := vlog.ClientURI("/client")
+	proxyHost := vlog.ProxyHost("proxy.com")
+	proxyMethod := vlog.ProxyMethod("GET")
+	proxyProto := vlog.ProxyProto("HTTP/1.1")
+	proxyURI := vlog.ProxyURI("/proxy")
 	valuesStr := "value1;value2"
 
 	// Call the function with the inputs
-	actualTypeLog, actualRecord := types.BuildRecord(
+	actualTypeLog, actualRecord := vlog.BuildRecord(
 		typeLog, resultCode, remoteAddr, clientHost, clientMethod,
 		clientProto, clientURI, proxyHost, proxyMethod, proxyProto, proxyURI,
 		valuesStr)
 
 	// Define the expected output
-	expectedTypeLog := types.Info
+	expectedTypeLog := vlog.Info
 	expectedRecord := "INFO;200;127.0.0.1;client.com;GET;HTTP/1.1;/client;GET;HTTP/1.1;" +
 		"proxy.com;/proxy;value1;value2"
 

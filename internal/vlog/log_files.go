@@ -5,15 +5,17 @@ import (
 	"os"
 	"path/filepath"
 	"vbalancer/internal/core"
-	"vbalancer/internal/types"
 	"vbalancer/internal/version"
 )
 
 const (
-	maskDir                     = 0x755
+	// maskDir 0x755 is an octal notation for the file permission -rwxr-xr-x.
+	maskDir = 0x755
+	// DefaultFilePerm is the default file permission with octal notation 0666.
 	DefaultFilePerm os.FileMode = 0666
 )
 
+// newFileLog - function for creating a new file log.
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.MapLastLogRecords = make([]string, 0)
@@ -49,6 +51,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	return nil
 }
 
+// Close function for closing the file log.
 func (v *VLog) Close() error {
 	v.wgNewLog.Wait()
 
@@ -61,6 +64,7 @@ func (v *VLog) Close() error {
 	return nil
 }
 
+// open function for opening the file log.
 func (v *VLog) open(newFileName string) (*os.File, error) {
 	v.countToLogID++
 
@@ -68,9 +72,9 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 
 	if newFileName == "" {
 		timeCreateLogFile := v.startTimeLog.Format("20060102150405")
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, types.LogFileExtension)
+		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, LogFileExtension)
 	} else {
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, types.LogFileExtension)
+		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, LogFileExtension)
 	}
 
 	fileNameLog = filepath.Join(v.cfg.DirLog, fileNameLog)
@@ -85,7 +89,8 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 	return fileLog, nil
 }
 
-func (v *VLog) GetCurrentFileLogInfo() *types.FileInfo {
+// GetCurrentFileLogInfo function for getting current file log info.
+func (v *VLog) GetCurrentFileLogInfo() *LogFile {
 	v.Mu.Lock()
 	defer v.Mu.Unlock()
 
@@ -94,13 +99,14 @@ func (v *VLog) GetCurrentFileLogInfo() *types.FileInfo {
 		return nil
 	}
 
-	return &types.FileInfo{
+	return &LogFile{
 		FileName: v.fileLog.Name(),
 		FileSize: core.HumanFileSize(float64(fileInfo.Size())),
-		Kind:     types.LogFileExtension,
+		Kind:     LogFileExtension,
 	}
 }
 
+// checkToCreateNewLogFile function for checking to create a new log file.
 func (v *VLog) checkToCreateNewLogFile() error {
 	fileInfo, err := os.Stat(v.fileLog.Name())
 	if err != nil {
@@ -124,7 +130,7 @@ func (v *VLog) checkToCreateNewLogFile() error {
 			return err
 		}
 
-		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
+		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", LogFileExtension))
 		if err != nil {
 			return fmt.Errorf("failed to archive file: %w", err)
 		}
@@ -140,6 +146,7 @@ func (v *VLog) checkToCreateNewLogFile() error {
 	return nil
 }
 
+// removeOldRecordsFromMemory function for removing old records from memory.
 func (v *VLog) removeOldRecordsFromMemory() {
 	if uint64(len(v.MapLastLogRecords)) > v.cfg.APIShowRecords {
 		var xLast string

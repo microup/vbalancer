@@ -8,12 +8,14 @@ import (
 	"vbalancer/internal/vlog"
 )
 
+// Response is a struct that contains the response to the client.
 type Response struct {
 	StatusCode  types.ResultCode `json:"statusCode"`
 	Description string           `json:"description"`
 	logger      vlog.ILog
 }
 
+// New create a new response object.
 func New(logger vlog.ILog) *Response {
 	return &Response{
 		StatusCode:  types.ResultUnknown,
@@ -22,21 +24,27 @@ func New(logger vlog.ILog) *Response {
 	}
 }
 
+// SentResponseToClient send a response to the client.
 func (r *Response) SentResponseToClient(client net.Conn, err error) error {
+	// set the status code and description
 	r.StatusCode = types.ErrProxy
 	r.Description = err.Error()
 
+	// marshal the response object to JSON
 	responseJSON, err := json.Marshal(r)
-
+	
+	// if there was an error marshalling the response object to JSON
+	// log the error
 	if err != nil {
-		r.logger.Add(types.Debug,
+		r.logger.Add(vlog.Debug,
 			types.ErrCantMarshalJSON,
-			types.RemoteAddr(client.RemoteAddr().String()),
+			vlog.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrCantMarshalJSON.ToStr())
 
 		return fmt.Errorf("%w", err)
 	}
 
+	// create the response body
 	responseLen := len(responseJSON)
 	responseBody :=
 		fmt.Sprintf(
@@ -45,9 +53,11 @@ func (r *Response) SentResponseToClient(client net.Conn, err error) error {
 			"Content-Length: %d\r\n\r\n"+
 			"%s", responseLen, responseJSON)
 
+		
+	// Write the response body to the client
 	_, err = client.Write([]byte(responseBody))
 	if err != nil {
-		r.logger.Add(types.Debug, types.ErrSendResponseToClient, types.RemoteAddr(client.RemoteAddr().String()),
+		r.logger.Add(vlog.Debug, types.ErrSendResponseToClient, vlog.RemoteAddr(client.RemoteAddr().String()),
 			types.ErrSendResponseToClient.ToStr())
 
 		return fmt.Errorf("%w", err )
@@ -55,3 +65,4 @@ func (r *Response) SentResponseToClient(client net.Conn, err error) error {
 
 	return nil
 }
+

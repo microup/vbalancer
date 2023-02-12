@@ -39,7 +39,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 	defer func(proxySrv net.Listener) {
 		err = proxySrv.Close()
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrProxy, fmt.Errorf("proxy close failed: %w", err))
+			p.Logger.Add(vlog.Debug, types.ErrProxy, fmt.Errorf("proxy close failed: %w", err))
 		}
 	}(proxySrv)
 
@@ -59,10 +59,10 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 		conn, err := proxySrv.Accept()
 		if err != nil {
 			if conn != nil {
-				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
+				p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
 					fmt.Errorf("accept failed, %w", err))
 			} else {
-				p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr("nil"),
+				p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr("nil"),
 					fmt.Errorf("accept failed, %w", err))
 			}
 
@@ -73,7 +73,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 
 		err = conn.SetDeadline(time.Now().Add(p.Cfg.ClientDeadLineTime))
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(conn.RemoteAddr().String()),
+			p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(conn.RemoteAddr().String()),
 				fmt.Errorf("failed to set deadline: %w", err))
 			<-semaphore
 
@@ -98,22 +98,22 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 func (p *Proxy) executeConnection(conn net.Conn) {
 	clientAddr := conn.RemoteAddr().String()
 
-	p.Logger.Add(types.Debug, types.ResultOK,
-		types.RemoteAddr(conn.RemoteAddr().String()),
+	p.Logger.Add(vlog.Debug, types.ResultOK,
+		vlog.RemoteAddr(conn.RemoteAddr().String()),
 		"starting connection")
 
 	err := p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
 	if err != nil {
-		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
-			"failed in reverseData() %w", err)
+		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr),
+			fmt.Errorf("failed in reverseData() %w", err))
 
 		responseLogger := response.New(p.Logger)
 		
 		err = responseLogger.SentResponseToClient(conn, err)
 
 		if err != nil {
-			p.Logger.Add(types.Debug, types.ErrSendResponseToClient, types.ErrProxy,
-				types.RemoteAddr(clientAddr),
+			p.Logger.Add(vlog.Debug, types.ErrSendResponseToClient, types.ErrProxy,
+				vlog.RemoteAddr(clientAddr),
 				fmt.Errorf("failed send response to client %w", err))
 		}
 	}
@@ -121,15 +121,17 @@ func (p *Proxy) executeConnection(conn net.Conn) {
 	err = conn.Close()
 
 	if err != nil {
-		p.Logger.Add(types.Debug, types.ErrProxy, types.ErrProxy,
-			types.RemoteAddr(clientAddr),
+		p.Logger.Add(vlog.Debug, types.ErrProxy, types.ErrProxy,
+			vlog.RemoteAddr(clientAddr),
 			fmt.Errorf("failed client close %w", err))
 	} else {
-		p.Logger.Add(types.Debug, types.ErrProxy, types.RemoteAddr(clientAddr),
+		p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(clientAddr),
 			"the connection with the client was closed successfully")
 	}
 }
 
+// ReverseData - reverses data from the client to the next available peer.
+// It returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
 func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfAttempts uint) error {
 	if numberOfAttempts >= maxNumberOfAttempts {
 		return types.ErrMaxCountAttempts
@@ -154,12 +156,14 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 	return nil
 }
 
+// proxyDataCopy - this is a function that copies data from the client to the peer
+// and copies the response from the peer to the client.
 func (p *Proxy) proxyDataCopy(client net.Conn, dst net.Conn) {
-	p.Logger.Add(types.Debug, types.ResultOK,
-		types.RemoteAddr(dst.RemoteAddr().String()),
-		types.ProxyHost(client.LocalAddr().String()), "try to send data")
+	p.Logger.Add(vlog.Debug, types.ResultOK,
+		vlog.RemoteAddr(dst.RemoteAddr().String()),
+		vlog.ProxyHost(client.LocalAddr().String()), "try to send data")
 
-	go func() {
+		go func() {
 		_, _ = bufio.NewReader(client).WriteTo(dst)
 	}()
 

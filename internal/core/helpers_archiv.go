@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// ArchiveFile function for archive file. 
 func ArchiveFile(fileName string, extension string) error {
 	file := filepath.Base(fileName)                                 // + ".zip"
 	file = strings.TrimSuffix(file, filepath.Ext(file)) + extension // ".zip"

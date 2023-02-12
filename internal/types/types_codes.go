@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Define types, ResultCode and ResultStatus as uint32.
 type (
 	ResultCode   uint32
 	ResultStatus uint32
@@ -14,6 +15,7 @@ type (
 var ErrFileIsNil = errors.New("file is nil")
 var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
 
+// Define constants for different ResultCode values.
 const (
 	ResultOK ResultCode = iota
 	ErrProxy
@@ -34,7 +36,9 @@ const (
 	ResultUnknown             ResultCode = 0xFFFFFFFF
 )
 
+// ToStr returns a string representation of the ResultCode.
 func (s ResultCode) ToStr() string {
+	// Map ResultCode values to their string representation
 	mapStatus := map[ResultCode]string{
 		ResultOK:                  "SUCCESS",
 		ErrProxy:                  "proxy error",
@@ -54,6 +58,7 @@ func (s ResultCode) ToStr() string {
 		ResultUnknown:             "unknown error",
 	}
 
+	// Get the string representation from the map
 	m, ok := mapStatus[s]
 	if !ok {
 		return fmt.Sprintf("unknown result code: %d", s)
@@ -62,6 +67,7 @@ func (s ResultCode) ToStr() string {
 	return m
 }
 
+// ToUint converts the ResultCode to its uint32 representation.
 func (s ResultCode) ToUint() uint32 {
 	return uint32(s)
 }
