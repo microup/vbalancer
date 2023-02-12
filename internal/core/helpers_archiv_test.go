@@ -10,6 +10,7 @@ import (
 	"vbalancer/internal/core"
 )
 
+// TestArchive this is a test function for `archive()`.
 //nolint:paralleltest
 func TestArchiveFile(t *testing.T) {
 	helperArchiveFile(t)

@@ -15,15 +15,22 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// DefaultProxyPort is the default port for the proxy server.
 const DefaultProxyPort = 8080
 
+// Configuration is the configuration for the vbalancer application.
 type Config struct {
+	// Logger is the configuration for the logger.
 	Logger    *vlog.Config  `yaml:"logger"`
+	// Proxy is the configuration for the proxy server.
 	Proxy     *proxy.Config `yaml:"proxy"`
+	// Peers is a list of peer configurations.
 	Peers     []*peer.Peer  `yaml:"peers"`
+	// ProxyPort is the port for the proxy server.
 	ProxyPort string
 }
 
+// New creates a new configuration for the vbalancer application.
 func New() *Config {
 	cfg := &Config{
 		Logger:    nil,
@@ -35,6 +42,7 @@ func New() *Config {
 	return cfg
 }
 
+// InitializeConfig initializes the configuration for the vbalancer application.
 func (c *Config) InitProxyPort() types.ResultCode {
 	osEnvValue := os.Getenv("ProxyPort")
 	if osEnvValue == ":" {
@@ -55,6 +63,7 @@ func (c *Config) InitProxyPort() types.ResultCode {
 	return types.ResultOK
 }
 
+// Load loads the configuration for the vbalancer application.
 func (c *Config) Load(cfgFileName string) error {
 	searchPathConfig := []string{cfgFileName, "", "./config/", "../../config/", "../config/", "../../../config"}
 
@@ -97,6 +106,7 @@ func (c *Config) Load(cfgFileName string) error {
 	return nil
 }
 
+// DecodeConfigFileYaml decodes the configuration for the vbalancer application.
 func (c *Config) DecodeConfigFileYaml(configYaml *os.File) error {
 	decoder := yaml.NewDecoder(configYaml)
 	err := decoder.Decode(c)

@@ -8,6 +8,7 @@ import (
 	"vbalancer/internal/types"
 )
 
+// TestInitializeConfig this is a test function for `initializeConfig()`.
 //nolint:funlen
 func TestInitProxyPort(t *testing.T) {
 	t.Parallel()
