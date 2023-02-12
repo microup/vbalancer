@@ -9,7 +9,7 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-// TestBuildRecord
+// TestBuildRecord.
 func TestBuildRecord(t *testing.T) {
 	t.Parallel()
 

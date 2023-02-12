@@ -60,7 +60,7 @@ const (
 // ClientProto, ClientURI, ProxyHost, ProxyMethod, ProxyProto, ProxyURI and a string value built
 // from concatenating the string values in the input slice with semicolons.
 //
-//nolint:cyclop
+//nolint:cyclop,funlen
 func ParseValues(values []interface{}) (
 	TypeLog, types.ResultCode,
 	RemoteAddr, ClientHost, ClientMethod,
