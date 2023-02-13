@@ -9,6 +9,7 @@ import (
 	"strings"
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/proxy/peer"
+	"vbalancer/internal/proxy/rules"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 
@@ -21,11 +22,13 @@ const DefaultProxyPort = 8080
 // Configuration is the configuration for the vbalancer application.
 type Config struct {
 	// Logger is the configuration for the logger.
-	Logger    *vlog.Config  `yaml:"logger"`
+	Logger *vlog.Config `yaml:"logger"`
 	// Proxy is the configuration for the proxy server.
-	Proxy     *proxy.Config `yaml:"proxy"`
+	Proxy *proxy.Config `yaml:"proxy"`
 	// Peers is a list of peer configurations.
-	Peers     []*peer.Peer  `yaml:"peers"`
+	Peers []*peer.Peer `yaml:"peers"`
+	// Rules is the configuration for the rules to proxy.
+	Rules *rules.Rules `yaml:"rules"`
 	// ProxyPort is the port for the proxy server.
 	ProxyPort string
 }
@@ -36,6 +39,7 @@ func New() *Config {
 		Logger:    nil,
 		Proxy:     nil,
 		Peers:     nil,
+		Rules:     nil,
 		ProxyPort: "",
 	}
 

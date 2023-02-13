@@ -6,7 +6,7 @@ import (
 	"vbalancer/internal/types"
 )
 
-// Peers define a struct that contains a list of peers and a pointer to the current peer index.
+// Peers define a struct that contains a list of peers.
 type Peers struct {
 	List             []peer.IPeer
 	CurrentPeerIndex *uint64
