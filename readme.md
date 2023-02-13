@@ -11,7 +11,10 @@ VBalancer is a project written on Golang that provides a simple and efficient wa
 
 VBalancer is an open source project released under the AGPL-3.0 license.
 
-![Image description](https://raw.githubusercontent.com/microup/vbalancer/33860ed4ee5dcfce78f9cb760208346eac426739/assets/vbalancer.png)
+<p align="center">
+  <img src="/assets/vbalancer.png" alt="Image description">
+</p>
+
 
 ## Begining
 
