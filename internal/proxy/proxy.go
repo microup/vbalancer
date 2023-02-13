@@ -10,6 +10,7 @@ import (
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/proxy/response"
+	"vbalancer/internal/proxy/rules"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
@@ -18,13 +19,15 @@ type Proxy struct {
 	Logger vlog.ILog
 	Peers  *peers.Peers
 	Cfg    *Config
+	Rules  *rules.Rules
 }
 
-func New(cfg *Config, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
+func New(cfg *Config, rules *rules.Rules, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
 	proxy := &Proxy{
 		Logger: logger,
 		Peers:  peers.New(listPeer),
 		Cfg:    cfg,
+		Rules:  rules,
 	}
 
 	return proxy
@@ -52,6 +55,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 	return nil
 }
 
+// AcceptConnections - accepts connections from the proxy server.
 func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 	semaphore := make(chan struct{}, p.Cfg.ConnectionSemaphore)
 
@@ -67,6 +71,15 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			}
 
 			continue
+		}
+
+		// Check if the ip is in the blacklist than exit
+		if p.Rules != nil && p.Rules.Blacklist != nil {
+			if p.Rules.Blacklist.IsIPInBlacklist(conn.RemoteAddr().String()) {
+				conn.Close()
+
+				continue
+			}
 		}
 
 		semaphore <- struct{}{}
@@ -108,7 +121,7 @@ func (p *Proxy) executeConnection(conn net.Conn) {
 			fmt.Errorf("failed in reverseData() %w", err))
 
 		responseLogger := response.New(p.Logger)
-		
+
 		err = responseLogger.SentResponseToClient(conn, err)
 
 		if err != nil {
@@ -163,7 +176,7 @@ func (p *Proxy) proxyDataCopy(client net.Conn, dst net.Conn) {
 		vlog.RemoteAddr(dst.RemoteAddr().String()),
 		vlog.ProxyHost(client.LocalAddr().String()), "try to send data")
 
-		go func() {
+	go func() {
 		_, _ = bufio.NewReader(client).WriteTo(dst)
 	}()
 

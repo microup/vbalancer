@@ -51,7 +51,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 	// The function then creates a list of peers for the proxy balancer using 
 	peerList := createPeerListForBalancer(configuration)
 
-	proxyBalancer := proxy.New(configuration.Proxy, peerList, logger)
+	proxyBalancer := proxy.New(configuration.Proxy, configuration.Rules, peerList, logger)
 
 	logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", configuration.ProxyPort))
 
@@ -78,11 +78,7 @@ func Run(wgStartApp *sync.WaitGroup) {
 	proxyWorkCancel()
 }
 
-// initializeConfig initializes the configuration for the vbalancer application.
-// It sets the maximum number of processors to be used by the Go runtime to the number of CPUs.
-// It loads the configuration from the file specified in the ConfigFile environment variable, 
-// or from the "../../config" file if the environment variable is not set.
-// It initializes the proxy port and returns the configuration if successful, otherwise it logs an error and exits.
+// initializeConfig the configuration for the vbalancer application.
 func initializeConfig() *config.Config {
 	// Set the maximum number of processors to be used by the Go runtime to the number of CPUs.
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -114,10 +110,7 @@ func initializeConfig() *config.Config {
 	return cfg
 }
 
-// createPeerListForBalancer takes a Config struct and returns a slice of IPeer interface
-// The function iterates over the list of Peers stored in the Config struct and converts
-// each individual Peer into an IPeer interface.
-// The resulting slice of IPeer interfaces is returned.
+// createPeerListForBalancer takes a Config struct and returns a slice of IPeer interface.
 func createPeerListForBalancer(cfg *config.Config) []peer.IPeer {
 	listPeer := make([]peer.IPeer, len(cfg.Peers))
 

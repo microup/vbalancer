@@ -61,6 +61,7 @@ func TestInitProxyPort(t *testing.T) {
 		Logger:    nil,
 		Proxy:     nil,
 		Peers:     nil,
+		Rules:     nil,
 		ProxyPort: "",
 	}
 
