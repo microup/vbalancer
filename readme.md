@@ -7,7 +7,9 @@
 
 ## What is VBalancer?
 
-VBalancer is a project written on Go lang that provides a simple and efficient way to balance traffic between identical servers(peers). It is designed to be lightweight and fast. Vbalancer supports TCP protocol. With its easy-to-use configuration options, it is an ideal solution for any organization looking to improve their network application performance and reliability. VBalancer is an open source project released under the AGPL-3.0 license.
+VBalancer is a project written on Golang that provides a simple and efficient way to balance traffic between identical servers(peers). It is designed to be lightweight and fast. VBalancer supports TCP protocol. With its easy-to-use configuration options, it is an ideal solution for any organization looking to improve their network application performance and reliability. Blacklist functionality has also been implemented in VBalancer. Now, IP addresses can be added to the configuration file to reject requests, which will also provide protection against DDOS or unauthorized access by a specific address. 
+
+VBalancer is an open source project released under the AGPL-3.0 license.
 
 ![Image description](https://raw.githubusercontent.com/microup/vbalancer/33860ed4ee5dcfce78f9cb760208346eac426739/assets/vbalancer.png)
 
@@ -81,6 +83,7 @@ $ docker container stop 271b4abb963s
 
 - The proxy (VBalancer) has realized on TCP net.Listener
 - A limit on connections and a deadline time can be set
+- Blacklists functionality has been implemented
 - All log write to 'CSV' file
 - Size log file can be changed in the config file
 
