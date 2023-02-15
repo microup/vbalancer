@@ -34,5 +34,6 @@ func HumanFileSize(size float64) string {
 // Round rounds a float to a given number of decimal places.
 func Round(val float64, roundOn float64, places int) float64 {
 	pow := math.Pow(PowX, float64(places))
+	
 	return math.Round(val*pow) / pow
 }
