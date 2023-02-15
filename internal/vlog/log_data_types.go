@@ -8,53 +8,34 @@ import (
 	"vbalancer/internal/types"
 )
 
-// Package file is a simple file logger.
 type (
-	// TypeLog is a type of log level.
 	TypeLog uint8
-	// IsSave is a type of bool.
 	IsSave bool
 )
 
 type (
-	// RemoteAddr is a type of string.
 	RemoteAddr string
-	// ClientHost is a type of string.
 	ClientHost string
-	// ClientMethod is a type of string.
 	ClientMethod string
-	// ClientProto is a type of string.
 	ClientProto string
-	// ClientURI is a type of string.
 	ClientURI string
-	// ProxyHost is a type of string.
 	ProxyHost string
-	// ProxyMethod is a type of string.
 	ProxyMethod string
-	// ProxyProto is a type of string.
 	ProxyProto string
-	// ProxyURI is a type of string.
 	ProxyURI string
-	// ProxyRequestURI is a type of string.
 	ProxyRequestURI string
 )
 
 const (
-	// Disable is a type of TypeLog.
 	Disable TypeLog = iota
-	// Fatal is a type of TypeLog.
 	Fatal
-	// Error is a type of TypeLog.
 	Error
-	// Warning is a type of TypeLog.
 	Warning
-	// Debug is a type of TypeLog.
 	Debug
-	// Info is a type of TypeLog.
 	Info
 )
 
-// ParseValues - takes in a slice of interface values and returns multiple values of different types.
+// ParseValues takes in a slice of interface values and returns multiple values of different types.
 // It loops through the values in the input slice and assigns each value to its corresponding variable
 // based on its type. The function returns TypeLog, ResultCode, RemoteAddr, ClientHost, ClientMethod,
 // ClientProto, ClientURI, ProxyHost, ProxyMethod, ProxyProto, ProxyURI and a string value built
@@ -117,7 +98,7 @@ func ParseValues(values []interface{}) (
 		proxyHost, proxyMethod, proxyProto, proxyURI, val.String()
 }
 
-// BuildRecord - function takes in several input values such as log type, result code,
+// BuildRecord function takes in several input values such as log type, result code,
 // remote address, client host, client method, client protocol, client URI, proxy host,
 // proxy method, proxy protocol, proxy URI, and string values. It creates a record in the
 // specified format with the current date and time by using the "GetDateTimeStr" function
@@ -152,7 +133,7 @@ func BuildRecord(typeLog TypeLog, resultCode types.ResultCode,
 	return typeLog, recordRow
 }
 
-// GetStr - this function returns a string representation of a "TypeLog"
+// GetStr this function returns a string representation of a "TypeLog"
 // value by mapping it to its string equivalent. If the "TypeLog" value is
 // not found in the map, it returns an error message indicating an unknown result code.
 func (s TypeLog) GetStr() string {

@@ -6,6 +6,7 @@ import (
 	"vbalancer/internal/core"
 )
 
+// TestGetDateTimeStr tests the GetDateTimeStr function.
 func TestGetDateTimeStr(t *testing.T) {
 	t.Parallel()
 

@@ -41,7 +41,6 @@ func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 		return peerValue, types.ResultOK
 	}
 
-	// nextIndex returns the next index in the list
 	return nil, types.ErrCantFindActivePeers
 }
 

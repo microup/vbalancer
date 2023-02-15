@@ -27,7 +27,6 @@ func helperArchiveFile(t *testing.T) {
 	fileName := "test_file.csv"
 	extension := ".zip"
 
-	// Create a test file
 	testFile, err := os.Create(fileName)
 	if err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
@@ -35,7 +34,6 @@ func helperArchiveFile(t *testing.T) {
 
 	defer os.Remove(fileName)
 
-	// Write data to the test file
 	_, err = testFile.Write([]byte("test data"))
 	if err != nil {
 		t.Fatalf("Failed to write data to test file: %v", err)
@@ -46,13 +44,11 @@ func helperArchiveFile(t *testing.T) {
 		t.Fatalf("Failed to close test file: %v", err)
 	}
 
-	// Call the ArchiveFile function
 	err = core.ArchiveFile(fileName, extension)
 	if err != nil {
 		t.Fatalf("Archiving failed: %v", err)
 	}
 
-	// Check if the archived file exists
 	archivedFile := strings.TrimSuffix(fileName, filepath.Ext(fileName)) + extension
 	if _, err = os.Stat(archivedFile); os.IsNotExist(err) {
 		t.Fatalf("Archived file does not exist: %v", err)
@@ -60,7 +56,6 @@ func helperArchiveFile(t *testing.T) {
 
 	defer os.Remove(archivedFile)
 
-	// Read the data from the archived file
 	zipFile, err := zip.OpenReader(archivedFile)
 	if err != nil {
 		t.Fatalf("Failed to open archived file: %v", err)
