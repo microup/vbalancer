@@ -23,19 +23,16 @@ type Peer struct {
 
 // Dial dials a connection to a peer.
 func (p *Peer) Dial(timeOut time.Duration, timeOutDeadLine time.Duration) (net.Conn, error) {
-	// Call net.DialTimeout with the given parameters
 	connect, err := net.DialTimeout("tcp", p.GetURI(), timeOut)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	// Set the deadline of the connection
 	err = connect.SetDeadline(time.Now().Add(timeOutDeadLine))
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	// Return the connection and nil
 	return connect, nil
 }
 

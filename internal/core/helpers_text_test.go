@@ -5,6 +5,7 @@ import (
 	"vbalancer/internal/core"
 )
 
+// TestTrimLastChar tests the TrimLastChar function.
 func TestTrimLastChar(t *testing.T) {
 	t.Parallel()
 
@@ -29,6 +30,7 @@ func TestTrimLastChar(t *testing.T) {
 	}
 }
 
+// TestFmtStringWithDelimiter tests the FmtStringWithDelimiter function.
 func TestFmtStringWithDelimiter(t *testing.T) {
 	t.Parallel()
 

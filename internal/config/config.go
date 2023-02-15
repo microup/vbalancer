@@ -19,7 +19,7 @@ import (
 // DefaultProxyPort is the default port for the proxy server.
 const DefaultProxyPort = 8080
 
-// Configuration is the configuration for the vbalancer application.
+// Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
 	Logger *vlog.Config `yaml:"logger"`
@@ -46,7 +46,7 @@ func New() *Config {
 	return cfg
 }
 
-// InitializeConfig initializes the configuration for the vbalancer application.
+// InitializeConfig initializes the proxy server configuration.
 func (c *Config) InitProxyPort() types.ResultCode {
 	osEnvValue := os.Getenv("ProxyPort")
 	if osEnvValue == ":" {
@@ -110,7 +110,7 @@ func (c *Config) Load(cfgFileName string) error {
 	return nil
 }
 
-// DecodeConfigFileYaml decodes the configuration for the vbalancer application.
+// DecodeConfigFileYaml decodes the YAML configuration file. 
 func (c *Config) DecodeConfigFileYaml(configYaml *os.File) error {
 	decoder := yaml.NewDecoder(configYaml)
 	err := decoder.Decode(c)

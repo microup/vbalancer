@@ -15,6 +15,7 @@ import (
 	"vbalancer/internal/vlog"
 )
 
+// Proxy defines the structure for the proxy server.
 type Proxy struct {
 	Logger vlog.ILog
 	Peers  *peers.Peers
@@ -22,6 +23,7 @@ type Proxy struct {
 	Rules  *rules.Rules
 }
 
+// New creates a new proxy server.
 func New(cfg *Config, rules *rules.Rules, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
 	proxy := &Proxy{
 		Logger: logger,
@@ -33,6 +35,7 @@ func New(cfg *Config, rules *rules.Rules, listPeer []peer.IPeer, logger vlog.ILo
 	return proxy
 }
 
+// ListenAndServe starts the proxy server.
 func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 	proxySrv, err := net.Listen("tcp", proxyPort)
 	if err != nil {
@@ -55,7 +58,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 	return nil
 }
 
-// AcceptConnections - accepts connections from the proxy server.
+// AcceptConnections accepts connections from the proxy server.
 func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 	semaphore := make(chan struct{}, p.Cfg.ConnectionSemaphore)
 
@@ -73,7 +76,6 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			continue
 		}
 
-		// Check if the ip is in the blacklist than exit
 		if p.Rules != nil && p.Rules.Blacklist != nil {
 			if p.Rules.Blacklist.IsIPInBlacklist(conn.RemoteAddr().String()) {
 				conn.Close()
@@ -102,13 +104,13 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			case <-ctx.Done():
 				return
 			default:
-				p.executeConnection(conn)
+				p.handleIncomingConnection(conn)
 			}
 		}(conn)
 	}
 }
 
-func (p *Proxy) executeConnection(conn net.Conn) {
+func (p *Proxy) handleIncomingConnection(conn net.Conn) {
 	clientAddr := conn.RemoteAddr().String()
 
 	p.Logger.Add(vlog.Debug, types.ResultOK,
@@ -143,8 +145,8 @@ func (p *Proxy) executeConnection(conn net.Conn) {
 	}
 }
 
-// ReverseData - reverses data from the client to the next available peer.
-// It returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
+// ReverseData reverses data from the client to the next available peer,
+// it returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
 func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfAttempts uint) error {
 	if numberOfAttempts >= maxNumberOfAttempts {
 		return types.ErrMaxCountAttempts
@@ -169,7 +171,7 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 	return nil
 }
 
-// proxyDataCopy - this is a function that copies data from the client to the peer
+// proxyDataCopy this is a function that copies data from the client to the peer
 // and copies the response from the peer to the client.
 func (p *Proxy) proxyDataCopy(client net.Conn, dst net.Conn) {
 	p.Logger.Add(vlog.Debug, types.ResultOK,

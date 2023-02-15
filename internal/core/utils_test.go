@@ -6,6 +6,7 @@ import (
 	"vbalancer/internal/core"
 )
 
+// TestHumanFileSize tests the HumanFileSize function. 
 func TestHumanFileSize(t *testing.T) {
 	t.Parallel()
 
@@ -31,6 +32,7 @@ func TestHumanFileSize(t *testing.T) {
 	}
 }
 
+// TestRound tests the Round function.
 func TestRound(t *testing.T) {
 	t.Parallel()
 
