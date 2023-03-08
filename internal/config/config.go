@@ -74,7 +74,7 @@ func (c *Config) Load(cfgFileName string) error {
 	var isPathFound bool
 
 	for _, searchPath := range searchPathConfig {
-		cfgFilePath := filepath.Join(searchPath, "config.yaml")
+		cfgFilePath := filepath.Join(searchPath, cfgFileName)
 		if _, err := os.Stat(cfgFilePath); errors.Is(err, os.ErrNotExist) {
 			continue
 		}

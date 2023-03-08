@@ -4,7 +4,7 @@ PROJECT_NAME="vbalancer"
 
 all: lint test race build
 
-pre-push: fmt lint test race 
+pre-push: lint test race 
 
 build-mocks:
 	go get github.com/golang/mock/gomock
