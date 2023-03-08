@@ -69,7 +69,7 @@ func (c *Config) InitProxyPort() types.ResultCode {
 
 // Load loads the configuration for the vbalancer application.
 func (c *Config) Load(cfgFileName string) error {
-	searchPathConfig := []string{cfgFileName, "", "./config/", "../../config/", "../config/", "../../../config"}
+	searchPathConfig := []string{"", "./config/", "../../config/", "../config/", "../../../config"}
 
 	var isPathFound bool
 
