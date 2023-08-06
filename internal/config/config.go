@@ -20,6 +20,7 @@ import (
 
 // DefaultProxyPort is the default port for the proxy server.
 const DefaultProxyPort = 8080
+const DefaultConfigFile = "config.yaml"
 
 // Config is the configuration of the proxy server.
 type Config struct {

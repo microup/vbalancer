@@ -18,6 +18,8 @@ import (
 
 // Run this is the function of an application that starts a proxy server.
 func Run() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf("catch err: %v", err) //nolint:forbidigo
@@ -62,15 +64,13 @@ func Run() {
 
 // initializeConfig is the function that initializes the configuration of the application.
 func initializeConfig() *config.Config {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	configFile := os.Getenv("ConfigFile")
 
-	if configFile == "." {
-		configFile = "../../config"
-	}
-
 	cfg := config.New()
+
+	if configFile == "" {
+		configFile = config.DefaultConfigFile
+	}
 
 	if err := cfg.Load(configFile); err != nil {
 		log.Fatalf("%v", err)
