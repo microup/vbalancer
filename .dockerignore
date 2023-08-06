@@ -2,7 +2,7 @@
 .gitignore
 .travis.yml
 target
-LICENSE
-README.md
 doc
 bin
+build
+_assets_

@@ -3,10 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/rules"
@@ -75,7 +77,13 @@ func (c *Config) Load(cfgFileName string) error {
 
 	for _, searchPath := range searchPathConfig {
 		cfgFilePath := filepath.Join(searchPath, cfgFileName)
-		if _, err := os.Stat(cfgFilePath); errors.Is(err, os.ErrNotExist) {
+
+		info, err := os.Stat(cfgFilePath)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+
+		if info.IsDir() {
 			continue
 		}
 
@@ -87,36 +95,36 @@ func (c *Config) Load(cfgFileName string) error {
 
 	if !isPathFound {
 		//nolint:goerr113
-		return fmt.Errorf("failed: %s", types.ErrCantFindFile.ToStr())
+		return fmt.Errorf("path to config not found: %s", cfgFileName)
 	}
 
 	fileConfig, err := os.Open(cfgFileName)
 	if err != nil {
-		return fmt.Errorf("failed to open config file: %w", err)
+		return fmt.Errorf("%w", err)
 	}
 
 	defer func(f *os.File) {
 		err = f.Close()
 		if err != nil {
-			log.Fatalf("Error can't close config file: %s, err: %s", cfgFileName, err)
+			log.Fatalf("error can't close config file: %s, err: %s", cfgFileName, err)
 		}
 	}(fileConfig)
 
-	err = c.DecodeConfigFileYaml(fileConfig)
+	err = c.decodeConfig(fileConfig)
 	if err != nil {
-		return fmt.Errorf("can't decode config file: %s, err: %w", cfgFileName, err)
+		return fmt.Errorf("%w", err)
 	}
 
 	return nil
 }
 
-// DecodeConfigFileYaml decodes the YAML configuration file. 
-func (c *Config) DecodeConfigFileYaml(configYaml *os.File) error {
+// decodeConfig decodes the YAML configuration file.
+func (c *Config) decodeConfig(configYaml io.Reader) error {
 	decoder := yaml.NewDecoder(configYaml)
-	err := decoder.Decode(c)
 
+	err := decoder.Decode(c)
 	if err != nil {
-		return fmt.Errorf("failed to decode config yml file: %w", err)
+		return fmt.Errorf("%w", err)
 	}
 
 	return nil
