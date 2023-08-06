@@ -19,5 +19,6 @@ bin/
 logs/
 build/
 vendor/
+_assets_/
 
 
