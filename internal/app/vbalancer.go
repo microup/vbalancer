@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"syscall"
 
 	"vbalancer/internal/config"
@@ -18,7 +17,7 @@ import (
 )
 
 // Run this is the function of an application that starts a proxy server.
-func Run(wgStartApp *sync.WaitGroup) {
+func Run() {
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf("catch err: %v", err) //nolint:forbidigo
@@ -39,11 +38,9 @@ func Run(wgStartApp *sync.WaitGroup) {
 		}
 	}(logger)
 
-	ctx, proxyWorkCancel := context.WithCancel(context.Background())
-	_, cancel := context.WithTimeout(context.Background(), configuration.Proxy.ShutdownTimeout)
-
+	ctx, cancel := context.WithTimeout(context.Background(), configuration.Proxy.ShutdownTimeout)
 	defer cancel()
-
+	
 	peerList := createPeerListForBalancer(configuration)
 
 	proxyBalancer := proxy.New(configuration.Proxy, configuration.Rules, peerList, logger)
@@ -58,21 +55,13 @@ func Run(wgStartApp *sync.WaitGroup) {
 
 	logger.Add(vlog.Info, types.ResultOK, "the balancer is running")
 
-	if wgStartApp != nil {
-		wgStartApp.Done()
-	}
-
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
 	<-stopSignal
-
-	// The function closes the proxy balancer
-	proxyWorkCancel()
 }
 
 // initializeConfig is the function that initializes the configuration of the application.
 func initializeConfig() *config.Config {
-	// Set the maximum number of processors to be used by the Go runtime to the number of CPUs.
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	configFile := os.Getenv("ConfigFile")
