@@ -48,8 +48,7 @@ func Run() {
 		}
 	}(logger)
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Proxy.ShutdownTimeout)
-	defer cancel()
+	ctx := context.Background()
 
 	peerList := newPeerList(cfg)
 
@@ -63,6 +62,8 @@ func Run() {
 	go func() {
 		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
 		listenProxyChan <- proxyBalancer.ListenAndServe(ctx, cfg.ProxyPort)
+
+		stopSignal <- syscall.SIGTERM
 	}()
 
 	listenErr := <-listenProxyChan
@@ -71,6 +72,8 @@ func Run() {
 	}
 
 	<-stopSignal
+
+	logger.Add(vlog.Info, types.ResultOK, "received shutdown signal, exiting gracefully...")
 }
 
 // newPeerList is the function that creates a list of peers for the balancer.
@@ -78,7 +81,7 @@ func newPeerList(cfg *config.Config) []peer.IPeer {
 	listPeer := make([]peer.IPeer, len(cfg.Peers))
 
 	for index, cfgPeer := range cfg.Peers {
-		peerCopy := cfgPeer 
+		peerCopy := cfgPeer
 		listPeer[index] = &peerCopy
 	}
 
