@@ -22,6 +22,8 @@ import (
 const DefaultProxyPort = 8080
 const DefaultConfigFile = "config.yaml"
 
+var ErrCantGetProxyPort = errors.New("can't get proxy port")
+
 // Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
@@ -29,7 +31,7 @@ type Config struct {
 	// Proxy is the configuration for the proxy server.
 	Proxy *proxy.Config `yaml:"proxy"`
 	// Peers is a list of peer configurations.
-	Peers []*peer.Peer `yaml:"peers"`
+	Peers []peer.Peer `yaml:"peers"`
 	// Rules is the configuration for the rules to proxy.
 	Rules *rules.Rules `yaml:"rules"`
 	// ProxyPort is the port for the proxy server.
@@ -38,19 +40,34 @@ type Config struct {
 
 // New creates a new configuration for the vbalancer application.
 func New() *Config {
-	cfg := &Config{
+	return &Config{
 		Logger:    nil,
 		Proxy:     nil,
 		Peers:     nil,
 		Rules:     nil,
 		ProxyPort: "",
 	}
-
-	return cfg
 }
 
-// InitializeConfig initializes the proxy server configuration.
-func (c *Config) InitProxyPort() types.ResultCode {
+func (c *Config) Init() error {
+	configFile := os.Getenv("ConfigFile")
+	if configFile == "" {
+		configFile = DefaultConfigFile
+	}
+
+	if err := c.Load(configFile); err != nil {
+		return err
+	}
+
+	if resultCode := c.GetProxyPortConfig(); resultCode != types.ResultOK {
+		return fmt.Errorf("%w: %s", ErrCantGetProxyPort, resultCode.ToStr())
+	}
+
+	return nil
+}
+
+// GetProxyPortConfig get the proxy port to serverconfiguration.
+func (c *Config) GetProxyPortConfig() types.ResultCode {
 	osEnvValue := os.Getenv("ProxyPort")
 	if osEnvValue == ":" {
 		return types.ErrEmptyValue

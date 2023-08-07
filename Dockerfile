@@ -27,7 +27,4 @@ RUN rm -rf internal/
 RUN rm -rf vendor/
 RUN rm -rf mocks/
 
-
-RUN ls
-
 CMD ["./vbalancer"]

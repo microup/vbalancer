@@ -1,0 +1,2 @@
+{"rule":"LC_AFTER_PERIOD","sentence":"^\\QGitHub go.mod Go version GitHub repo file count test-and-linter Release Docker CI\\E$"}
+{"rule":"SENTENCE_WHITESPACE","sentence":"^\\QListener\nA limit on connections and a deadline time can be set\nBlacklists functionality has been implemented\nAll log write to 'CSV' file\nSize log file can be changed in the config file\\E$"}

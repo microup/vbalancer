@@ -7,7 +7,7 @@
 
 ## What is VBalancer?
 
-VBalancer is a project written on Golang that provides a simple and efficient way to balance traffic between identical servers(peers). It is designed to be lightweight and fast. VBalancer supports TCP protocol. With its easy-to-use configuration options, it is an ideal solution for any organization looking to improve their network application performance and reliability. Blacklist functionality has also been implemented in VBalancer. Now, IP addresses can be added to the configuration file to reject requests, which will also provide protection against DDOS or unauthorized access by a specific address. 
+VBalancer is a project written on Golang that provides a simple and efficient way to balance traffic between identical servers(peers). It is designed to be lightweight and fast. VBalancer supports TCP protocol. With its easy-to-use configuration options, it is an ideal solution for any organization looking to improve their network application performance and reliability. Blacklist functionality has also been implemented in VBalancer. Now, IP addresses can be added to the configuration file to reject requests, which will also provide protection against DDoS or unauthorized access by a specific address. 
 
 VBalancer is an open source project released under the AGPL-3.0 license.
 
@@ -16,7 +16,7 @@ VBalancer is an open source project released under the AGPL-3.0 license.
 </p>
 
 
-## Begining
+## Beginning
 
 This solution it allows users to easily configure and manage their load balancers with minimal effort.
 
@@ -48,7 +48,7 @@ $docker run --restart=always -p 8080:8080 vbalancer
 ```
 ### * you can take a ready image.
 
-#### login to Github 
+#### Login to GitHub 
 
 ```bash
 $docker login docker.pkg.github.com -u USERNAME -p ${{ secrets.TOKEN }}
@@ -68,7 +68,7 @@ $docker run -d -e PORT=8080 -p 8080:8080 docker.pkg.github.com/microup/vbalancer
 ```
 Congratulations! Now you can use the high-load balancer by sending network requests to it.
 
-#### to stop it, get the container id:
+#### If you need to stop the container, you will get the container ID:
 
 ```bash
 $ docker container ls

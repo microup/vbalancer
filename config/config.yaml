@@ -1,34 +1,18 @@
 proxy:
   defaultPort: 8080
-  clientDeadLineTime: 10s
-  destinationHostTimeout: 1ms
-  destinationHostDeadLine: 10s
-  shutdownTimeout: 10s
-  connectionSemaphore: 1000
+  clientDeadLineTime: 1s
+  destinationHostTimeout: 60s
+  destinationHostDeadLine: 1s
+  maxCountConnection: 1000
   countDialAttemptsToPeer: 30
 
 peers:
 
   - name: test_backend_1
-    uri: 127.0.0.1:8020
+    uri: 127.0.0.1:8081
 
   - name: test_backend_2
-    uri: 127.0.0.1:8030
-
-  - name: test_backend_3
-    uri: 127.0.0.1:8040
-
-  - name: test_backend_4
-    uri: 127.0.0.1:8050    
-
-  - name: test_backend_5
-    uri: 127.0.0.1:8060    
-
-  - name: test_backend_6
-    uri: 127.0.0.1:8070 
-
-  - name: test_backend_7
-    uri: 127.0.0.1:8090    
+    uri: 127.0.0.1:8082
 
 logger:
   dirLog: ./logs/

@@ -10,7 +10,7 @@
             "env": {
                 "GOPATH": "${workspaceRoot}/build",
                 "ProxyPort": "8080",
-                "ConfigFile":"../../config"
+                "ConfigFile":"config.yaml"
             },
             "args": [],
             "cwd": "${workspaceFolder}/build"

@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	
 	"vbalancer/internal/config"
 	"vbalancer/internal/types"
 )
 
-// TestInitializeConfig this is a test function for `initializeConfig()`.
+// TestGetProxyPortConfig tests the GetProxyPortConfig function.
+// It validates GetProxyPortConfig handles invalid environment variable values,
+// default values, and valid custom environment variable values correctly.
 //nolint:funlen
-func TestInitProxyPort(t *testing.T) {
+func TestGetProxyPortConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -71,8 +74,7 @@ func TestInitProxyPort(t *testing.T) {
 		os.Clearenv()
 		os.Setenv("ProxyPort", test.envVar)
 
-		result := config.InitProxyPort()
-
+		result := config.GetProxyPortConfig()
 		if result != test.expected {
 			t.Fatalf("name: %s, expected result %v, got %v", test.name, test.expected, result)
 		}
