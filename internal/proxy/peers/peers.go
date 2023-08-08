@@ -14,7 +14,7 @@ type Peers struct {
 }
 
 // newPeerList is the function that creates a list of peers for the balancer.
-func New(peers []peer.Peer) *Peers  {
+func New(peers []peer.Peer) *Peers {
 	listPeer := make([]peer.IPeer, len(peers))
 
 	for index, cfgPeer := range peers {
@@ -22,14 +22,13 @@ func New(peers []peer.Peer) *Peers  {
 		listPeer[index] = &peerCopy
 	}
 
-	var startIndexInListPeer uint64	
+	var startIndexInListPeer uint64
 
 	return &Peers{
 		List:             listPeer,
 		CurrentPeerIndex: &startIndexInListPeer,
 	}
 }
-
 
 // GetNextPeer returns the next peer in the list.
 func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
@@ -45,7 +44,11 @@ func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 	for i := next; i < l; i++ {
 		idx := i % len(p.List)
 		atomic.StoreUint64(p.CurrentPeerIndex, uint64(idx))
-		peerValue, _ := p.List[idx].(*peer.Peer)
+
+		peerValue, ok := p.List[idx].(*peer.Peer)
+		if !ok {
+			continue
+		}
 
 		return peerValue, types.ResultOK
 	}
