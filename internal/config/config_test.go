@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	
+
 	"vbalancer/internal/config"
+	"vbalancer/internal/proxy/rules"
 	"vbalancer/internal/types"
 )
 
 // TestGetProxyPortConfig tests the GetProxyPortConfig function.
 // It validates GetProxyPortConfig handles invalid environment variable values,
 // default values, and valid custom environment variable values correctly.
+//
 //nolint:funlen
 func TestGetProxyPortConfig(t *testing.T) {
 	t.Parallel()
@@ -61,10 +63,14 @@ func TestGetProxyPortConfig(t *testing.T) {
 	}
 
 	config := &config.Config{
-		Logger:    nil,
-		Proxy:     nil,
-		Peers:     nil,
-		Rules:     nil,
+		Logger: nil,
+		Proxy:  nil,
+		Peers:  nil,
+		Rules: &rules.Rules{
+			Blacklist: &rules.Blacklist{
+				RemoteIP: []string{},
+			},
+		},
 		ProxyPort: "",
 	}
 

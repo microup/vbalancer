@@ -49,6 +49,13 @@ func New() *Config {
 }
 
 func (c *Config) Init() error {
+	c.Rules = &rules.Rules{
+			Blacklist: &rules.Blacklist{
+				RemoteIP: []string{},
+			},
+		}
+		
+
 	configFile := os.Getenv("ConfigFile")
 	if configFile == "" {
 		configFile = DefaultConfigFile

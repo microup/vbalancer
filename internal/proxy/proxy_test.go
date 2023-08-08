@@ -42,7 +42,13 @@ func TestCheckNewConnection(t *testing.T) {
 			MaxCountConnection: 100,
 			CountDialAttemptsToPeer: 10,
 		},
-		Peers:  peers.New(listPeer),
+	}
+
+	testProxy.Peers = peers.New()
+	
+	err = testProxy.Peers.Init(listPeer)
+	if err != nil {
+		t.Fatalf("can't init peers: %v", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -52,7 +58,7 @@ func TestCheckNewConnection(t *testing.T) {
 
 	conn, err := net.Dial("tcp", proxySrv.Addr().String())
 	if err != nil {
-		t.Fatalf("Error dialing to proxy server: %v", err)
+		t.Fatalf("dialing to proxy server: %v", err)
 	}
 
 	defer conn.Close()

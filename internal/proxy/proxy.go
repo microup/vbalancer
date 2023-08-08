@@ -31,11 +31,28 @@ func New(cfg *config.Config, rules *rules.Rules, logger vlog.ILog) *Proxy {
 	proxy := &Proxy{
 		Config: cfg.Proxy,
 		Logger: logger,
-		Peers:  peers.New(cfg.Peers),
+		Peers:  nil,
 		Rules:  rules,
 	}
 
 	return proxy
+}
+
+// Init initializes the proxy server.
+func (p *Proxy) Init(cfg *config.Config) error {
+	p.Peers = peers.New()
+	
+	err := p.Peers.Init(cfg.Peers)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	err = p.Rules.Init()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
 }
 
 // ListenAndServe starts the proxy server.

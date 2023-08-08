@@ -14,20 +14,24 @@ type Peers struct {
 }
 
 // newPeerList is the function that creates a list of peers for the balancer.
-func New(peers []peer.Peer) *Peers {
-	listPeer := make([]peer.IPeer, len(peers))
-
-	for index, cfgPeer := range peers {
-		peerCopy := cfgPeer
-		listPeer[index] = &peerCopy
-	}
-
+func New() *Peers {
 	var startIndexInListPeer uint64
 
 	return &Peers{
-		List:             listPeer,
+		List:             []peer.IPeer{},
 		CurrentPeerIndex: &startIndexInListPeer,
 	}
+}
+
+func (p *Peers) Init(peers []peer.Peer) error {
+	p.List = make([]peer.IPeer, len(peers))
+
+	for index, cfgPeer := range peers {
+		peerCopy := cfgPeer
+		p.List[index] = &peerCopy
+	}
+
+	return nil
 }
 
 // GetNextPeer returns the next peer in the list.

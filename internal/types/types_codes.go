@@ -13,6 +13,8 @@ type (
 
 var ErrFileIsNil = errors.New("file is nil")
 var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
+var ErrRecoveredPanic = errors.New("recovered from panic")
+var ErrInitProxy = errors.New("can't init proxy")
 
 const (
 	ResultOK ResultCode = iota
@@ -29,6 +31,7 @@ const (
 	ErrCopyDataClientToPeer
 	ErrCountAttempts
 	ErrGotPanic
+	ErrCantInitProxy
 	StatusBadRequest          ResultCode = http.StatusBadRequest
 	StatusInternalServerError ResultCode = http.StatusInternalServerError
 	StatusNotExtended         ResultCode = http.StatusNotExtended

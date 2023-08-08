@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,11 +15,12 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-var ErrRecoveredPanic = errors.New("recovered from panic")
-
 // Run this is the function of an application that starts a proxy server.
 func Run() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	cfg := config.New()
 
@@ -36,7 +36,7 @@ func Run() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Add(vlog.Fatal, types.ErrGotPanic, fmt.Errorf("%w: %v", ErrRecoveredPanic, err))
+			logger.Add(vlog.Fatal, types.ErrGotPanic, fmt.Errorf("%w: %v", types.ErrRecoveredPanic, err))
 		}
 	}()
 
@@ -47,9 +47,12 @@ func Run() {
 		}
 	}(logger)
 
-	ctx := context.Background()
-
 	proxyBalancer := proxy.New(cfg, cfg.Rules, logger)
+
+	err = proxyBalancer.Init(cfg)
+	if err != nil {
+		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w: %v", types.ErrInitProxy, err))
+	}
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
