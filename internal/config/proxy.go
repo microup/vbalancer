@@ -15,5 +15,5 @@ type Proxy struct {
 	// Define the max connection semaphore
 	MaxCountConnection uint `yaml:"maxCountConnection"`
 	// Define the count dial attempts to peer
-	CountDialAttemptsToPeer uint `yaml:"countDialAttemptsToPeer"`
+	CountMaxDialAttemptsToPeer uint `yaml:"countDialAttemptsToPeer"`
 }

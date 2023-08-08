@@ -35,17 +35,17 @@ func TestCheckNewConnection(t *testing.T) {
 	testProxy := &proxy.Proxy{
 		Logger: logger,
 		Cfg: &config.Proxy{
-			DefaultPort: "8080",
-			ClientDeadLineTime: 10,
-			PeerHostTimeOut: 10,
-			PeerHostDeadLine: 10,
-			MaxCountConnection: 100,
-			CountDialAttemptsToPeer: 10,
+			DefaultPort:                "8080",
+			ClientDeadLineTime:         10,
+			PeerHostTimeOut:            10,
+			PeerHostDeadLine:           10,
+			MaxCountConnection:         100,
+			CountMaxDialAttemptsToPeer: 10,
 		},
 	}
 
 	testProxy.Peers = peers.New()
-	
+
 	err = testProxy.Peers.Init(listPeer)
 	if err != nil {
 		t.Fatalf("can't init peers: %v", err)

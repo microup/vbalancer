@@ -136,7 +136,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	clientAddr := conn.RemoteAddr().String()
 
-	err = p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
+	err = p.reverseData(conn, 0, p.Cfg.CountMaxDialAttemptsToPeer)
 
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
@@ -157,8 +157,8 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 // ReverseData reverses data from the client to the next available peer,
 // it returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
-func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfAttempts uint) error {
-	if numberOfAttempts >= maxNumberOfAttempts {
+func (p *Proxy) reverseData(client net.Conn, curentDialAttemptsToPeer uint, maxDialAttemptsToPeer uint) error {
+	if curentDialAttemptsToPeer >= maxDialAttemptsToPeer {
 		return types.ErrMaxCountAttempts
 	}
 
@@ -170,9 +170,9 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 
 	dst, err := pPeer.Dial(p.Cfg.PeerHostTimeOut, p.Cfg.PeerHostDeadLine)
 	if err != nil {
-		numberOfAttempts++
+		curentDialAttemptsToPeer++
 
-		return p.reverseData(client, numberOfAttempts, maxNumberOfAttempts)
+		return p.reverseData(client, curentDialAttemptsToPeer, maxDialAttemptsToPeer)
 	}
 	defer dst.Close()
 
