@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"vbalancer/internal/proxy"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/rules"
 	"vbalancer/internal/types"
@@ -29,7 +28,7 @@ type Config struct {
 	// Logger is the configuration for the logger.
 	Logger *vlog.Config `yaml:"logger"`
 	// Proxy is the configuration for the proxy server.
-	Proxy *proxy.Config `yaml:"proxy"`
+	Proxy *Proxy `yaml:"proxy"`
 	// Peers is a list of peer configurations.
 	Peers []peer.Peer `yaml:"peers"`
 	// Rules is the configuration for the rules to proxy.

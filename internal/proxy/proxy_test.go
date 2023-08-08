@@ -5,6 +5,7 @@ import (
 	"net"
 	"testing"
 
+	"vbalancer/internal/config"
 	"vbalancer/internal/proxy"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
@@ -23,18 +24,24 @@ func TestCheckNewConnection(t *testing.T) {
 
 	logger := &mocks.MockLogger{}
 
-	listPeer := make([]peer.IPeer, 0)
+	listPeer := make([]peer.Peer, 0)
 	testPeer := peer.Peer{
-		Name:  "test peer",
-		URI:   "127.0.0.1:0",
+		Name: "test peer",
+		URI:  "127.0.0.1:8080",
 	}
-	listPeer = append(listPeer, &testPeer)
+	listPeer = append(listPeer, testPeer)
 
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy := &proxy.Proxy{
-		Cfg: &proxy.Config{},
-
 		Logger: logger,
+		Config: &config.Proxy{
+			DefaultPort: "8080",
+			ClientDeadLineTime: 10,
+			PeerHostTimeOut: 10,
+			PeerHostDeadLine: 10,
+			MaxCountConnection: 100,
+			CountDialAttemptsToPeer: 10,
+		},
 		Peers:  peers.New(listPeer),
 	}
 

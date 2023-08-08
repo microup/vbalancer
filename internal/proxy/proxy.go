@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"vbalancer/internal/proxy/peer"
+	"vbalancer/internal/config"
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/proxy/response"
 	"vbalancer/internal/proxy/rules"
@@ -22,16 +22,16 @@ const MaxProxyCountCopyData = 2
 type Proxy struct {
 	Logger vlog.ILog
 	Peers  *peers.Peers
-	Cfg    *Config
+	Config *config.Proxy
 	Rules  *rules.Rules
 }
 
 // New creates a new proxy server.
-func New(cfg *Config, rules *rules.Rules, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
+func New(cfg *config.Config, rules *rules.Rules, logger vlog.ILog) *Proxy {
 	proxy := &Proxy{
+		Config: cfg.Proxy,
 		Logger: logger,
-		Peers:  peers.New(listPeer),
-		Cfg:    cfg,
+		Peers:  peers.New(cfg.Peers),
 		Rules:  rules,
 	}
 
@@ -63,7 +63,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 
 // AcceptConnections accepts connections from the proxy server.
 func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
-	semaphore := make(chan struct{}, p.Cfg.MaxCountConnection)
+	semaphore := make(chan struct{}, p.Config.MaxCountConnection)
 
 	for {
 		select {
@@ -102,7 +102,7 @@ func (p *Proxy) getCheckIsBlackListIP(remoteIP string) bool {
 
 func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{}) {
 	defer func() {
-		<- semaphore
+		<-semaphore
 	}()
 
 	defer p.Logger.Add(vlog.Debug, types.ResultOK,
@@ -112,7 +112,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
 
-	err := conn.SetDeadline(time.Now().Add(p.Cfg.ClientDeadLineTime))
+	err := conn.SetDeadline(time.Now().Add(p.Config.ClientDeadLineTime))
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy,
 			vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Errorf("failed to set deadline: %w", err))
@@ -122,7 +122,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	clientAddr := conn.RemoteAddr().String()
 
-	err = p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
+	err = p.reverseData(conn, 0, p.Config.CountDialAttemptsToPeer)
 
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
@@ -154,7 +154,7 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	dst, err := pPeer.Dial(p.Cfg.DestinationHostTimeOut, p.Cfg.DestinationHostDeadLine)
+	dst, err := pPeer.Dial(p.Config.PeerHostTimeOut, p.Config.PeerHostDeadLine)
 	if err != nil {
 		numberOfAttempts++
 
