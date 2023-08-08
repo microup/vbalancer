@@ -21,6 +21,7 @@ const (
 	ErrEmptyValue
 	ErrCantFindFile
 	ErrCantFindActivePeers
+	ErrUnknownTypeObjectPeer
 	ErrPeerIsFailed
 	ErrCantMarshalJSON
 	ErrSendResponseToClient
