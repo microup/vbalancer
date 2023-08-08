@@ -9,26 +9,22 @@ import (
 
 // Peers define a struct that contains a list of peers.
 type Peers struct {
-	List             []peer.IPeer
 	CurrentPeerIndex *uint64
+	List             []peer.Peer `yaml:"list" json:"list"` 
 }
 
-// newPeerList is the function that creates a list of peers for the balancer.
-func New() *Peers {
-	var startIndexInListPeer uint64
-
-	return &Peers{
-		List:             []peer.IPeer{},
-		CurrentPeerIndex: &startIndexInListPeer,
-	}
-}
-
+// Initialize Peers struct with a slice of Peer objects,
+// copy peers from input to the new slice, set CurrentPeerIndex to 0
+// to track the selected peer's index in the slice.
 func (p *Peers) Init(peers []peer.Peer) error {
-	p.List = make([]peer.IPeer, len(peers))
+	var startIndexInListPeer uint64
+	p.CurrentPeerIndex = &startIndexInListPeer
+
+	p.List = make([]peer.Peer, len(peers))
 
 	for index, cfgPeer := range peers {
 		peerCopy := cfgPeer
-		p.List[index] = &peerCopy
+		p.List[index] = peerCopy
 	}
 
 	return nil
@@ -49,12 +45,7 @@ func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 		idx := i % len(p.List)
 		atomic.StoreUint64(p.CurrentPeerIndex, uint64(idx))
 
-		peerValue, ok := p.List[idx].(*peer.Peer)
-		if !ok {
-			continue
-		}
-
-		return peerValue, types.ResultOK
+		return &p.List[idx], types.ResultOK
 	}
 
 	return nil, types.ErrCantFindActivePeers

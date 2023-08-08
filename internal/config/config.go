@@ -7,18 +7,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"vbalancer/internal/proxy/peer"
-	"vbalancer/internal/proxy/rules"
+	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 
 	"gopkg.in/yaml.v2"
 )
-
-// DefaultProxyPort is the default port for the proxy server.
-const DefaultProxyPort = 8080
 
 const DefaultConfigFile = "config.yaml"
 const DefaultFileLogSizeBytes = 100000
@@ -30,15 +25,9 @@ var ErrCantGetProxyPort = errors.New("can't get proxy port")
 // Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
-	Logger *vlog.Config `yaml:"logger"`
+	Logger *vlog.Config `yaml:"logger" json:"logger"`
 	// Proxy is the configuration for the proxy server.
-	Proxy *Proxy `yaml:"proxy"`
-	// Peers is a list of peer configurations.
-	Peers []peer.Peer `yaml:"peers"`
-	// Rules is the configuration for the rules to proxy.
-	Rules *rules.Rules `yaml:"rules"`
-	// ProxyPort is the port for the proxy server.
-	ProxyPort string
+	Proxy *proxy.Proxy `yaml:"proxy" json:"proxy"`
 }
 
 // New creates a new configuration for the vbalancer application.
@@ -50,13 +39,6 @@ func New() *Config {
 			APIShowRecords: DeafultShowRecordsAPI,
 		},
 		Proxy: nil,
-		Peers: nil,
-		Rules: &rules.Rules{
-			Blacklist: &rules.Blacklist{
-				RemoteIP: []string{},
-			},
-		},
-		ProxyPort: "",
 	}
 }
 
@@ -70,32 +52,11 @@ func (c *Config) Init() error {
 		return err
 	}
 
-	if resultCode := c.GetProxyPortConfig(); resultCode != types.ResultOK {
+	if resultCode := c.Proxy.UpdatePort(); resultCode != types.ResultOK {
 		return fmt.Errorf("%w: %s", ErrCantGetProxyPort, resultCode.ToStr())
 	}
 
 	return nil
-}
-
-// GetProxyPortConfig get the proxy port to serverconfiguration.
-func (c *Config) GetProxyPortConfig() types.ResultCode {
-	osEnvValue := os.Getenv("ProxyPort")
-	if osEnvValue == ":" {
-		return types.ErrEmptyValue
-	}
-
-	c.ProxyPort = fmt.Sprintf(":%s", osEnvValue)
-	if c.ProxyPort == ":" {
-		c.ProxyPort = fmt.Sprintf(":%d", DefaultProxyPort)
-	}
-
-	c.ProxyPort = strings.Trim(c.ProxyPort, " ")
-
-	if c.ProxyPort == strings.Trim(":", " ") {
-		return types.ErrEmptyValue
-	}
-
-	return types.ResultOK
 }
 
 // Load loads the configuration for the vbalancer application.

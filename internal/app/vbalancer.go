@@ -10,7 +10,6 @@ import (
 	"syscall"
 
 	"vbalancer/internal/config"
-	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
@@ -50,9 +49,9 @@ func Run() {
 		}
 	}(logger)
 
-	proxyBalancer := proxy.New(logger, cfg.Proxy, cfg.Rules)
+	proxyBalancer := cfg.Proxy
 
-	err = proxyBalancer.Init(cfg.Peers)
+	err = proxyBalancer.Init(logger)
 	if err != nil {
 		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w: %v", types.ErrInitProxy, err))
 	}
@@ -63,8 +62,8 @@ func Run() {
 	listenProxyChan := make(chan error)
 
 	go func() {
-		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
-		listenProxyChan <- proxyBalancer.ListenAndServe(ctx, cfg.ProxyPort)
+		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.Proxy.Port))
+		listenProxyChan <- proxyBalancer.ListenAndServe(ctx, cfg.Proxy.Port)
 
 		stopSignal <- syscall.SIGTERM
 	}()

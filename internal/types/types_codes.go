@@ -15,6 +15,7 @@ var ErrFileIsNil = errors.New("file is nil")
 var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
 var ErrRecoveredPanic = errors.New("recovered from panic")
 var ErrInitProxy = errors.New("can't init proxy")
+var ErrConfigPeersIsNil = errors.New("empty list peer in config file") 
 
 const (
 	ResultOK ResultCode = iota
