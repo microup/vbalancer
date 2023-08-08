@@ -2,6 +2,7 @@ package peers
 
 import (
 	"sync/atomic"
+
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/types"
 )
@@ -12,15 +13,23 @@ type Peers struct {
 	CurrentPeerIndex *uint64
 }
 
-// New creates a new instance of Peers.
-func New(list []peer.IPeer) *Peers {
-	var startIndexInListPeer uint64
+// newPeerList is the function that creates a list of peers for the balancer.
+func New(peers []peer.Peer) *Peers  {
+	listPeer := make([]peer.IPeer, len(peers))
+
+	for index, cfgPeer := range peers {
+		peerCopy := cfgPeer
+		listPeer[index] = &peerCopy
+	}
+
+	var startIndexInListPeer uint64	
 
 	return &Peers{
-		List:             list,
+		List:             listPeer,
 		CurrentPeerIndex: &startIndexInListPeer,
 	}
 }
+
 
 // GetNextPeer returns the next peer in the list.
 func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
