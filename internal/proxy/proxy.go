@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
-	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/proxy/response"
 	"vbalancer/internal/proxy/rules"
@@ -16,26 +17,79 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-const MaxProxyCountCopyData = 2
+// DefaultPort is the default port for the proxy server.
+const DefaultPort = 8080
+
+const MaxCountCopyData = 2
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
-	Logger vlog.ILog
-	Peers  *peers.Peers
-	Cfg    *Config
-	Rules  *rules.Rules
+	// Define the default port to listen on
+	Port string `yaml:"port" json:"port"`
+	// Define the client deadline time
+	ClientDeadLineTime time.Duration `yaml:"clientDeadLineTime" json:"clientDeadLineTime"`
+	// Define the peer host timeout
+	PeerHostTimeOut time.Duration `yaml:"peerHostTimeout" json:"peerHostTimeout"`
+	// Define the peer host deadline
+	PeerHostDeadLine time.Duration `yaml:"peerHostDeadLine" json:"peerHostDeadLine"`
+	// Define the max connection semaphore
+	MaxCountConnection uint `yaml:"maxCountConnection" json:"maxCountConnection"`
+	// Define the count dial attempts to peer
+	CountMaxDialAttemptsToPeer uint `yaml:"countDialAttemptsToPeer" json:"countDialAttemptsToPeer"`
+	// Peers is a list of peer configurations.
+	Peers *peers.Peers `yaml:"peers" json:"peers"` 
+	//
+	Logger vlog.ILog `yaml:"-" json:"-"`
+	// Defien allows configuration of blacklist rules to be passed to the proxy server
+	Rules *rules.Rules `yaml:"rules" json:"rules"`
 }
 
-// New creates a new proxy server.
-func New(cfg *Config, rules *rules.Rules, listPeer []peer.IPeer, logger vlog.ILog) *Proxy {
-	proxy := &Proxy{
-		Logger: logger,
-		Peers:  peers.New(listPeer),
-		Cfg:    cfg,
-		Rules:  rules,
+// Init initializes the proxy server.
+func (p *Proxy) Init(logger vlog.ILog) error {
+	p.Logger = logger
+
+	if p.Peers != nil && len(p.Peers.List) != 0 {
+		err := p.Peers.Init(p.Peers.List)
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+	} else {
+		return types.ErrConfigPeersIsNil
 	}
 
-	return proxy
+	if p.Rules != nil {
+		err := p.Rules.Init()
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+	}
+
+	return nil
+}
+
+// GetProxyPortConfig get the proxy port to serverconfiguration.
+func (p *Proxy) UpdatePort() types.ResultCode {
+	var proxyPort string
+
+	if p.Port == "" || p.Port == ":" {
+		proxyPort = os.Getenv("ProxyPort")
+		if proxyPort == ":" || proxyPort == "" {
+			proxyPort = fmt.Sprintf("%d", DefaultPort)
+		}
+	} else {
+		proxyPort = p.Port
+	}
+
+	proxyPort = fmt.Sprintf(":%s", proxyPort)
+
+	proxyPort = strings.Trim(proxyPort, " ")
+	if proxyPort == strings.Trim(":", " ") {
+		return types.ErrEmptyValue
+	}
+
+	p.Port = proxyPort
+
+	return types.ResultOK
 }
 
 // ListenAndServe starts the proxy server.
@@ -52,10 +106,6 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 		}
 	}(proxySrv)
 
-	for _, pPeer := range p.Peers.List {
-		pPeer.SetLogger(p.Logger)
-	}
-
 	p.AcceptConnections(ctx, proxySrv)
 
 	return nil
@@ -63,7 +113,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 
 // AcceptConnections accepts connections from the proxy server.
 func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
-	semaphore := make(chan struct{}, p.Cfg.MaxCountConnection)
+	semaphore := make(chan struct{}, p.MaxCountConnection)
 
 	for {
 		select {
@@ -102,7 +152,7 @@ func (p *Proxy) getCheckIsBlackListIP(remoteIP string) bool {
 
 func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{}) {
 	defer func() {
-		<- semaphore
+		<-semaphore
 	}()
 
 	defer p.Logger.Add(vlog.Debug, types.ResultOK,
@@ -112,7 +162,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
 
-	err := conn.SetDeadline(time.Now().Add(p.Cfg.ClientDeadLineTime))
+	err := conn.SetDeadline(time.Now().Add(p.ClientDeadLineTime))
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy,
 			vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Errorf("failed to set deadline: %w", err))
@@ -122,7 +172,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	clientAddr := conn.RemoteAddr().String()
 
-	err = p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
+	err = p.reverseData(conn, 0, p.CountMaxDialAttemptsToPeer)
 
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
@@ -143,8 +193,8 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 // ReverseData reverses data from the client to the next available peer,
 // it returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
-func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfAttempts uint) error {
-	if numberOfAttempts >= maxNumberOfAttempts {
+func (p *Proxy) reverseData(client net.Conn, curentDialAttemptsToPeer uint, maxDialAttemptsToPeer uint) error {
+	if curentDialAttemptsToPeer >= maxDialAttemptsToPeer {
 		return types.ErrMaxCountAttempts
 	}
 
@@ -154,11 +204,11 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	dst, err := pPeer.Dial(p.Cfg.DestinationHostTimeOut, p.Cfg.DestinationHostDeadLine)
+	dst, err := pPeer.Dial(p.PeerHostTimeOut, p.PeerHostDeadLine)
 	if err != nil {
-		numberOfAttempts++
+		curentDialAttemptsToPeer++
 
-		return p.reverseData(client, numberOfAttempts, maxNumberOfAttempts)
+		return p.reverseData(client, curentDialAttemptsToPeer, maxDialAttemptsToPeer)
 	}
 	defer dst.Close()
 
@@ -170,7 +220,7 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 
 	var waitGroup sync.WaitGroup
 
-	waitGroup.Add(MaxProxyCountCopyData)
+	waitGroup.Add(MaxCountCopyData)
 
 	p.proxyDataCopy(&waitGroup, client, dst)
 

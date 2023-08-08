@@ -17,7 +17,7 @@ func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 		{
 			name: "empty blacklisted",
 			b: &rules.Blacklist{
-				RemoteIPs: []string{""},
+				RemoteIP: []string{""},
 			},
 			checkedIP: "89.207.132.170",
 			want:      false,
@@ -25,7 +25,7 @@ func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 		{
 			name: "ip is blacklisted",
 			b: &rules.Blacklist{
-				RemoteIPs: []string{"89.207.132.170", "89.207.132.172"},
+				RemoteIP: []string{"89.207.132.170", "89.207.132.172"},
 			},
 			checkedIP: "89.207.132.170",
 			want:      true,
@@ -33,15 +33,15 @@ func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 		{
 			name: "ip is blacklisted with port",
 			b: &rules.Blacklist{
-				RemoteIPs: []string{"89.207.132.170", "89.207.132.172"},
+				RemoteIP: []string{"89.207.132.170", "89.207.132.172"},
 			},
 			checkedIP: "89.207.132.170:1234",
 			want:      true,
-		},		
+		},
 		{
 			name: "ip is not blacklisted",
 			b: &rules.Blacklist{
-				RemoteIPs: []string{"89.207.132.170", "89.207.132.175"},
+				RemoteIP: []string{"89.207.132.170", "89.207.132.175"},
 			},
 			checkedIP: "89.207.132.171",
 			want:      false,
@@ -49,11 +49,11 @@ func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 		{
 			name: "ip is not blacklisted with port",
 			b: &rules.Blacklist{
-				RemoteIPs: []string{"89.207.132.170", "89.207.132.175"},
+				RemoteIP: []string{"89.207.132.170", "89.207.132.175"},
 			},
 			checkedIP: "89.207.132.171:1234",
 			want:      false,
-		},		
+		},
 	}
 
 	for _, c := range cases {

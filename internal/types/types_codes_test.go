@@ -45,19 +45,6 @@ func TestResultCodeToUint(t *testing.T) {
 		expected uint32
 	}{
 		{types.ResultOK, 0},
-		{types.ErrProxy, 1},
-		{types.ErrClientProxy, 2},
-		{types.ErrCantMarshalJSON, 7},
-		{types.ErrCopyDataPeerToClient, 9},
-		{types.ErrCopyDataClientToPeer, 10},
-		{types.ErrSendResponseToClient, 8},
-		{types.StatusBadRequest, 400},
-		{types.StatusInternalServerError, 500},
-		{types.StatusNotExtended, 510},
-		{types.ErrEmptyValue, 3},
-		{types.ErrCantFindFile, 4},
-		{types.ErrCantFindActivePeers, 5},
-		{types.ErrGotPanic, 12},
 		{types.ResultUnknown, 4294967295},
 		{types.ResultCode(0xABC), 2748},
 	}

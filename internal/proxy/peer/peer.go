@@ -4,21 +4,18 @@ import (
 	"fmt"
 	"net"
 	"time"
-	"vbalancer/internal/vlog"
 )
 
 // IPeer this is the interface that defines the methods for dialing a connection.
 type IPeer interface {
 	Dial(timeOut time.Duration, timeOutDeadLine time.Duration) (net.Conn, error)
 	GetURI() string
-	SetLogger(vlog.ILog)
 }
 
 // Peer this is the struct that implements the IPeer interface.
 type Peer struct {
 	Name   string `yaml:"name"`
 	URI    string `yaml:"uri"`
-	logger vlog.ILog
 }
 
 // Dial dials a connection to a peer.
@@ -34,11 +31,6 @@ func (p *Peer) Dial(timeOut time.Duration, timeOutDeadLine time.Duration) (net.C
 	}
 
 	return connect, nil
-}
-
-// SetLogger set the logger of the peer to the given value.
-func (p *Peer) SetLogger(value vlog.ILog) {
-	p.logger = value
 }
 
 // GetURI return the URI of the peer.

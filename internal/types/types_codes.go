@@ -13,6 +13,11 @@ type (
 
 var ErrFileIsNil = errors.New("file is nil")
 var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
+var ErrRecoveredPanic = errors.New("recovered from panic")
+var ErrInitProxy = errors.New("can't init proxy")
+var ErrConfigPeersIsNil = errors.New("empty list peer in config file") 
+var ErrCantGetProxyPort = errors.New("can't get proxy port")
+var ErrCantGetProxySection = errors.New("can't get proxy section in config")
 
 const (
 	ResultOK ResultCode = iota
@@ -21,6 +26,7 @@ const (
 	ErrEmptyValue
 	ErrCantFindFile
 	ErrCantFindActivePeers
+	ErrUnknownTypeObjectPeer
 	ErrPeerIsFailed
 	ErrCantMarshalJSON
 	ErrSendResponseToClient
@@ -28,6 +34,7 @@ const (
 	ErrCopyDataClientToPeer
 	ErrCountAttempts
 	ErrGotPanic
+	ErrCantInitProxy
 	StatusBadRequest          ResultCode = http.StatusBadRequest
 	StatusInternalServerError ResultCode = http.StatusInternalServerError
 	StatusNotExtended         ResultCode = http.StatusNotExtended

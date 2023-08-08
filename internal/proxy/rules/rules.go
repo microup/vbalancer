@@ -4,3 +4,7 @@ package rules
 type Rules struct {
 	Blacklist *Blacklist `yaml:"blacklist"`
 }
+
+func (r *Rules) Init() error {
+	return nil
+}

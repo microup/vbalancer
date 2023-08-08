@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,17 +10,16 @@ import (
 	"syscall"
 
 	"vbalancer/internal/config"
-	"vbalancer/internal/proxy"
-	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
 
-var ErrRecoveredPanic = errors.New("recovered from panic")
-
 // Run this is the function of an application that starts a proxy server.
 func Run() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	cfg := config.New()
 
@@ -37,7 +35,10 @@ func Run() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Add(vlog.Fatal, types.ErrGotPanic, fmt.Errorf("%w: %v", ErrRecoveredPanic, err))
+			msgErr := fmt.Errorf("%w: %v", types.ErrRecoveredPanic, err)
+
+			logger.Add(vlog.Fatal, types.ErrGotPanic, msgErr)
+			log.Printf("%v", msgErr)
 		}
 	}()
 
@@ -48,11 +49,12 @@ func Run() {
 		}
 	}(logger)
 
-	ctx := context.Background()
+	proxyBalancer := cfg.Proxy
 
-	peerList := newPeerList(cfg)
-
-	proxyBalancer := proxy.New(cfg.Proxy, cfg.Rules, peerList, logger)
+	err = proxyBalancer.Init(logger)
+	if err != nil {
+		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w: %v", types.ErrInitProxy, err))
+	}
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
@@ -60,8 +62,8 @@ func Run() {
 	listenProxyChan := make(chan error)
 
 	go func() {
-		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.ProxyPort))
-		listenProxyChan <- proxyBalancer.ListenAndServe(ctx, cfg.ProxyPort)
+		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.Proxy.Port))
+		listenProxyChan <- proxyBalancer.ListenAndServe(ctx, cfg.Proxy.Port)
 
 		stopSignal <- syscall.SIGTERM
 	}()
@@ -74,16 +76,4 @@ func Run() {
 	<-stopSignal
 
 	logger.Add(vlog.Info, types.ResultOK, "received shutdown signal, exiting gracefully...")
-}
-
-// newPeerList is the function that creates a list of peers for the balancer.
-func newPeerList(cfg *config.Config) []peer.IPeer {
-	listPeer := make([]peer.IPeer, len(cfg.Peers))
-
-	for index, cfgPeer := range cfg.Peers {
-		peerCopy := cfgPeer
-		listPeer[index] = &peerCopy
-	}
-
-	return listPeer
 }

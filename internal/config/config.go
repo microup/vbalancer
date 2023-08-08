@@ -7,45 +7,36 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"vbalancer/internal/proxy"
-	"vbalancer/internal/proxy/peer"
-	"vbalancer/internal/proxy/rules"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 
 	"gopkg.in/yaml.v2"
 )
 
-// DefaultProxyPort is the default port for the proxy server.
-const DefaultProxyPort = 8080
 const DefaultConfigFile = "config.yaml"
-
-var ErrCantGetProxyPort = errors.New("can't get proxy port")
+const DefaultFileLogSizeBytes = 100000
+const DeafultShowRecordsAPI = 50
+const DefaultDirLogs = "/logs"
 
 // Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
-	Logger *vlog.Config `yaml:"logger"`
+	Logger *vlog.Config `yaml:"logger" json:"logger"`
 	// Proxy is the configuration for the proxy server.
-	Proxy *proxy.Config `yaml:"proxy"`
-	// Peers is a list of peer configurations.
-	Peers []peer.Peer `yaml:"peers"`
-	// Rules is the configuration for the rules to proxy.
-	Rules *rules.Rules `yaml:"rules"`
-	// ProxyPort is the port for the proxy server.
-	ProxyPort string
+	Proxy *proxy.Proxy `yaml:"proxy" json:"proxy"`
 }
 
 // New creates a new configuration for the vbalancer application.
 func New() *Config {
 	return &Config{
-		Logger:    nil,
-		Proxy:     nil,
-		Peers:     nil,
-		Rules:     nil,
-		ProxyPort: "",
+		Logger: &vlog.Config{
+			DirLog:         DefaultDirLogs,
+			FileSize:       DefaultFileLogSizeBytes,
+			APIShowRecords: DeafultShowRecordsAPI,
+		},
+		Proxy: nil,
 	}
 }
 
@@ -59,32 +50,15 @@ func (c *Config) Init() error {
 		return err
 	}
 
-	if resultCode := c.GetProxyPortConfig(); resultCode != types.ResultOK {
-		return fmt.Errorf("%w: %s", ErrCantGetProxyPort, resultCode.ToStr())
+	if c.Proxy == nil {
+		return fmt.Errorf("%w", types.ErrCantGetProxySection)
+	}
+
+	if resultCode := c.Proxy.UpdatePort(); resultCode != types.ResultOK {
+		return fmt.Errorf("%w: %s", types.ErrCantGetProxyPort, resultCode.ToStr())
 	}
 
 	return nil
-}
-
-// GetProxyPortConfig get the proxy port to serverconfiguration.
-func (c *Config) GetProxyPortConfig() types.ResultCode {
-	osEnvValue := os.Getenv("ProxyPort")
-	if osEnvValue == ":" {
-		return types.ErrEmptyValue
-	}
-
-	c.ProxyPort = fmt.Sprintf(":%s", osEnvValue)
-	if c.ProxyPort == ":" {
-		c.ProxyPort = fmt.Sprintf(":%d", DefaultProxyPort)
-	}
-
-	c.ProxyPort = strings.Trim(c.ProxyPort, " ")
-
-	if c.ProxyPort == strings.Trim(":", " ") {
-		return types.ErrEmptyValue
-	}
-
-	return types.ResultOK
 }
 
 // Load loads the configuration for the vbalancer application.
