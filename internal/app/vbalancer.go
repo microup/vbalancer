@@ -12,7 +12,6 @@ import (
 
 	"vbalancer/internal/config"
 	"vbalancer/internal/proxy"
-	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
@@ -50,9 +49,7 @@ func Run() {
 
 	ctx := context.Background()
 
-	peerList := newPeerList(cfg)
-
-	proxyBalancer := proxy.New(cfg.Proxy, cfg.Rules, peerList, logger)
+	proxyBalancer := proxy.New(cfg, cfg.Rules, logger)
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
@@ -74,16 +71,4 @@ func Run() {
 	<-stopSignal
 
 	logger.Add(vlog.Info, types.ResultOK, "received shutdown signal, exiting gracefully...")
-}
-
-// newPeerList is the function that creates a list of peers for the balancer.
-func newPeerList(cfg *config.Config) []peer.IPeer {
-	listPeer := make([]peer.IPeer, len(cfg.Peers))
-
-	for index, cfgPeer := range cfg.Peers {
-		peerCopy := cfgPeer
-		listPeer[index] = &peerCopy
-	}
-
-	return listPeer
 }
