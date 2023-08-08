@@ -20,8 +20,6 @@ const DefaultFileLogSizeBytes = 100000
 const DeafultShowRecordsAPI = 50
 const DefaultDirLogs = "/logs"
 
-var ErrCantGetProxyPort = errors.New("can't get proxy port")
-
 // Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
@@ -52,8 +50,12 @@ func (c *Config) Init() error {
 		return err
 	}
 
+	if c.Proxy == nil {
+		return fmt.Errorf("%w", types.ErrCantGetProxySection)
+	}
+
 	if resultCode := c.Proxy.UpdatePort(); resultCode != types.ResultOK {
-		return fmt.Errorf("%w: %s", ErrCantGetProxyPort, resultCode.ToStr())
+		return fmt.Errorf("%w: %s", types.ErrCantGetProxyPort, resultCode.ToStr())
 	}
 
 	return nil
