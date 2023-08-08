@@ -9,7 +9,7 @@ import (
 	"vbalancer/internal/types"
 )
 
-// Ilog is the interface for log. 
+// Ilog is the interface for log.
 type ILog interface {
 	Add(values ...interface{})
 	Close() error
@@ -27,7 +27,14 @@ type VLog struct {
 	IsDisabled        bool
 }
 
+
 func New(cfg *Config) (*VLog, error) {
+	headerCSV := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;",
+		"Date", "Time", "Type", "ResultCode", "RemoteAddr",
+		"ClientHost", "ClientMethod", "ClientProto", "ClientURI",
+		"PeerMethod", "PeerProto", "PeerHost",
+		"PeerRequestURI", "Description")
+
 	vLog := &VLog{
 		wgNewLog:          &sync.WaitGroup{},
 		Mu:                &sync.Mutex{},
@@ -35,13 +42,9 @@ func New(cfg *Config) (*VLog, error) {
 		cfg:               cfg,
 		countToLogID:      -1,
 		MapLastLogRecords: []string{},
-		headerCSV: fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;",
-			"Date", "Time", "Type", "ResultCode", "RemoteAddr",
-			"ClientHost", "ClientMethod", "ClientProto", "ClientURI",
-			"PeerMethod", "PeerProto", "PeerHost",
-			"PeerRequestURI", "Description"),
-		startTimeLog: time.Now(),
-		IsDisabled:   false,
+		headerCSV:         headerCSV,
+		startTimeLog:      time.Now(),
+		IsDisabled:        false,
 	}
 
 	err := vLog.newFileLog("", true)

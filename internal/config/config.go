@@ -19,7 +19,11 @@ import (
 
 // DefaultProxyPort is the default port for the proxy server.
 const DefaultProxyPort = 8080
+
 const DefaultConfigFile = "config.yaml"
+const DefaultFileLogSizeBytes = 100000
+const DeafultShowRecordsAPI = 50
+const DefaultDirLogs = "/logs"
 
 var ErrCantGetProxyPort = errors.New("can't get proxy port")
 
@@ -40,22 +44,23 @@ type Config struct {
 // New creates a new configuration for the vbalancer application.
 func New() *Config {
 	return &Config{
-		Logger:    nil,
-		Proxy:     nil,
-		Peers:     nil,
-		Rules:     nil,
+		Logger: &vlog.Config{
+			DirLog:         DefaultDirLogs,
+			FileSize:       DefaultFileLogSizeBytes,
+			APIShowRecords: DeafultShowRecordsAPI,
+		},
+		Proxy: nil,
+		Peers: nil,
+		Rules: &rules.Rules{
+			Blacklist: &rules.Blacklist{
+				RemoteIP: []string{},
+			},
+		},
 		ProxyPort: "",
 	}
 }
 
 func (c *Config) Init() error {
-	c.Rules = &rules.Rules{
-			Blacklist: &rules.Blacklist{
-				RemoteIP: []string{},
-			},
-		}
-		
-
 	configFile := os.Getenv("ConfigFile")
 	if configFile == "" {
 		configFile = DefaultConfigFile

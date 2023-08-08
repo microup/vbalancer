@@ -36,7 +36,10 @@ func Run() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Add(vlog.Fatal, types.ErrGotPanic, fmt.Errorf("%w: %v", types.ErrRecoveredPanic, err))
+			msgErr := fmt.Errorf("%w: %v", types.ErrRecoveredPanic, err)
+
+			logger.Add(vlog.Fatal, types.ErrGotPanic, msgErr)
+			log.Printf("%v", msgErr)
 		}
 	}()
 
@@ -47,9 +50,9 @@ func Run() {
 		}
 	}(logger)
 
-	proxyBalancer := proxy.New(cfg, cfg.Rules, logger)
+	proxyBalancer := proxy.New(logger, cfg.Proxy, cfg.Rules)
 
-	err = proxyBalancer.Init(cfg)
+	err = proxyBalancer.Init(cfg.Peers)
 	if err != nil {
 		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w: %v", types.ErrInitProxy, err))
 	}

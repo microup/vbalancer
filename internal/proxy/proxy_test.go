@@ -34,7 +34,7 @@ func TestCheckNewConnection(t *testing.T) {
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy := &proxy.Proxy{
 		Logger: logger,
-		Config: &config.Proxy{
+		Cfg: &config.Proxy{
 			DefaultPort: "8080",
 			ClientDeadLineTime: 10,
 			PeerHostTimeOut: 10,

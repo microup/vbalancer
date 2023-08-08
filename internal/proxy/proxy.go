@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"vbalancer/internal/config"
+	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/proxy/response"
 	"vbalancer/internal/proxy/rules"
@@ -16,20 +17,20 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-const MaxProxyCountCopyData = 2
+const MaxCountCopyData = 2
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
 	Logger vlog.ILog
 	Peers  *peers.Peers
-	Config *config.Proxy
+	Cfg    *config.Proxy
 	Rules  *rules.Rules
 }
 
 // New creates a new proxy server.
-func New(cfg *config.Config, rules *rules.Rules, logger vlog.ILog) *Proxy {
+func New(logger vlog.ILog, cfg *config.Proxy, rules *rules.Rules) *Proxy {
 	proxy := &Proxy{
-		Config: cfg.Proxy,
+		Cfg:    cfg,
 		Logger: logger,
 		Peers:  nil,
 		Rules:  rules,
@@ -39,10 +40,10 @@ func New(cfg *config.Config, rules *rules.Rules, logger vlog.ILog) *Proxy {
 }
 
 // Init initializes the proxy server.
-func (p *Proxy) Init(cfg *config.Config) error {
+func (p *Proxy) Init(lstPeers []peer.Peer) error {
 	p.Peers = peers.New()
-	
-	err := p.Peers.Init(cfg.Peers)
+
+	err := p.Peers.Init(lstPeers)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -69,10 +70,6 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 		}
 	}(proxySrv)
 
-	for _, pPeer := range p.Peers.List {
-		pPeer.SetLogger(p.Logger)
-	}
-
 	p.AcceptConnections(ctx, proxySrv)
 
 	return nil
@@ -80,7 +77,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
 
 // AcceptConnections accepts connections from the proxy server.
 func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
-	semaphore := make(chan struct{}, p.Config.MaxCountConnection)
+	semaphore := make(chan struct{}, p.Cfg.MaxCountConnection)
 
 	for {
 		select {
@@ -129,7 +126,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
 
-	err := conn.SetDeadline(time.Now().Add(p.Config.ClientDeadLineTime))
+	err := conn.SetDeadline(time.Now().Add(p.Cfg.ClientDeadLineTime))
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy,
 			vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Errorf("failed to set deadline: %w", err))
@@ -139,7 +136,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 	clientAddr := conn.RemoteAddr().String()
 
-	err = p.reverseData(conn, 0, p.Config.CountDialAttemptsToPeer)
+	err = p.reverseData(conn, 0, p.Cfg.CountDialAttemptsToPeer)
 
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
@@ -171,7 +168,7 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	dst, err := pPeer.Dial(p.Config.PeerHostTimeOut, p.Config.PeerHostDeadLine)
+	dst, err := pPeer.Dial(p.Cfg.PeerHostTimeOut, p.Cfg.PeerHostDeadLine)
 	if err != nil {
 		numberOfAttempts++
 
@@ -187,7 +184,7 @@ func (p *Proxy) reverseData(client net.Conn, numberOfAttempts uint, maxNumberOfA
 
 	var waitGroup sync.WaitGroup
 
-	waitGroup.Add(MaxProxyCountCopyData)
+	waitGroup.Add(MaxCountCopyData)
 
 	p.proxyDataCopy(&waitGroup, client, dst)
 
