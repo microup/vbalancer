@@ -16,6 +16,7 @@ import (
 )
 
 const DefaultConfigFile = "config.yaml"
+
 const DefaultFileLogSizeBytes = 100000
 const DeafultShowRecordsAPI = 50
 const DefaultDirLogs = "/logs"

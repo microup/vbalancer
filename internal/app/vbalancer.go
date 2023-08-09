@@ -51,7 +51,7 @@ func Run() {
 
 	proxyBalancer := cfg.Proxy
 
-	err = proxyBalancer.Init(logger)
+	err = proxyBalancer.Init(ctx, logger)
 	if err != nil {
 		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w: %v", types.ErrInitProxy, err))
 	}

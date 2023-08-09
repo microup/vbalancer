@@ -24,6 +24,8 @@ const MaxCountCopyData = 2
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
+	//
+	Logger vlog.ILog `yaml:"-" json:"-"`
 	// Define the default port to listen on
 	Port string `yaml:"port" json:"port"`
 	// Define the client deadline time
@@ -37,15 +39,13 @@ type Proxy struct {
 	// Define the count dial attempts to peer
 	CountMaxDialAttemptsToPeer uint `yaml:"countDialAttemptsToPeer" json:"countDialAttemptsToPeer"`
 	// Peers is a list of peer configurations.
-	Peers *peers.Peers `yaml:"peers" json:"peers"` 
-	//
-	Logger vlog.ILog `yaml:"-" json:"-"`
+	Peers *peers.Peers `yaml:"peers" json:"peers"`
 	// Defien allows configuration of blacklist rules to be passed to the proxy server
 	Rules *rules.Rules `yaml:"rules" json:"rules"`
 }
 
 // Init initializes the proxy server.
-func (p *Proxy) Init(logger vlog.ILog) error {
+func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 	p.Logger = logger
 
 	if p.Peers != nil && len(p.Peers.List) != 0 {
@@ -58,38 +58,13 @@ func (p *Proxy) Init(logger vlog.ILog) error {
 	}
 
 	if p.Rules != nil {
-		err := p.Rules.Init()
+		err := p.Rules.Init(ctx)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
 	}
 
 	return nil
-}
-
-// GetProxyPortConfig get the proxy port to serverconfiguration.
-func (p *Proxy) UpdatePort() types.ResultCode {
-	var proxyPort string
-
-	if p.Port == "" || p.Port == ":" {
-		proxyPort = os.Getenv("ProxyPort")
-		if proxyPort == ":" || proxyPort == "" {
-			proxyPort = fmt.Sprintf("%d", DefaultPort)
-		}
-	} else {
-		proxyPort = p.Port
-	}
-
-	proxyPort = fmt.Sprintf(":%s", proxyPort)
-
-	proxyPort = strings.Trim(proxyPort, " ")
-	if proxyPort == strings.Trim(":", " ") {
-		return types.ErrEmptyValue
-	}
-
-	p.Port = proxyPort
-
-	return types.ResultOK
 }
 
 // ListenAndServe starts the proxy server.
@@ -140,9 +115,34 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 	}
 }
 
+// GetProxyPortConfig get the proxy port to serverconfiguration.
+func (p *Proxy) UpdatePort() types.ResultCode {
+	var proxyPort string
+
+	if p.Port == "" || p.Port == ":" {
+		proxyPort = os.Getenv("ProxyPort")
+		if proxyPort == ":" || proxyPort == "" {
+			proxyPort = fmt.Sprintf("%d", DefaultPort)
+		}
+	} else {
+		proxyPort = p.Port
+	}
+
+	proxyPort = fmt.Sprintf(":%s", proxyPort)
+
+	proxyPort = strings.Trim(proxyPort, " ")
+	if proxyPort == strings.Trim(":", " ") {
+		return types.ErrEmptyValue
+	}
+
+	p.Port = proxyPort
+
+	return types.ResultOK
+}
+
 func (p *Proxy) getCheckIsBlackListIP(remoteIP string) bool {
 	if p.Rules != nil && p.Rules.Blacklist != nil {
-		if p.Rules.Blacklist.IsIPInBlacklist(remoteIP) {
+		if p.Rules.Blacklist.IsBlacklistIP(remoteIP) {
 			return true
 		}
 	}

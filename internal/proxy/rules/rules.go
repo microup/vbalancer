@@ -1,10 +1,21 @@
 package rules
 
+import (
+	"context"
+	"fmt"
+)
+
 // Rules is the configuration for the rules to proxy.
 type Rules struct {
 	Blacklist *Blacklist `yaml:"blacklist"`
 }
 
-func (r *Rules) Init() error {
+// Init initializes the rules.
+func (r *Rules) Init(ctx context.Context) error {
+	err := r.Blacklist.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
 	return nil
 }

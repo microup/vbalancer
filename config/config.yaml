@@ -8,6 +8,7 @@ proxy:
   countDialAttemptsToPeer: 30
 
   rules:
+    cacheDurationToEvict: 1d
     blacklist: 
       remoteIp: 
         - 127.0.0.5
