@@ -16,7 +16,7 @@ type Blacklist struct {
 	RemoteIP []string `yaml:"remoteIp"`
 }
 
-// Init initializes the blacklist
+// Init initializes the blacklist.
 func (b *Blacklist) Init(ctx context.Context) error {
 	b.Cache = cache.New(time.Second, b.CacheDurationToEvict)
 	

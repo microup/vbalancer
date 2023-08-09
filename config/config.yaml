@@ -8,8 +8,8 @@ proxy:
   countDialAttemptsToPeer: 30
 
   rules:
-    cacheDurationToEvict: 1d
     blacklist: 
+      cacheDurationToEvict: 1h
       remoteIp: 
         - 127.0.0.5
         - 192.168.1.40
