@@ -21,7 +21,7 @@ var ErrRecoveredPanic = errors.New("recovered from panic")
 
 // Run this is the function of an application that starts a proxy server.
 //
-//nolint:funlen
+//nolint:funlen,cyclop
 func Run() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
