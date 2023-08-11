@@ -116,7 +116,10 @@ func (v *VLog) checkToCreateNewLogFile() error {
 		return nil
 	}
 
-	if uint64(fileInfo.Size()) > v.cfg.FileSizeMB {
+	fileSizeBytes := uint64(fileInfo.Size())
+	fileSizeMB := float64(fileSizeBytes) / (types.LengthKilobytesInBytes * types.LengthKilobytesInBytes)
+
+	if fileSizeMB > float64(v.cfg.FileSizeMB) {
 		oldFileCSV := v.fileLog.Name()
 
 		err = v.newFileLog("", false)
