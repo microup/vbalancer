@@ -5,10 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"vbalancer/internal/config"
 	"vbalancer/internal/vlog"
 )
 
 // TestVlogAdd is a test case for vlog.Add.
+//
 //nolint:paralleltest
 func TestVlogAdd(t *testing.T) {
 	helperVlogAdd(t)
@@ -21,13 +24,15 @@ func helperVlogAdd(t *testing.T) {
 		return
 	}
 
-	cfg := &vlog.Config{
+	cfg := &config.Log{
 		DirLog:         "./logs/",
-		FileSize:       1000,
+		FileSizeMB:     1,
 		APIShowRecords: 5,
 	}
 
-	vLog, err := vlog.New(cfg)
+	vLog := vlog.New(cfg)
+
+	err := vLog.Init()
 	if err != nil {
 		t.Fatalf("unexpected error creating VLog: %v", err)
 	}

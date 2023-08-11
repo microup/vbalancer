@@ -5,14 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"vbalancer/internal/core"
+	"vbalancer/internal/types"
 	"vbalancer/internal/version"
-)
-
-const (
-	// maskDir 0x755 is an octal notation for the file permission -rwxr-xr-x.
-	maskDir = 0x755
-	// DefaultFilePerm is the default file permission with octal notation 0666.
-	DefaultFilePerm os.FileMode = 0666
 )
 
 // newFileLog - function for creating a new file log.
@@ -32,7 +26,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 	var err error
 	if _, err = os.Stat(v.cfg.DirLog); os.IsNotExist(err) {
-		err = os.Mkdir(v.cfg.DirLog, maskDir)
+		err = os.Mkdir(v.cfg.DirLog, types.MaskDir)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
@@ -72,15 +66,15 @@ func (v *VLog) open(newFileName string) (*os.File, error) {
 
 	if newFileName == "" {
 		timeCreateLogFile := v.startTimeLog.Format("20060102150405")
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, LogFileExtension)
+		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, types.LogFileExtension)
 	} else {
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, LogFileExtension)
+		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, types.LogFileExtension)
 	}
 
 	fileNameLog = filepath.Join(v.cfg.DirLog, fileNameLog)
 
 	//nolint:nosnakecase
-	fileLog, err := os.OpenFile(fileNameLog, os.O_APPEND|os.O_CREATE|os.O_RDWR, DefaultFilePerm)
+	fileLog, err := os.OpenFile(fileNameLog, os.O_APPEND|os.O_CREATE|os.O_RDWR, types.DefaultFilePerm)
 
 	if err != nil || fileLog == nil {
 		return nil, fmt.Errorf("%w", err)
@@ -102,7 +96,7 @@ func (v *VLog) GetCurrentFileLogInfo() *LogFile {
 	return &LogFile{
 		FileName: v.fileLog.Name(),
 		FileSize: core.HumanFileSize(float64(fileInfo.Size())),
-		Kind:     LogFileExtension,
+		Kind:     types.LogFileExtension,
 	}
 }
 
@@ -122,7 +116,7 @@ func (v *VLog) checkToCreateNewLogFile() error {
 		return nil
 	}
 
-	if uint64(fileInfo.Size()) > v.cfg.FileSize {
+	if uint64(fileInfo.Size()) > v.cfg.FileSizeMB {
 		oldFileCSV := v.fileLog.Name()
 
 		err = v.newFileLog("", false)
@@ -130,7 +124,7 @@ func (v *VLog) checkToCreateNewLogFile() error {
 			return err
 		}
 
-		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", LogFileExtension))
+		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
 		if err != nil {
 			return fmt.Errorf("failed to archive file: %w", err)
 		}

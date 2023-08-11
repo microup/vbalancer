@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 	"strconv"
+	"vbalancer/internal/types"
 )
 
 const (
@@ -20,20 +21,20 @@ func HumanFileSize(size float64) string {
 	suffixes[3] = "GB"
 	suffixes[4] = "TB"
 
-	base := math.Log(size) / math.Log(LengthByte)
-	getSize := Round(math.Pow(LengthByte, base-math.Floor(base)), RoundOne, place)
+	base := math.Log(size) / math.Log(types.LengthByte)
+	getSize := Round(math.Pow(types.LengthByte, base-math.Floor(base)), types.RoundOne, place)
 
 	var suffix string
 	if base > 0 {
 		suffix = suffixes[int(math.Floor(base))]
 	}
 
-	return strconv.FormatFloat(getSize, 'f', prec, BitSize) + " " + suffix
+	return strconv.FormatFloat(getSize, 'f', prec, types.BitSize) + " " + suffix
 }
 
 // Round rounds a float to a given number of decimal places.
 func Round(val float64, roundOn float64, places int) float64 {
-	pow := math.Pow(PowX, float64(places))
+	pow := math.Pow(types.PowX, float64(places))
 	
 	return math.Round(val*pow) / pow
 }

@@ -1,7 +1,5 @@
 package vlog
 
-// LogFileExtension is the file extension used for log files in CSV format.
-const LogFileExtension = "csv"
 
 // LogFile represents information about a file, including its name, size, and kind.
 type LogFile struct {
