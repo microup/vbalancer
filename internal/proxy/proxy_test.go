@@ -96,7 +96,7 @@ func TestGetProxyPort(t *testing.T) {
 			name:       "empty env var, got DefaultPort",
 			envVar:     "",
 			expected:   types.ResultOK,
-			checkValue: fmt.Sprintf(":%d", proxy.DefaultPort),
+			checkValue: fmt.Sprintf(":%d", types.DefaultProxyPort),
 		},
 		{
 			name:       "valid proxy port from env var",
