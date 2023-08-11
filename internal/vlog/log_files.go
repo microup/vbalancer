@@ -13,8 +13,8 @@ import (
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.MapLastLogRecords = make([]string, 0)
+		
 		err := v.Close()
-
 		if err != nil {
 			return err
 		}
@@ -34,7 +34,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 	v.fileLog, err = v.open(newFileName)
 	if v.fileLog == nil || err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 
 	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
@@ -110,21 +110,21 @@ func (v *VLog) checkToCreateNewLogFile() error {
 	if fileInfo == nil {
 		err = v.newFileLog("", false)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w", err)
 		}
 
 		return nil
 	}
 
-	fileSizeBytes := uint64(fileInfo.Size())
+	fileSizeBytes := fileInfo.Size()
 	fileSizeMB := float64(fileSizeBytes) / (types.LengthKilobytesInBytes * types.LengthKilobytesInBytes)
 
-	if fileSizeMB > float64(v.cfg.FileSizeMB) {
+	if fileSizeMB > v.cfg.FileSizeMB {
 		oldFileCSV := v.fileLog.Name()
 
 		err = v.newFileLog("", false)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w", err)
 		}
 
 		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
