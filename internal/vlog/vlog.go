@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"vbalancer/internal/config"
 	"vbalancer/internal/types"
 )
 
@@ -17,7 +18,7 @@ type ILog interface {
 }
 
 type VLog struct {
-	cfg               *Config
+	cfg               *config.Log
 	fileLog           *os.File
 	countToLogID      int
 	MapLastLogRecords []string
@@ -28,15 +29,14 @@ type VLog struct {
 	IsDisabled        bool
 }
 
-
-func New(cfg *Config) (*VLog, error) {
+func New(cfg *config.Log) *VLog {
 	headerCSV := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;",
 		"Date", "Time", "Type", "ResultCode", "RemoteAddr",
 		"ClientHost", "ClientMethod", "ClientProto", "ClientURI",
 		"PeerMethod", "PeerProto", "PeerHost",
 		"PeerRequestURI", "Description")
 
-	vLog := &VLog{
+	return &VLog{
 		wgNewLog:          &sync.WaitGroup{},
 		Mu:                &sync.Mutex{},
 		fileLog:           nil,
@@ -47,13 +47,15 @@ func New(cfg *Config) (*VLog, error) {
 		startTimeLog:      time.Now(),
 		IsDisabled:        false,
 	}
+}
 
-	err := vLog.newFileLog("", true)
+func (v *VLog) Init() error {
+	err := v.newFileLog("", true)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return vLog, nil
+	return nil	
 }
 
 // GetCountRecords returns the number of records in the log file.
@@ -106,7 +108,9 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 	_, err := v.fileLog.WriteString(recordRow + "\n")
 	if err != nil {
-		log.Printf("Error: %s - is writing: %s to log file: %s", err, recordRow, v.fileLog.Name())
+		log.Printf("Error: %s - is writing: %s to log file: %s\n", err, recordRow, v.fileLog.Name())
+
+		return
 	}
 
 	v.removeOldRecordsFromMemory()
