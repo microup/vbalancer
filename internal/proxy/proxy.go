@@ -133,7 +133,6 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			semaphore <- struct{}{}
 
 			go p.handleIncomingConnection(conn, semaphore)
-
 		}
 	}
 }
