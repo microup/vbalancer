@@ -9,6 +9,8 @@ import (
 const (
 	// LengthByte is the length of a byte.
 	LengthByte = 1024
+	//
+	LengthKilobytesInBytes = 1024
 	// PowX is the power of 10.
 	PowX = 10
 	// RoundOne is the value of 0.5.

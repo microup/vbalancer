@@ -52,7 +52,7 @@ func New(cfg *config.Log) *VLog {
 func (v *VLog) Init() error {
 	err := v.newFileLog("", true)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 
 	return nil	
