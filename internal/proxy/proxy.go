@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -17,10 +18,11 @@ import (
 	"vbalancer/internal/vlog"
 )
 
-// DefaultPort is the default port for the proxy server.
-const DefaultPort = 8080
-
 const MaxCountCopyData = 2
+
+var ErrCantGetProxyPort = errors.New("can't get proxy port")
+var ErrMaxCountAttempts = errors.New("exceeded maximum number of attempts")
+var ErrConfigPeersIsNil = errors.New("empty list peer in config file")
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
@@ -44,6 +46,22 @@ type Proxy struct {
 	Rules *rules.Rules `yaml:"rules" json:"rules"`
 }
 
+func New() *Proxy {
+	return &Proxy{
+		Logger:                     nil,
+		Port:                       types.DefaultProxyPort,
+		ClientDeadLineTime:         types.DeafultClientDeadLineTime,
+		PeerHostTimeOut:            types.DeafultPeerHostTimeOut,
+		PeerHostDeadLine:           types.DeafultPeerHostDeadLine,
+		MaxCountConnection:         types.DeafultMaxCountConnection,
+		CountMaxDialAttemptsToPeer: types.DeafultCountMaxDialAttemptsToPeer,
+		//nolint:exhaustivestruct,exhaustruct
+		Peers: &peers.Peers{},
+		//nolint:exhaustivestruct,exhaustruct
+		Rules: &rules.Rules{},
+	}
+}
+
 // Init initializes the proxy server.
 func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 	p.Logger = logger
@@ -54,7 +72,7 @@ func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 			return fmt.Errorf("%w", err)
 		}
 	} else {
-		return types.ErrConfigPeersIsNil
+		return ErrConfigPeersIsNil
 	}
 
 	if p.Rules != nil {
@@ -64,12 +82,16 @@ func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 		}
 	}
 
+	if resultCode := p.UpdatePort(); resultCode != types.ResultOK {
+		return fmt.Errorf("%w: %s", ErrCantGetProxyPort, resultCode.ToStr())
+	}
+
 	return nil
 }
 
 // ListenAndServe starts the proxy server.
-func (p *Proxy) ListenAndServe(ctx context.Context, proxyPort string) error {
-	proxySrv, err := net.Listen("tcp", proxyPort)
+func (p *Proxy) ListenAndServe(ctx context.Context) error {
+	proxySrv, err := net.Listen("tcp", p.Port)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -111,6 +133,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 			semaphore <- struct{}{}
 
 			go p.handleIncomingConnection(conn, semaphore)
+
 		}
 	}
 }
@@ -122,7 +145,7 @@ func (p *Proxy) UpdatePort() types.ResultCode {
 	if p.Port == "" || p.Port == ":" {
 		proxyPort = os.Getenv("ProxyPort")
 		if proxyPort == ":" || proxyPort == "" {
-			proxyPort = fmt.Sprintf("%d", DefaultPort)
+			proxyPort = types.DefaultProxyPort
 		}
 	} else {
 		proxyPort = p.Port
@@ -177,7 +200,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
 
-		responseLogger := response.New(p.Logger)
+		responseLogger := response.New()
 
 		err = responseLogger.SentResponseToClient(conn, err)
 		if err != nil {
@@ -195,7 +218,7 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 // it returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
 func (p *Proxy) reverseData(client net.Conn, curentDialAttemptsToPeer uint, maxDialAttemptsToPeer uint) error {
 	if curentDialAttemptsToPeer >= maxDialAttemptsToPeer {
-		return types.ErrMaxCountAttempts
+		return ErrMaxCountAttempts
 	}
 
 	pPeer, resultCode := p.Peers.GetNextPeer()
