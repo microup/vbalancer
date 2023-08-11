@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,37 +11,34 @@ import (
 	"syscall"
 
 	"vbalancer/internal/config"
+	"vbalancer/internal/core"
+	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 )
 
+var ErrRecoveredPanic = errors.New("recovered from panic")
+
 // Run this is the function of an application that starts a proxy server.
+//
+//nolint:funlen
 func Run() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	cfg := config.New()
+	logger := vlog.New(cfg.Log)
 
 	err := cfg.Init()
 	if err != nil {
 		log.Panicf("failed to initialize configuration: %s", err.Error())
 	}
 
-	logger, err := vlog.New(cfg.Logger)
+	err = logger.Init()
 	if err != nil {
 		log.Panicf("failed to create logger: %s", err)
 	}
-
-	defer func() {
-		if err := recover(); err != nil {
-			msgErr := fmt.Errorf("%w: %v", types.ErrRecoveredPanic, err)
-
-			logger.Add(vlog.Fatal, types.ErrGotPanic, msgErr)
-			log.Printf("%v", msgErr)
-		}
-	}()
 
 	defer func(logger vlog.ILog) {
 		err = logger.Close()
@@ -49,31 +47,52 @@ func Run() {
 		}
 	}(logger)
 
-	proxyBalancer := cfg.Proxy
+	defer func() {
+		if err := recover(); err != nil {
+			msgErr := fmt.Errorf("%w: %v", ErrRecoveredPanic, err)
 
-	err = proxyBalancer.Init(ctx, logger)
+			logger.Add(vlog.Fatal, types.ErrGotPanic, msgErr)
+			log.Printf("%v", msgErr)
+		}
+	}()
+
+	proxy, err := core.GetObjectFromMap(cfg.Proxy, proxy.New())
 	if err != nil {
-		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w: %v", types.ErrInitProxy, err))
+		logger.Add(vlog.Fatal, types.ErrCantGetProxyObject, "can't get proxy object")
+	}
+
+	err = proxy.Init(ctx, logger)
+	if err != nil {
+		logger.Add(vlog.Fatal, types.ErrCantInitProxy, fmt.Errorf("%w", err))
 	}
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
 
-	listenProxyChan := make(chan error)
+	chanListenProxy := make(chan error)
 
 	go func() {
-		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", cfg.Proxy.Port))
-		listenProxyChan <- proxyBalancer.ListenAndServe(ctx, cfg.Proxy.Port)
+		logger.Add(vlog.Info, types.ResultOK, fmt.Sprintf("start server addr on %s", proxy.Port))
+		chanListenProxy <- proxy.ListenAndServe(ctx)
 
 		stopSignal <- syscall.SIGTERM
 	}()
 
-	listenErr := <-listenProxyChan
-	if listenErr != nil {
-		logger.Add(vlog.Fatal, types.ErrProxy, fmt.Errorf("the proxy was return err: %w", err))
+	select {
+	case <-ctx.Done():
+		logger.Add(vlog.Info, types.ResultOK, "get ctx.Done()...")
+
+	case listenErr := <-chanListenProxy:
+		{
+			if listenErr != nil {
+				logger.Add(vlog.Fatal, types.ErrProxy, fmt.Errorf("the proxy was return err: %w", err))
+			} else {
+				log.Printf("the proxy was close")
+			}
+		}
+	case <-stopSignal:
+		{
+			logger.Add(vlog.Info, types.ResultOK, "get syscall.SIGTERM...")
+		}
 	}
-
-	<-stopSignal
-
-	logger.Add(vlog.Info, types.ResultOK, "received shutdown signal, exiting gracefully...")
 }
