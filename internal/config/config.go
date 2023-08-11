@@ -8,43 +8,38 @@ import (
 	"os"
 	"path/filepath"
 
-	"vbalancer/internal/proxy"
 	"vbalancer/internal/types"
-	"vbalancer/internal/vlog"
 
 	"gopkg.in/yaml.v2"
 )
 
-const DefaultConfigFile = "config.yaml"
-
-const DefaultFileLogSizeBytes = 100000
-const DeafultShowRecordsAPI = 50
-const DefaultDirLogs = "/logs"
+var ErrCantFindProxySection = errors.New("can't find proxy section in config")
 
 // Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
-	Logger *vlog.Config `yaml:"logger" json:"logger"`
+	Log *Log `yaml:"logger" json:"logger"`
 	// Proxy is the configuration for the proxy server.
-	Proxy *proxy.Proxy `yaml:"proxy" json:"proxy"`
+	Proxy any `yaml:"proxy" json:"proxy"`
 }
 
 // New creates a new configuration for the vbalancer application.
 func New() *Config {
 	return &Config{
-		Logger: &vlog.Config{
-			DirLog:         DefaultDirLogs,
-			FileSize:       DefaultFileLogSizeBytes,
-			APIShowRecords: DeafultShowRecordsAPI,
+		Log: &Log{
+			DirLog:         types.DefaultDirLogs,
+			FileSizeMB:     types.DefaultFileLogSizeMB,
+			APIShowRecords: types.DeafultShowRecordsAPI,
 		},
 		Proxy: nil,
 	}
 }
 
+// Init initializes the configuration by loading values from a YAML file.
 func (c *Config) Init() error {
 	configFile := os.Getenv("ConfigFile")
 	if configFile == "" {
-		configFile = DefaultConfigFile
+		configFile = types.DefaultNameConfigFile
 	}
 
 	if err := c.Load(configFile); err != nil {
@@ -52,11 +47,7 @@ func (c *Config) Init() error {
 	}
 
 	if c.Proxy == nil {
-		return fmt.Errorf("%w", types.ErrCantGetProxySection)
-	}
-
-	if resultCode := c.Proxy.UpdatePort(); resultCode != types.ResultOK {
-		return fmt.Errorf("%w: %s", types.ErrCantGetProxyPort, resultCode.ToStr())
+		return fmt.Errorf("%w", ErrCantFindProxySection)
 	}
 
 	return nil
