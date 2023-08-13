@@ -1,4 +1,5 @@
-package proxy_test
+//nolint:testpackage
+package proxy
 
 import (
 	"context"
@@ -7,7 +8,6 @@ import (
 	"os"
 	"testing"
 
-	"vbalancer/internal/proxy"
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/types"
@@ -34,17 +34,17 @@ func TestCheckNewConnection(t *testing.T) {
 	listPeer = append(listPeer, testPeer)
 
 	//nolint:exhaustivestruct,exhaustruct
-	testProxy := &proxy.Proxy{
+	testProxy := &Proxy{
 		Logger:                     logger,
 		Port:                       "18880",
 		ClientDeadLineTime:         10,
-		PeerHostTimeOut:            10,
+		PeerConnectionTimeout:      10,
 		PeerHostDeadLine:           10,
 		MaxCountConnection:         100,
 		CountMaxDialAttemptsToPeer: 10,
 	}
 
-	resultCode := testProxy.UpdatePort()
+	resultCode := testProxy.updatePort()
 	if resultCode != types.ResultOK {
 		t.Fatalf("can't update proxy port: %d", resultCode)
 	}
@@ -121,7 +121,7 @@ func TestGetProxyPort(t *testing.T) {
 	}
 
 	//nolint:exhaustivestruct,exhaustruct
-	prx := &proxy.Proxy{}
+	prx := &Proxy{}
 
 	for _, test := range tests {
 		prx.Port = test.port
@@ -129,7 +129,7 @@ func TestGetProxyPort(t *testing.T) {
 		os.Clearenv()
 		os.Setenv("ProxyPort", test.envVar)
 
-		result := prx.UpdatePort()
+		result := prx.updatePort()
 		if result != test.expected {
 			t.Fatalf("name: %s, expected result %v, got %v", test.name, test.expected, result)
 		}
