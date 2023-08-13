@@ -5,7 +5,6 @@ proxy:
   peerHostDeadLine: 30s
   peerConnectionTimeout: 30s
   maxCountConnection: 1000
-  countDialAttemptsToPeer: 30
 
   rules:
     blacklist: 

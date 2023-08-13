@@ -15,8 +15,8 @@ type IPeer interface {
 
 // Peer this is the struct that implements the IPeer interface.
 type Peer struct {
-	Name   string `yaml:"name"`
-	URI    string `yaml:"uri"`
+	Name                       string `yaml:"name"`
+	URI                        string `yaml:"uri"`
 }
 
 // Dial dials a connection to a peer.

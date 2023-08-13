@@ -41,7 +41,6 @@ func TestCheckNewConnection(t *testing.T) {
 		PeerConnectionTimeout:      10,
 		PeerHostDeadLine:           10,
 		MaxCountConnection:         100,
-		CountMaxDialAttemptsToPeer: 10,
 	}
 
 	resultCode := testProxy.updatePort()

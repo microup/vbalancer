@@ -38,8 +38,6 @@ type Proxy struct {
 	PeerHostDeadLine time.Duration `yaml:"peerHostDeadLine" json:"peerHostDeadLine"`
 	// Define the max connection semaphore
 	MaxCountConnection uint `yaml:"maxCountConnection" json:"maxCountConnection"`
-	// Define the count dial attempts to peer
-	CountMaxDialAttemptsToPeer uint `yaml:"countDialAttemptsToPeer" json:"countDialAttemptsToPeer"`
 	// Peers is a list of peer configurations.
 	Peers *peers.Peers `yaml:"peers" json:"peers"`
 	// Defien allows configuration of blacklist rules to be passed to the proxy server
@@ -54,7 +52,6 @@ func New() *Proxy {
 		PeerConnectionTimeout:      types.DeafultPeerConnectionTimeout,
 		PeerHostDeadLine:           types.DeafultPeerHostDeadLine,
 		MaxCountConnection:         types.DeafultMaxCountConnection,
-		CountMaxDialAttemptsToPeer: types.DeafultCountMaxDialAttemptsToPeer,
 		//nolint:exhaustivestruct,exhaustruct
 		Peers: &peers.Peers{},
 		//nolint:exhaustivestruct,exhaustruct
@@ -158,11 +155,13 @@ func (p *Proxy) handleIncomingConnection(ctx context.Context, conn net.Conn, sem
 		return
 	}
 
-	clientAddr := conn.RemoteAddr().String()
+	ctxConnectionTimeout, cancel := context.WithTimeout(ctx, p.PeerConnectionTimeout)
+	defer cancel()		
 
-	err = p.reverseData(ctx, conn, 0, p.CountMaxDialAttemptsToPeer)
+	err = p.reverseData(ctxConnectionTimeout, conn)
 
 	if err != nil {
+		clientAddr := conn.RemoteAddr().String()
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
 
 		responseLogger := response.New()
@@ -181,28 +180,18 @@ func (p *Proxy) handleIncomingConnection(ctx context.Context, conn net.Conn, sem
 
 // ReverseData reverses data from the client to the next available peer,
 // it returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
-func (p *Proxy) reverseData(ctx context.Context, client net.Conn,
-	 curentDialAttemptsToPeer uint, maxDialAttemptsToPeer uint) error {
-	if curentDialAttemptsToPeer >= maxDialAttemptsToPeer {
-		return ErrMaxCountAttempts
-	}
-
+func (p *Proxy) reverseData(ctxTimeOut context.Context, client net.Conn) error {
 	pPeer, resultCode := p.Peers.GetNextPeer()
 	if resultCode != types.ResultOK || pPeer == nil {
 		//nolint:goerr113
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	ctxConnectionTimeout, cancel := context.WithTimeout(ctx, p.PeerConnectionTimeout)
-	defer cancel()	
-
-	dst, err := pPeer.Dial(ctxConnectionTimeout, p.PeerConnectionTimeout, p.PeerHostDeadLine)
-	if err != nil {
+	dst, err := pPeer.Dial(ctxTimeOut, p.PeerConnectionTimeout, p.PeerHostDeadLine)
+	if err != nil || dst == nil {
 		p.Peers.AddToCacheBadPeer(pPeer.URI)
 
-		curentDialAttemptsToPeer++
-
-		return p.reverseData(ctx, client, curentDialAttemptsToPeer, maxDialAttemptsToPeer)
+		return p.reverseData(ctxTimeOut, client)
 	}
 	defer dst.Close()
 
