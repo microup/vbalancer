@@ -67,7 +67,7 @@ func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 	p.Logger = logger
 
 	if p.Peers != nil && len(p.Peers.List) != 0 {
-		err := p.Peers.Init(p.Peers.List)
+		err := p.Peers.Init(ctx, p.Peers.List)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
@@ -198,6 +198,8 @@ func (p *Proxy) reverseData(ctx context.Context, client net.Conn,
 
 	dst, err := pPeer.Dial(ctxConnectionTimeout, p.PeerConnectionTimeout, p.PeerHostDeadLine)
 	if err != nil {
+		p.Peers.AddToCacheBadPeer(pPeer.URI)
+
 		curentDialAttemptsToPeer++
 
 		return p.reverseData(ctx, client, curentDialAttemptsToPeer, maxDialAttemptsToPeer)

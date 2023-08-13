@@ -52,7 +52,7 @@ func TestCheckNewConnection(t *testing.T) {
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy.Peers = &peers.Peers{}
 
-	err = testProxy.Peers.Init(listPeer)
+	err = testProxy.Peers.Init(context.Background(), listPeer)
 	if err != nil {
 		t.Fatalf("can't init peers: %v", err)
 	}
