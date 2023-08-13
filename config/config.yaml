@@ -2,10 +2,9 @@ proxy:
 
   port: 8080
   clientDeadLineTime: 30s
-  peerHostTimeout: 60s
   peerHostDeadLine: 30s
+  peerConnectionTimeout: 30s
   maxCountConnection: 1000
-  countDialAttemptsToPeer: 30
 
   rules:
     blacklist: 
@@ -15,6 +14,7 @@ proxy:
         - 192.168.1.40
 
   peers:
+    timeToEvictNotResponsePeers: 60s
     list:
       - name: test_backend_1
         uri: 127.0.0.1:8081

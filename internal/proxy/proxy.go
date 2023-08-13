@@ -26,20 +26,18 @@ var ErrConfigPeersIsNil = errors.New("empty list peer in config file")
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
-	//
+	// 
 	Logger vlog.ILog `yaml:"-" json:"-"`
 	// Define the default port to listen on
 	Port string `yaml:"port" json:"port"`
 	// Define the client deadline time
 	ClientDeadLineTime time.Duration `yaml:"clientDeadLineTime" json:"clientDeadLineTime"`
 	// Define the peer host timeout
-	PeerHostTimeOut time.Duration `yaml:"peerHostTimeout" json:"peerHostTimeout"`
+	PeerConnectionTimeout  time.Duration `yaml:"peerConnectionTimeout" json:"peerConnectionTimeout"`
 	// Define the peer host deadline
 	PeerHostDeadLine time.Duration `yaml:"peerHostDeadLine" json:"peerHostDeadLine"`
 	// Define the max connection semaphore
 	MaxCountConnection uint `yaml:"maxCountConnection" json:"maxCountConnection"`
-	// Define the count dial attempts to peer
-	CountMaxDialAttemptsToPeer uint `yaml:"countDialAttemptsToPeer" json:"countDialAttemptsToPeer"`
 	// Peers is a list of peer configurations.
 	Peers *peers.Peers `yaml:"peers" json:"peers"`
 	// Defien allows configuration of blacklist rules to be passed to the proxy server
@@ -51,10 +49,9 @@ func New() *Proxy {
 		Logger:                     nil,
 		Port:                       types.DefaultProxyPort,
 		ClientDeadLineTime:         types.DeafultClientDeadLineTime,
-		PeerHostTimeOut:            types.DeafultPeerHostTimeOut,
+		PeerConnectionTimeout:      types.DeafultPeerConnectionTimeout,
 		PeerHostDeadLine:           types.DeafultPeerHostDeadLine,
 		MaxCountConnection:         types.DeafultMaxCountConnection,
-		CountMaxDialAttemptsToPeer: types.DeafultCountMaxDialAttemptsToPeer,
 		//nolint:exhaustivestruct,exhaustruct
 		Peers: &peers.Peers{},
 		//nolint:exhaustivestruct,exhaustruct
@@ -67,7 +64,7 @@ func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 	p.Logger = logger
 
 	if p.Peers != nil && len(p.Peers.List) != 0 {
-		err := p.Peers.Init(p.Peers.List)
+		err := p.Peers.Init(ctx, p.Peers.List)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
@@ -82,7 +79,7 @@ func (p *Proxy) Init(ctx context.Context, logger vlog.ILog) error {
 		}
 	}
 
-	if resultCode := p.UpdatePort(); resultCode != types.ResultOK {
+	if resultCode := p.updatePort(); resultCode != types.ResultOK {
 		return fmt.Errorf("%w: %s", ErrCantGetProxyPort, resultCode.ToStr())
 	}
 
@@ -132,47 +129,13 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 
 			semaphore <- struct{}{}
 
-			go p.handleIncomingConnection(conn, semaphore)
+			go p.handleIncomingConnection(ctx, conn, semaphore)
 		}
 	}
 }
 
-// GetProxyPortConfig get the proxy port to serverconfiguration.
-func (p *Proxy) UpdatePort() types.ResultCode {
-	var proxyPort string
-
-	if p.Port == "" || p.Port == ":" {
-		proxyPort = os.Getenv("ProxyPort")
-		if proxyPort == ":" || proxyPort == "" {
-			proxyPort = types.DefaultProxyPort
-		}
-	} else {
-		proxyPort = p.Port
-	}
-
-	proxyPort = fmt.Sprintf(":%s", proxyPort)
-
-	proxyPort = strings.Trim(proxyPort, " ")
-	if proxyPort == strings.Trim(":", " ") {
-		return types.ErrEmptyValue
-	}
-
-	p.Port = proxyPort
-
-	return types.ResultOK
-}
-
-func (p *Proxy) getCheckIsBlackListIP(remoteIP string) bool {
-	if p.Rules != nil && p.Rules.Blacklist != nil {
-		if p.Rules.Blacklist.IsBlacklistIP(remoteIP) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{}) {
+// handleIncomingConnection. 
+func (p *Proxy) handleIncomingConnection(ctx context.Context, conn net.Conn, semaphore chan struct{}) {
 	defer func() {
 		<-semaphore
 	}()
@@ -192,11 +155,13 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 		return
 	}
 
-	clientAddr := conn.RemoteAddr().String()
+	ctxConnectionTimeout, cancel := context.WithTimeout(ctx, p.PeerConnectionTimeout)
+	defer cancel()		
 
-	err = p.reverseData(conn, 0, p.CountMaxDialAttemptsToPeer)
+	err = p.reverseData(ctxConnectionTimeout, conn)
 
 	if err != nil {
+		clientAddr := conn.RemoteAddr().String()
 		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
 
 		responseLogger := response.New()
@@ -215,26 +180,24 @@ func (p *Proxy) handleIncomingConnection(conn net.Conn, semaphore chan struct{})
 
 // ReverseData reverses data from the client to the next available peer,
 // it returns an error if the maximum number of attempts is reached or if it fails to get the next peer.
-func (p *Proxy) reverseData(client net.Conn, curentDialAttemptsToPeer uint, maxDialAttemptsToPeer uint) error {
-	if curentDialAttemptsToPeer >= maxDialAttemptsToPeer {
-		return ErrMaxCountAttempts
-	}
-
+func (p *Proxy) reverseData(ctxTimeOut context.Context, client net.Conn) error {
 	pPeer, resultCode := p.Peers.GetNextPeer()
 	if resultCode != types.ResultOK || pPeer == nil {
 		//nolint:goerr113
 		return fmt.Errorf("failed get next peer, result code: %s", resultCode.ToStr())
 	}
 
-	dst, err := pPeer.Dial(p.PeerHostTimeOut, p.PeerHostDeadLine)
-	if err != nil {
-		curentDialAttemptsToPeer++
+	dst, err := pPeer.Dial(ctxTimeOut, p.PeerConnectionTimeout, p.PeerHostDeadLine)
+	if err != nil || dst == nil {
+		p.Peers.AddToCacheBadPeer(pPeer.URI)
 
-		return p.reverseData(client, curentDialAttemptsToPeer, maxDialAttemptsToPeer)
+		return p.reverseData(ctxTimeOut, client)
 	}
 	defer dst.Close()
 
-	p.Logger.Add(vlog.Debug, types.ResultOK,
+	p.Logger.Add(
+		vlog.Debug, 
+		types.ResultOK,
 		vlog.RemoteAddr(dst.RemoteAddr().String()),
 		vlog.ProxyHost(client.LocalAddr().String()),
 		fmt.Sprintf("try to copy data from remote: %s to peer: %s",
@@ -271,4 +234,40 @@ func (p *Proxy) proxyDataCopy(waitGroup *sync.WaitGroup, client io.ReadWriter, d
 
 		_, _ = io.Copy(client, dst)
 	}()
+}
+
+// updatePort.
+func (p *Proxy) updatePort() types.ResultCode {
+	var proxyPort string
+
+	if p.Port == "" || p.Port == ":" {
+		proxyPort = os.Getenv("ProxyPort")
+		if proxyPort == ":" || proxyPort == "" {
+			proxyPort = types.DefaultProxyPort
+		}
+	} else {
+		proxyPort = p.Port
+	}
+
+	proxyPort = fmt.Sprintf(":%s", proxyPort)
+
+	proxyPort = strings.Trim(proxyPort, " ")
+	if proxyPort == strings.Trim(":", " ") {
+		return types.ErrEmptyValue
+	}
+
+	p.Port = proxyPort
+
+	return types.ResultOK
+}
+
+// getCheckIsBlackListIP.
+func (p *Proxy) getCheckIsBlackListIP(remoteIP string) bool {
+	if p.Rules != nil && p.Rules.Blacklist != nil {
+		if p.Rules.Blacklist.IsBlacklistIP(remoteIP) {
+			return true
+		}
+	}
+
+	return false
 }

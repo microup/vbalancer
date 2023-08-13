@@ -46,7 +46,7 @@ const (
 	//
 	DeafultClientDeadLineTime = 30 * time.Second
 	//
-	DeafultPeerHostTimeOut =  60 * time.Second
+	DeafultPeerConnectionTimeout =  30 * time.Second
 	//
 	DeafultPeerHostDeadLine =  30 * time.Second
 	//
