@@ -26,14 +26,14 @@ var ErrConfigPeersIsNil = errors.New("empty list peer in config file")
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
-	// 
+	//
 	Logger vlog.ILog `yaml:"-" json:"-"`
 	// Define the default port to listen on
 	Port string `yaml:"port" json:"port"`
 	// Define the client deadline time
 	ClientDeadLineTime time.Duration `yaml:"clientDeadLineTime" json:"clientDeadLineTime"`
 	// Define the peer host timeout
-	PeerConnectionTimeout  time.Duration `yaml:"peerConnectionTimeout" json:"peerConnectionTimeout"`
+	PeerConnectionTimeout time.Duration `yaml:"peerConnectionTimeout" json:"peerConnectionTimeout"`
 	// Define the peer host deadline
 	PeerHostDeadLine time.Duration `yaml:"peerHostDeadLine" json:"peerHostDeadLine"`
 	// Define the max connection semaphore
@@ -46,12 +46,12 @@ type Proxy struct {
 
 func New() *Proxy {
 	return &Proxy{
-		Logger:                     nil,
-		Port:                       types.DefaultProxyPort,
-		ClientDeadLineTime:         types.DeafultClientDeadLineTime,
-		PeerConnectionTimeout:      types.DeafultPeerConnectionTimeout,
-		PeerHostDeadLine:           types.DeafultPeerHostDeadLine,
-		MaxCountConnection:         types.DeafultMaxCountConnection,
+		Logger:                nil,
+		Port:                  types.DefaultProxyPort,
+		ClientDeadLineTime:    types.DeafultClientDeadLineTime,
+		PeerConnectionTimeout: types.DeafultPeerConnectionTimeout,
+		PeerHostDeadLine:      types.DeafultPeerHostDeadLine,
+		MaxCountConnection:    types.DeafultMaxCountConnection,
 		//nolint:exhaustivestruct,exhaustruct
 		Peers: &peers.Peers{},
 		//nolint:exhaustivestruct,exhaustruct
@@ -96,7 +96,7 @@ func (p *Proxy) ListenAndServe(ctx context.Context) error {
 	defer func(proxySrv net.Listener) {
 		err = proxySrv.Close()
 		if err != nil {
-			p.Logger.Add(vlog.Debug, types.ErrProxy, fmt.Errorf("proxy close failed: %w", err))
+			p.Logger.Add(vlog.Debug, types.ErrProxy, "proxy close failed", fmt.Errorf("%w", err))
 		}
 	}(proxySrv)
 
@@ -116,7 +116,7 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 		default:
 			conn, err := proxySrv.Accept()
 			if err != nil {
-				p.Logger.Add(vlog.Debug, types.ErrProxy, fmt.Errorf("accept connection failed: %w", err))
+				p.Logger.Add(vlog.Debug, types.ErrProxy, "remote accept connection failed", fmt.Errorf("%w", err))
 
 				continue
 			}
@@ -134,46 +134,46 @@ func (p *Proxy) AcceptConnections(ctx context.Context, proxySrv net.Listener) {
 	}
 }
 
-// handleIncomingConnection. 
-func (p *Proxy) handleIncomingConnection(ctx context.Context, conn net.Conn, semaphore chan struct{}) {
+// handleIncomingConnection.
+func (p *Proxy) handleIncomingConnection(ctx context.Context, client net.Conn, semaphore chan struct{}) {
 	defer func() {
 		<-semaphore
 	}()
 
-	defer p.Logger.Add(vlog.Debug, types.ResultOK,
-		fmt.Sprintf("accept connection %s, was close", conn.RemoteAddr().String()))
+	defer p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()), "connection was close")
 
-	defer conn.Close()
+	defer client.Close()
 
-	p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(conn.RemoteAddr().String()), "starting connection")
+	p.Logger.Add(vlog.Debug, types.ResultOK, vlog.RemoteAddr(client.RemoteAddr().String()), "start connection")
 
-	err := conn.SetDeadline(time.Now().Add(p.ClientDeadLineTime))
+	err := client.SetDeadline(time.Now().Add(p.ClientDeadLineTime))
 	if err != nil {
 		p.Logger.Add(vlog.Debug, types.ErrProxy,
-			vlog.RemoteAddr(conn.RemoteAddr().String()), fmt.Errorf("failed to set deadline: %w", err))
+			vlog.RemoteAddr(client.RemoteAddr().String()), "failed to set deadline", fmt.Errorf("%w", err))
 
 		return
 	}
 
 	ctxConnectionTimeout, cancel := context.WithTimeout(ctx, p.PeerConnectionTimeout)
-	defer cancel()		
+	defer cancel()
 
-	err = p.reverseData(ctxConnectionTimeout, conn)
+	err = p.reverseData(ctxConnectionTimeout, client)
 
 	if err != nil {
-		clientAddr := conn.RemoteAddr().String()
-		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr), fmt.Errorf("failed in reverseData() %w", err))
+		clientAddr := client.RemoteAddr().String()
+		p.Logger.Add(vlog.Debug, types.ErrProxy, vlog.RemoteAddr(clientAddr),
+			"failed in reverseData()", fmt.Errorf("%w", err))
 
 		responseLogger := response.New()
 
-		err = responseLogger.SentResponseToClient(conn, err)
+		err = responseLogger.SentResponseToClient(client, err)
 		if err != nil {
 			p.Logger.Add(
 				vlog.Debug,
 				types.ErrSendResponseToClient,
 				types.ErrProxy,
 				vlog.RemoteAddr(clientAddr),
-				fmt.Errorf("failed send response to client %w", err))
+				"failed send response to client", fmt.Errorf("%w", err))
 		}
 	}
 }
@@ -196,12 +196,11 @@ func (p *Proxy) reverseData(ctxTimeOut context.Context, client net.Conn) error {
 	defer dst.Close()
 
 	p.Logger.Add(
-		vlog.Debug, 
+		vlog.Debug,
 		types.ResultOK,
-		vlog.RemoteAddr(dst.RemoteAddr().String()),
-		vlog.ProxyHost(client.LocalAddr().String()),
-		fmt.Sprintf("try to copy data from remote: %s to peer: %s",
-			client.RemoteAddr().String(), dst.RemoteAddr().String()))
+		vlog.RemoteAddr(client.RemoteAddr().String()),
+		vlog.PeerAddr(dst.RemoteAddr().String()),
+		"try to copy data from remote to peer")
 
 	var waitGroup sync.WaitGroup
 
@@ -212,10 +211,9 @@ func (p *Proxy) reverseData(ctxTimeOut context.Context, client net.Conn) error {
 	waitGroup.Wait()
 
 	p.Logger.Add(vlog.Debug, types.ResultOK,
-		vlog.RemoteAddr(dst.RemoteAddr().String()),
-		vlog.ProxyHost(client.LocalAddr().String()),
-		fmt.Sprintf("copy data from remote: %s to peer: %s, it was finish",
-			client.RemoteAddr().String(), dst.RemoteAddr().String()))
+		vlog.RemoteAddr(client.RemoteAddr().String()),
+		vlog.PeerAddr(dst.RemoteAddr().String()),
+		"copy data from remote to peer it was finish")
 
 	return nil
 }

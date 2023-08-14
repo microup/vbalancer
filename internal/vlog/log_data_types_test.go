@@ -15,27 +15,16 @@ func TestBuildRecord(t *testing.T) {
 
 	typeLog := vlog.Info
 	resultCode := types.ResultCode(200)
-	remoteAddr := vlog.RemoteAddr("127.0.0.1")
-	clientHost := vlog.ClientHost("client.com")
-	clientMethod := vlog.ClientMethod("GET")
-	clientProto := vlog.ClientProto("HTTP/1.1")
-	clientURI := vlog.ClientURI("/client")
-	proxyHost := vlog.ProxyHost("proxy.com")
-	proxyMethod := vlog.ProxyMethod("GET")
-	proxyProto := vlog.ProxyProto("HTTP/1.1")
-	proxyURI := vlog.ProxyURI("/proxy")
+	remoteAddr := vlog.RemoteAddr("192.168.1.40")
+	peerAddr := vlog.PeerAddr("127.0.0.1:8081")
 	valuesStr := "value1;value2"
 
 	// Call the function with the inputs
-	actualTypeLog, actualRecord := vlog.BuildRecord(
-		typeLog, resultCode, remoteAddr, clientHost, clientMethod,
-		clientProto, clientURI, proxyHost, proxyMethod, proxyProto, proxyURI,
-		valuesStr)
+	actualTypeLog, actualRecord := vlog.BuildRecord(typeLog, resultCode, remoteAddr, peerAddr,valuesStr)
 
 	// Define the expected output
 	expectedTypeLog := vlog.Info
-	expectedRecord := "INFO;200;127.0.0.1;client.com;GET;HTTP/1.1;/client;GET;HTTP/1.1;" +
-		"proxy.com;/proxy;value1;value2"
+	expectedRecord := "INFO;200;192.168.1.40;127.0.0.1:8081;value1;value2;"
 
 	// Assert that the actual output is as expected
 	if actualTypeLog != expectedTypeLog {

@@ -10,19 +10,12 @@ import (
 
 type (
 	TypeLog uint8
-	IsSave bool
+	IsSave  bool
 )
 
 type (
-	RemoteAddr string
-	ClientHost string
-	ClientMethod string
-	ClientProto string
-	ClientURI string
-	ProxyHost string
-	ProxyMethod string
-	ProxyProto string
-	ProxyURI string
+	RemoteAddr      string
+	PeerAddr        string
 	ProxyRequestURI string
 )
 
@@ -37,27 +30,16 @@ const (
 
 // ParseValues takes in a slice of interface values and returns multiple values of different types.
 // It loops through the values in the input slice and assigns each value to its corresponding variable
-// based on its type. The function returns TypeLog, ResultCode, RemoteAddr, ClientHost, ClientMethod,
-// ClientProto, ClientURI, ProxyHost, ProxyMethod, ProxyProto, ProxyURI and a string value built
+// based on its type. The function returns TypeLog, ResultCode, RemoteAddr, ClientHost, ProxyHost
+// and a string value built
 // from concatenating the string values in the input slice with semicolons.
-//
-//nolint:cyclop,funlen
 func ParseValues(values []interface{}) (
 	TypeLog, types.ResultCode,
-	RemoteAddr, ClientHost, ClientMethod,
-	ClientProto, ClientURI, ProxyHost,
-	ProxyMethod, ProxyProto, ProxyURI, string) {
+	RemoteAddr, PeerAddr, string) {
 	var typeLog TypeLog
 	var resultCode types.ResultCode //nolint:wsl
 	var remoteAddr RemoteAddr       //nolint:wsl
-	var clientHost ClientHost       //nolint:wsl
-	var clientMethod ClientMethod   //nolint:wsl
-	var clientProto ClientProto     //nolint:wsl
-	var clientURI ClientURI         //nolint:wsl
-	var proxyHost ProxyHost         //nolint:wsl
-	var proxyMethod ProxyMethod     //nolint:wsl
-	var proxyProto ProxyProto       //nolint:wsl
-	var proxyURI ProxyURI           //nolint:wsl
+	var peerAddr PeerAddr          //nolint:wsl
 	var val strings.Builder         //nolint:wsl
 
 	for _, value := range values {
@@ -71,64 +53,41 @@ func ParseValues(values []interface{}) (
 			val.WriteString(";")
 		case error:
 			val.WriteString(valueTypeLog.Error())
-			val.WriteString(";")			
+			val.WriteString(";")
 		case RemoteAddr:
 			remoteAddr = valueTypeLog
-		case ClientHost:
-			clientHost = valueTypeLog
-		case ClientMethod:
-			clientMethod = valueTypeLog
-		case ClientProto:
-			clientProto = valueTypeLog
-		case ClientURI:
-			clientURI = valueTypeLog
-		case ProxyHost:
-			proxyHost = valueTypeLog
-		case ProxyMethod:
-			proxyMethod = valueTypeLog
-		case ProxyProto:
-			proxyProto = valueTypeLog
-		case ProxyURI:
-			proxyURI = valueTypeLog
+		case PeerAddr:
+			peerAddr = valueTypeLog
 		}
 	}
 
-	return typeLog, resultCode, remoteAddr,
-		clientHost, clientMethod, clientProto, clientURI,
-		proxyHost, proxyMethod, proxyProto, proxyURI, val.String()
+	return typeLog, resultCode, remoteAddr,	peerAddr, val.String()
 }
 
 // BuildRecord function takes in several input values such as log type, result code,
-// remote address, client host, client method, client protocol, client URI, proxy host,
-// proxy method, proxy protocol, proxy URI, and string values. It creates a record in the
+// remote address, client host, proxy host and string values. It creates a record in the
 // specified format with the current date and time by using the "GetDateTimeStr" function
 // from the "core" package. The result is returned as a tuple with the log type and the formatted record string.
-func BuildRecord(typeLog TypeLog, resultCode types.ResultCode,
-	remoteAddr RemoteAddr, clientHost ClientHost, clientMethod ClientMethod,
-	clientProto ClientProto, clientURI ClientURI, proxyHost ProxyHost,
-	proxyMethod ProxyMethod, proxyProto ProxyProto, proxyURI ProxyURI,
+func BuildRecord(
+	typeLog TypeLog,
+	resultCode types.ResultCode,
+	remoteAddr RemoteAddr,
+	peerAddr PeerAddr,
 	valuesStr string) (TypeLog, string) {
 	var recordTime = time.Now()
 
 	var dateStr, timeStr = core.GetDateTimeStr(recordTime)
 
-	var resultFmtStr = core.FmtStringWithDelimiter(";", valuesStr)
+	var resultStr = core.FmtStringWithDelimiter(";", valuesStr)
 
-	var recordRow = fmt.Sprintf("%s;%s;%s;%d;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
+	var recordRow = fmt.Sprintf("%s;%s;%s;%d;%s;%s;%s;",
 		dateStr,
 		timeStr,
 		typeLog.GetStr(),
 		resultCode,
 		remoteAddr,
-		clientHost,
-		clientMethod,
-		clientProto,
-		clientURI,
-		proxyMethod,
-		proxyProto,
-		proxyHost,
-		proxyURI,
-		resultFmtStr)
+		peerAddr,
+		resultStr)
 
 	return typeLog, recordRow
 }
