@@ -30,11 +30,14 @@ type VLog struct {
 }
 
 func New(cfg *config.Log) *VLog {
-	headerCSV := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;",
-		"Date", "Time", "Type", "ResultCode", "RemoteAddr",
-		"ClientHost", "ClientMethod", "ClientProto", "ClientURI",
-		"PeerMethod", "PeerProto", "PeerHost",
-		"PeerRequestURI", "Description")
+	headerCSV := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;",
+		"Date", 
+		"Time", 
+		"Type", 
+		"ResultCode", 
+		"RemoteAddr",
+		"PeerURL",
+		"Description")
 
 	return &VLog{
 		wgNewLog:          &sync.WaitGroup{},
