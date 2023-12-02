@@ -12,6 +12,8 @@ import (
 	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/types"
 	"vbalancer/mocks"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestProxyServer - this is the `TestProxyServer` function of the proxy server.
@@ -19,9 +21,9 @@ func TestCheckNewConnection(t *testing.T) {
 	t.Parallel()
 
 	proxySrv, err := net.Listen("tcp", "127.0.0.1:18880")
-	if err != nil {
-		t.Fatalf("Error creating listener: %v", err)
-	}
+
+	assert.Nil(t, err, "error creating listener")
+
 	defer proxySrv.Close()
 
 	logger := &mocks.MockLogger{}
@@ -35,26 +37,23 @@ func TestCheckNewConnection(t *testing.T) {
 
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy := &Proxy{
-		Logger:                     logger,
-		Port:                       "18880",
-		ClientDeadLineTime:         10,
-		PeerConnectionTimeout:      10,
-		PeerHostDeadLine:           10,
-		MaxCountConnection:         100,
+		Logger:                logger,
+		Port:                  "18880",
+		ClientDeadLineTime:    10,
+		PeerConnectionTimeout: 10,
+		PeerHostDeadLine:      10,
+		MaxCountConnection:    100,
 	}
 
 	resultCode := testProxy.updatePort()
-	if resultCode != types.ResultOK {
-		t.Fatalf("can't update proxy port: %d", resultCode)
-	}
+	assert.Equal(t, resultCode, types.ResultOK, "name: `%s`")
 
 	//nolint:exhaustivestruct,exhaustruct
 	testProxy.Peers = &peers.Peers{}
 
 	err = testProxy.Peers.Init(context.Background(), listPeer)
-	if err != nil {
-		t.Fatalf("can't init peers: %v", err)
-	}
+
+	assert.Nil(t, err, "can't init peers")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -62,9 +61,8 @@ func TestCheckNewConnection(t *testing.T) {
 	go testProxy.AcceptConnections(ctx, proxySrv)
 
 	conn, err := net.Dial("tcp", proxySrv.Addr().String())
-	if err != nil {
-		t.Fatalf("dialing to proxy server: %v", err)
-	}
+
+	assert.Nil(t, err, "dialing to proxy server")
 
 	defer conn.Close()
 }
@@ -72,69 +70,65 @@ func TestCheckNewConnection(t *testing.T) {
 // TestGetProxyPort tests the UpdatePort function.
 // It validates UpdatePort handles invalid environment variable values,
 // default values, and valid custom environment variable values correctly.
-//
-//nolint:funlen
 func TestGetProxyPort(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		port       string
-		name       string
-		envVar     string
-		expected   types.ResultCode
-		checkValue string
+	testCases := []struct {
+		port      string
+		name      string
+		envVar    string
+		want      types.ResultCode
+		wantValue string
 	}{
 		{
-			name:       "set port `1234`",
-			port:       "1234",
-			envVar:     ":",
-			expected:   types.ResultOK,
-			checkValue: ":1234",
+			name:      "set port `1234`",
+			port:      "1234",
+			envVar:    ":",
+			want:      types.ResultOK,
+			wantValue: ":1234",
 		},
 		{
-			name:       "empty env var, got DefaultPort",
-			envVar:     "",
-			expected:   types.ResultOK,
-			checkValue: fmt.Sprintf(":%s", types.DefaultProxyPort),
+			name:      "empty env var, got DefaultPort",
+			port:      "",
+			envVar:    "",
+			want:      types.ResultOK,
+			wantValue: fmt.Sprintf(":%s", types.DefaultProxyPort),
 		},
 		{
-			name:       "valid proxy port from env var",
-			envVar:     "8080",
-			expected:   types.ResultOK,
-			checkValue: ":8080",
+			name:      "valid proxy port from env var",
+			port:      "",
+			envVar:    "8080",
+			want:      types.ResultOK,
+			wantValue: ":8080",
 		},
 		{
-			name:       "empty proxy port from default value",
-			envVar:     " ",
-			expected:   types.ErrEmptyValue,
-			checkValue: ":",
-			port:       ":",
+			name:      "empty proxy port from default value",
+			envVar:    " ",
+			want:      types.ErrEmptyValue,
+			wantValue: ":",
+			port:      ":",
 		},
 		{
-			name:       "empty proxy port from default value",
-			envVar:     "          ",
-			expected:   types.ErrEmptyValue,
-			checkValue: ":",
-			port:       ":",
+			name:      "empty proxy port from default value",
+			envVar:    "          ",
+			want:      types.ErrEmptyValue,
+			wantValue: ":",
+			port:      ":",
 		},
 	}
-
 	//nolint:exhaustivestruct,exhaustruct
 	prx := &Proxy{}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		prx.Port = test.port
 
 		os.Clearenv()
 		os.Setenv("ProxyPort", test.envVar)
 
 		result := prx.updatePort()
-		if result != test.expected {
-			t.Fatalf("name: %s, expected result %v, got %v", test.name, test.expected, result)
-		}
 
-		if prx.Port != test.checkValue {
-			t.Fatalf("name: %s, expected value %s, got %s", test.name, test.checkValue, prx.Port)
-		}
+		assert.Equalf(t, result, test.want, "name: `%s`", test.name)
+
+		assert.Equalf(t, prx.Port, test.wantValue, "name: `%s`", test.name)
 	}
 }

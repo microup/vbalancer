@@ -5,10 +5,10 @@
 package mocks
 
 import (
+	context "context"
 	net "net"
 	reflect "reflect"
 	time "time"
-	vlog "vbalancer/internal/vlog"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -37,18 +37,18 @@ func (m *MockIPeer) EXPECT() *MockIPeerMockRecorder {
 }
 
 // Dial mocks base method.
-func (m *MockIPeer) Dial(timeOut, timeOutDeadLine time.Duration) (net.Conn, error) {
+func (m *MockIPeer) Dial(ctx context.Context, timeOut, timeOutDeadLine time.Duration) (net.Conn, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Dial", timeOut, timeOutDeadLine)
+	ret := m.ctrl.Call(m, "Dial", ctx, timeOut, timeOutDeadLine)
 	ret0, _ := ret[0].(net.Conn)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Dial indicates an expected call of Dial.
-func (mr *MockIPeerMockRecorder) Dial(timeOut, timeOutDeadLine interface{}) *gomock.Call {
+func (mr *MockIPeerMockRecorder) Dial(ctx, timeOut, timeOutDeadLine interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dial", reflect.TypeOf((*MockIPeer)(nil).Dial), timeOut, timeOutDeadLine)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dial", reflect.TypeOf((*MockIPeer)(nil).Dial), ctx, timeOut, timeOutDeadLine)
 }
 
 // GetURI mocks base method.
@@ -65,14 +65,3 @@ func (mr *MockIPeerMockRecorder) GetURI() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURI", reflect.TypeOf((*MockIPeer)(nil).GetURI))
 }
 
-// SetLogger mocks base method.
-func (m *MockIPeer) SetLogger(arg0 vlog.ILog) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetLogger", arg0)
-}
-
-// SetLogger indicates an expected call of SetLogger.
-func (mr *MockIPeerMockRecorder) SetLogger(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLogger", reflect.TypeOf((*MockIPeer)(nil).SetLogger), arg0)
-}

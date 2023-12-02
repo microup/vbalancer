@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"vbalancer/internal/core"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestArchive this is a test function for `archive()`.
@@ -16,7 +18,6 @@ func TestArchiveFile(t *testing.T) {
 	helperArchiveFile(t)
 }
 
-//nolint:funlen,cyclop
 func helperArchiveFile(t *testing.T) {
 	t.Helper()
 
@@ -28,58 +29,50 @@ func helperArchiveFile(t *testing.T) {
 	extension := ".zip"
 
 	testFile, err := os.Create(fileName)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
+
+	assert.Nil(t, err, "failed to create test file")
 
 	defer os.Remove(fileName)
 
 	_, err = testFile.Write([]byte("test data"))
-	if err != nil {
-		t.Fatalf("Failed to write data to test file: %v", err)
-	}
+
+	assert.Nil(t, err, "failed to write data to test file")
 
 	err = testFile.Close()
-	if err != nil {
-		t.Fatalf("Failed to close test file: %v", err)
-	}
+
+	assert.Nil(t, err, "failed to close test file")
 
 	err = core.ArchiveFile(fileName, extension)
-	if err != nil {
-		t.Fatalf("Archiving failed: %v", err)
-	}
+
+	assert.Nil(t, err, "archiving failed")
 
 	archivedFile := strings.TrimSuffix(fileName, filepath.Ext(fileName)) + extension
 	if _, err = os.Stat(archivedFile); os.IsNotExist(err) {
-		t.Fatalf("Archived file does not exist: %v", err)
+		assert.FailNow(t, "archived file does not exist", err)
 	}
+
+	assert.Nil(t, err, "archiving failed")
 
 	defer os.Remove(archivedFile)
 
 	zipFile, err := zip.OpenReader(archivedFile)
 	if err != nil {
-		t.Fatalf("Failed to open archived file: %v", err)
+		assert.FailNow(t, "failed to open archived file: %v", err)
 	}
 	defer zipFile.Close()
 
-	if len(zipFile.File) != 1 {
-		t.Fatalf("Unexpected number of files in archived file: %d", len(zipFile.File))
-	}
+	assert.Equal(t, 1, len(zipFile.File), "unexpected number of files in archived file")
 
 	fileInArchive := zipFile.File[0]
 	zipFileContent, err := fileInArchive.Open()
 
-	if err != nil {
-		t.Fatalf("Failed to open file in archive: %v", err)
-	}
+	assert.Nil(t, err, "failed to open file in archive")
+
 	defer zipFileContent.Close()
 
 	data, err := io.ReadAll(zipFileContent)
-	if err != nil {
-		t.Fatalf("Failed to read data from file in archive: %v", err)
-	}
 
-	if string(data) != "test data" {
-		t.Fatalf("Unexpected data in archived file: %s", string(data))
-	}
+	assert.Nil(t, err, "failed to read data from file in archive")
+
+	assert.Equal(t, "test data", string(data), "unexpected data in archived file")
 }
