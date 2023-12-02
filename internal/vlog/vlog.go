@@ -31,10 +31,10 @@ type VLog struct {
 
 func New(cfg *config.Log) *VLog {
 	headerCSV := fmt.Sprintf("%s;%s;%s;%s;%s;%s;%s;",
-		"Date", 
-		"Time", 
-		"Type", 
-		"ResultCode", 
+		"Date",
+		"Time",
+		"Type",
+		"ResultCode",
 		"RemoteAddr",
 		"PeerURL",
 		"Description")
@@ -58,7 +58,7 @@ func (v *VLog) Init() error {
 		return fmt.Errorf("%w", err)
 	}
 
-	return nil	
+	return nil
 }
 
 // GetCountRecords returns the number of records in the log file.

@@ -22,7 +22,7 @@ const (
 // CONFIG - CONSTS.
 const (
 	//
-	 DefaultNameConfigFile = "config.yaml"
+	DefaultNameConfigFile = "config.yaml"
 	// MaskDir 0x755 is an octal notation for the file permission -rwxr-xr-x.
 	MaskDir = 0x755
 	// DefaultFilePerm is the default file permission with octal notation 0666.
@@ -39,16 +39,16 @@ const (
 
 // PROXY - CONSTS.
 const (
-	//  
+	//
 	DefaultProxyPort = "8080"
 	//
 	DeafultMaxCountConnection = 1000
 	//
 	DeafultClientDeadLineTime = 30 * time.Second
 	//
-	DeafultPeerConnectionTimeout =  30 * time.Second
+	DeafultPeerConnectionTimeout = 30 * time.Second
 	//
-	DeafultPeerHostDeadLine =  30 * time.Second
+	DeafultPeerHostDeadLine = 30 * time.Second
 	//
 	DeafultCountMaxDialAttemptsToPeer = 30
 )
