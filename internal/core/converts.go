@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	place      = 2
-	prec       = -1
+	place = 2
+	prec  = -1
 )
 
 // HumanFileSize returns a human-readable file size.
@@ -33,8 +33,8 @@ func HumanFileSize(size float64) string {
 }
 
 // Round rounds a float to a given number of decimal places.
-func Round(val float64, roundOn float64, places int) float64 {
+func Round(val float64, _ float64, places int) float64 {
 	pow := math.Pow(types.PowX, float64(places))
-	
+
 	return math.Round(val*pow) / pow
 }

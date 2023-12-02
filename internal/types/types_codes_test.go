@@ -3,14 +3,16 @@ package types_test
 import (
 	"testing"
 	"vbalancer/internal/types"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResultCodeToStr(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
-		input    types.ResultCode
-		expected string
+	var testCases = []struct {
+		input types.ResultCode
+		want  string
 	}{
 		{types.ResultOK, "SUCCESS"},
 		{types.ErrProxy, "proxy error"},
@@ -30,28 +32,24 @@ func TestResultCodeToStr(t *testing.T) {
 		{types.ResultCode(0xABC), "unknown result code: 2748"},
 	}
 
-	for _, test := range tests {
-		if result := test.input.ToStr(); result != test.expected {
-			t.Errorf("TestResultCodeToStr(%d) = %s; expected = %s", test.input, result, test.expected)
-		}
+	for _, test := range testCases {
+		assert.Equalf(t, test.input.ToStr(), test.want, "input: `%d | want %d`", test.input, test.want)
 	}
 }
 
 func TestResultCodeToUint(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
-		input    types.ResultCode
-		expected uint32
+	var testCases = []struct {
+		input types.ResultCode
+		want  uint32
 	}{
 		{types.ResultOK, 0},
 		{types.ResultUnknown, 4294967295},
 		{types.ResultCode(0xABC), 2748},
 	}
 
-	for _, test := range tests {
-		if result := test.input.ToUint(); result != test.expected {
-			t.Errorf("TestResultCodeToUint(%d) = %d; expected = %d", test.input, result, test.expected)
-		}
+	for _, test := range testCases {
+		assert.Equalf(t, test.input.ToUint(), test.want, "input: `%d | want %d`", test.input, test.want)
 	}
 }

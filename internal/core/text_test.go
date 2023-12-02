@@ -3,6 +3,8 @@ package core_test
 import (
 	"testing"
 	"vbalancer/internal/core"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestTrimLastChar tests the TrimLastChar function.
@@ -24,9 +26,8 @@ func TestTrimLastChar(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		got := core.TrimLastChar(tc.input)
-		if got != tc.want {
-			t.Errorf("TrimLastChar(%q) = %q, want %q", tc.input, got, tc.want)
-		}
+
+		assert.Equal(t, got, tc.want)
 	}
 }
 
@@ -35,9 +36,9 @@ func TestFmtStringWithDelimiter(t *testing.T) {
 	t.Parallel()
 
 	delimiter := ","
-	tests := []struct {
+	testCases := []struct {
 		values  []interface{}
-		result  string
+		want    string
 		isError bool
 	}{
 		{[]interface{}{"a", "b", "c"}, "a,b,c", false},
@@ -50,10 +51,9 @@ func TestFmtStringWithDelimiter(t *testing.T) {
 		{[]interface{}{1, 2, "c", []int{}}, "1,2,c", false},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		result := core.FmtStringWithDelimiter(delimiter, test.values...)
-		if result != test.result {
-			t.Errorf("Expected %s, but got %s", test.result, result)
-		}
+
+		assert.Equal(t, result, test.want)
 	}
 }

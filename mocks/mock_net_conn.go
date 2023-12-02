@@ -59,21 +59,21 @@ func (c *MockConn) RemoteAddr() net.Addr {
 	return nil
 }
 
-func (c *MockConn) SetDeadline(t time.Time) error {
+func (c *MockConn) SetDeadline(time.Time) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	return nil
 }
 
-func (c *MockConn) SetReadDeadline(t time.Time) error {
+func (c *MockConn) SetReadDeadline(time.Time) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	return nil
 }
 
-func (c *MockConn) SetWriteDeadline(t time.Time) error {
+func (c *MockConn) SetWriteDeadline(time.Time) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

@@ -1,9 +1,12 @@
 package core_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 	"vbalancer/internal/core"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestGetDateTimeStr tests the GetDateTimeStr function.
@@ -20,11 +23,12 @@ func TestGetDateTimeStr(t *testing.T) {
 		{time.Date(2022, time.December, 31, 23, 59, 59, 0, time.UTC), "2022-12-31", "23:59:59"},
 	}
 
-	for _, tc := range testCases {
-		dateStr, timeStr := core.GetDateTimeStr(tc.recordTime)
-		if dateStr != tc.expectedDateStr || timeStr != tc.expectedTimeStr {
-			t.Errorf("GetDateTimeStr(%v) = (%v, %v), want (%v, %v)", tc.recordTime,
-				dateStr, timeStr, tc.expectedDateStr, tc.expectedTimeStr)
-		}
+	for _, test := range testCases {
+		dateStr, timeStr := core.GetDateTimeStr(test.recordTime)
+		assert.Equal(t, test.expectedDateStr, dateStr, "unexpected date string for recordTime: %v", test.recordTime)
+
+		assert.Equal(t, fmt.Sprintf("%s %s", test.expectedDateStr, test.expectedTimeStr),
+			fmt.Sprintf("%s %s", dateStr, timeStr),
+			"unexpected combined date and time string for recordTime: %v", test.recordTime)
 	}
 }

@@ -1,12 +1,15 @@
 package core_test
 
 import (
+	"fmt"
 	"math"
 	"testing"
 	"vbalancer/internal/core"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// TestHumanFileSize tests the HumanFileSize function. 
+// TestHumanFileSize tests the HumanFileSize function.
 func TestHumanFileSize(t *testing.T) {
 	t.Parallel()
 
@@ -24,11 +27,10 @@ func TestHumanFileSize(t *testing.T) {
 		{1099511627776, "1 TB"},
 	}
 
-	for _, tc := range testCases {
-		got := core.HumanFileSize(tc.size)
-		if got != tc.want {
-			t.Errorf("HumanFileSize(%f) = %s; want %s", tc.size, got, tc.want)
-		}
+	for _, test := range testCases {
+		got := core.HumanFileSize(test.size)
+
+		assert.Equalf(t, test.want, got, fmt.Sprintf("size %f want %s", test.size, test.want))
 	}
 }
 
@@ -42,18 +44,24 @@ func TestRound(t *testing.T) {
 		places   int
 		expected float64
 	}{
-		{3.1415, 0.5, 2, 3.14},
+		{3.1415, 0.4, 2, 3.14},
 		{1.2345, 0.5, 3, 1.235},
 		{2.6666, 0.5, 2, 2.67},
 		{0.0, 0.5, 2, 0.0},
 		{-1.234, 0.5, 2, -1.23},
 	}
 
-	for _, tc := range testCases {
-		actual := core.Round(tc.val, tc.roundOn, tc.places)
-		if math.Abs(actual-tc.expected) > 0.0001 {
-			t.Errorf("For val %v, roundOn %v and places %v, expected %v but got %v",
-				tc.val, tc.roundOn, tc.places, tc.expected, actual)
+	for _, testCase := range testCases {
+		actual := core.Round(testCase.val, testCase.roundOn, testCase.places)
+		if math.Abs(actual-testCase.expected) > 0.0001 {
+			assert.InDelta(
+				t,
+				testCase.expected,
+				actual,
+				0.0001,
+				"for val %v, roundOn %v and places %v, expected %v but got %v",
+				testCase.val, testCase.roundOn, testCase.places, actual, testCase.expected,
+			)
 		}
 	}
 }

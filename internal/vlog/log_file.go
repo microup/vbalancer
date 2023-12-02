@@ -1,6 +1,5 @@
 package vlog
 
-
 // LogFile represents information about a file, including its name, size, and kind.
 type LogFile struct {
 	// FileName is the name of the file.

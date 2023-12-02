@@ -13,7 +13,7 @@ import (
 func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 	if isNewFileLog {
 		v.MapLastLogRecords = make([]string, 0)
-		
+
 		err := v.Close()
 		if err != nil {
 			return err

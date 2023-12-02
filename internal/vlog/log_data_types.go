@@ -39,7 +39,7 @@ func ParseValues(values []interface{}) (
 	var typeLog TypeLog
 	var resultCode types.ResultCode //nolint:wsl
 	var remoteAddr RemoteAddr       //nolint:wsl
-	var peerAddr PeerAddr          //nolint:wsl
+	var peerAddr PeerAddr           //nolint:wsl
 	var val strings.Builder         //nolint:wsl
 
 	for _, value := range values {
@@ -61,7 +61,7 @@ func ParseValues(values []interface{}) (
 		}
 	}
 
-	return typeLog, resultCode, remoteAddr,	peerAddr, val.String()
+	return typeLog, resultCode, remoteAddr, peerAddr, val.String()
 }
 
 // BuildRecord function takes in several input values such as log type, result code,

@@ -14,7 +14,7 @@ func TrimLastChar(value string) string {
 		if size == len(value) {
 			return ""
 		}
-		
+
 		return value[:len(value)-size]
 	}
 

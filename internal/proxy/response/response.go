@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	
+
 	"vbalancer/internal/types"
 )
 
@@ -36,15 +36,14 @@ func (r *Response) SentResponseToClient(client net.Conn, err error) error {
 	responseBody :=
 		fmt.Sprintf(
 			"HTTP/1.1 200 OK\r\nConnection: close\r\n"+
-			"Content-Type: application/json\r\n"+
-			"Content-Length: %d\r\n\r\n"+
-			"%s", responseLen, responseJSON)
+				"Content-Type: application/json\r\n"+
+				"Content-Length: %d\r\n\r\n"+
+				"%s", responseLen, responseJSON)
 
 	_, err = client.Write([]byte(responseBody))
 	if err != nil {
-		return fmt.Errorf("%w", err )
+		return fmt.Errorf("%w", err)
 	}
 
 	return nil
 }
-

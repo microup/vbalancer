@@ -11,15 +11,15 @@ import (
 
 // Blacklist defines the blacklist configuration.
 type Blacklist struct {
-	Cache *cache.VCache 
+	Cache                *cache.VCache
 	CacheDurationToEvict time.Duration `yaml:"cacheDurationToEvict"`
-	RemoteIP []string `yaml:"remoteIp"`
+	RemoteIP             []string      `yaml:"remoteIp"`
 }
 
 // Init initializes the blacklist.
 func (b *Blacklist) Init(ctx context.Context) error {
 	b.Cache = cache.New(time.Second, b.CacheDurationToEvict)
-	
+
 	err := b.Cache.StartEvict(ctx)
 	if err != nil {
 		return fmt.Errorf("%w", err)
@@ -36,7 +36,7 @@ func (b *Blacklist) IsBlacklistIP(checkIP string) bool {
 		if ok {
 			return b
 		}
-    } 
+	}
 
 	host, _, err := net.SplitHostPort(checkIP)
 	if err != nil {
