@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"testing"
 
 	"vbalancer/internal/proxy/peer"
@@ -70,9 +69,9 @@ func TestCheckNewConnection(t *testing.T) {
 // TestGetProxyPort tests the UpdatePort function.
 // It validates UpdatePort handles invalid environment variable values,
 // default values, and valid custom environment variable values correctly.
+//
+//nolint:paralleltest
 func TestGetProxyPort(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		port      string
 		name      string
@@ -119,16 +118,18 @@ func TestGetProxyPort(t *testing.T) {
 	//nolint:exhaustivestruct,exhaustruct
 	prx := &Proxy{}
 
-	for _, test := range testCases {
-		prx.Port = test.port
+	for _, tc := range testCases {
+		testCase := tc
+		t.Run(testCase.name, func(t *testing.T) {
+			prx.Port = testCase.port
 
-		os.Clearenv()
-		os.Setenv("ProxyPort", test.envVar)
+			t.Setenv(types.ProxyPort, testCase.envVar)
 
-		result := prx.updatePort()
+			result := prx.updatePort()
 
-		assert.Equalf(t, result, test.want, "name: `%s`", test.name)
+			assert.Equal(t, testCase.want, result, "name: `%s`")
 
-		assert.Equalf(t, prx.Port, test.wantValue, "name: `%s`", test.name)
+			assert.Equal(t, testCase.wantValue, prx.Port, "name: `%s`")
+		})
 	}
 }

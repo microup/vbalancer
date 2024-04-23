@@ -54,6 +54,6 @@ func TestFmtStringWithDelimiter(t *testing.T) {
 	for _, test := range testCases {
 		result := core.FmtStringWithDelimiter(delimiter, test.values...)
 
-		assert.Equal(t, result, test.want)
+		assert.Equal(t, test.want, result)
 	}
 }
