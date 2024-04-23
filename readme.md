@@ -102,4 +102,4 @@ See the GNU Affero General Public License for more details.
 
 ####
 
-Copyright (C) 2022-2023 https://microup.ru
+Copyright (C) 2022-2024 https://microup.ru
