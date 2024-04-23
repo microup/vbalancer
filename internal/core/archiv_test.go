@@ -30,28 +30,28 @@ func helperArchiveFile(t *testing.T) {
 
 	testFile, err := os.Create(fileName)
 
-	assert.Nil(t, err, "failed to create test file")
+	assert.NoError(t, err, "failed to create test file")
 
 	defer os.Remove(fileName)
 
 	_, err = testFile.Write([]byte("test data"))
 
-	assert.Nil(t, err, "failed to write data to test file")
+	assert.NoError(t, err, "failed to write data to test file")
 
 	err = testFile.Close()
 
-	assert.Nil(t, err, "failed to close test file")
+	assert.NoError(t, err, "failed to close test file")
 
 	err = core.ArchiveFile(fileName, extension)
 
-	assert.Nil(t, err, "archiving failed")
+	assert.NoError(t, err, "archiving failed")
 
 	archivedFile := strings.TrimSuffix(fileName, filepath.Ext(fileName)) + extension
 	if _, err = os.Stat(archivedFile); os.IsNotExist(err) {
 		assert.FailNow(t, "archived file does not exist", err)
 	}
 
-	assert.Nil(t, err, "archiving failed")
+	assert.NoError(t, err, "archiving failed")
 
 	defer os.Remove(archivedFile)
 
@@ -66,13 +66,13 @@ func helperArchiveFile(t *testing.T) {
 	fileInArchive := zipFile.File[0]
 	zipFileContent, err := fileInArchive.Open()
 
-	assert.Nil(t, err, "failed to open file in archive")
+	assert.NoError(t, err, "failed to open file in archive")
 
 	defer zipFileContent.Close()
 
 	data, err := io.ReadAll(zipFileContent)
 
-	assert.Nil(t, err, "failed to read data from file in archive")
+	assert.NoError(t, err, "failed to read data from file in archive")
 
 	assert.Equal(t, "test data", string(data), "unexpected data in archived file")
 }

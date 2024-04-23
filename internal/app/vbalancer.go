@@ -21,7 +21,7 @@ var ErrRecoveredPanic = errors.New("recovered from panic")
 
 // Run this is the function of an application that starts a proxy server.
 //
-//nolint:funlen,cyclop
+//nolint:funlen, cyclop
 func Run() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -56,7 +56,7 @@ func Run() {
 		}
 	}()
 
-	proxy, err := core.GetObjectFromMap(cfg.Proxy, proxy.New())
+	proxy, err := core.YamlToObject(cfg.Proxy, proxy.New())
 	if err != nil {
 		logger.Add(vlog.Fatal, types.ErrCantGetProxyObject, "can't get proxy object")
 	}

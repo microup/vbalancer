@@ -26,7 +26,6 @@ var ErrConfigPeersIsNil = errors.New("empty list peer in config file")
 
 // Proxy defines the structure for the proxy server.
 type Proxy struct {
-	//
 	Logger vlog.ILog `yaml:"-" json:"-"`
 	// Define the default port to listen on
 	Port string `yaml:"port" json:"port"`
@@ -239,7 +238,7 @@ func (p *Proxy) updatePort() types.ResultCode {
 	var proxyPort string
 
 	if p.Port == "" || p.Port == ":" {
-		proxyPort = os.Getenv("ProxyPort")
+		proxyPort = os.Getenv(types.ProxyPort)
 		if proxyPort == ":" || proxyPort == "" {
 			proxyPort = types.DefaultProxyPort
 		}

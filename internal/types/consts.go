@@ -52,3 +52,8 @@ const (
 	//
 	DeafultCountMaxDialAttemptsToPeer = 30
 )
+
+// ENVIREMENT.
+const (
+	ProxyPort = "ProxyPort"
+)

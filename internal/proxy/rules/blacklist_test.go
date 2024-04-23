@@ -81,7 +81,7 @@ func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 	for _, test := range testCases {
 		err := test.b.Init(ctx)
 
-		assert.Nil(t, err, "name: `%s`", test.name)
+		assert.NoError(t, err, "name: `%s`", test.name)
 
 		assert.Equalf(t, test.b.IsBlacklistIP(test.checkedIP), test.want, "name: `%s`", test.name)
 	}
