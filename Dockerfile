@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM golang:1.22.4
 
 ENV ConfigFile="config.yaml"
 ENV ProxyPort 8080
