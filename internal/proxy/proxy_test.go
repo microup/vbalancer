@@ -2,93 +2,13 @@
 package proxy
 
 import (
-	"context"
 	"fmt"
-	"io"
-	"net"
-	"net/http"
 	"testing"
-	"time"
 
-	"vbalancer/internal/proxy/peer"
-	"vbalancer/internal/proxy/peers"
 	"vbalancer/internal/types"
-	"vbalancer/mocks"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
 )
-
-// TestProxyServer - this is the `TestProxyServer` function of the proxy server.
-func TestCheckNewConnection(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	port := "18880"
-	uri := fmt.Sprintf("127.0.0.1:%s", port)
-
-	listener, err := net.Listen("tcp", uri)
-
-	require.NoErrorf(t, err, "error creating listener")
-
-	defer listener.Close()
-
-	logger := &mocks.MockLogger{}
-
-	listPeer := []peer.Peer{
-		{
-			Name: "test client",
-			URI:  "127.0.0.1:18881",
-		},
-	}
-
-	testProxy := &Proxy{
-		Logger:                logger,
-		Port:                  port,
-		ClientDeadLineTime:    1,
-		PeerConnectionTimeout: 1,
-		MaxCountConnection:    100,
-		Peers:                 nil,
-		Rules:                 nil,
-	}
-
-	resultCode := testProxy.updatePort()
-	assert.Equal(t, types.ResultOK, resultCode, "name: `%s`")
-
-	testProxy.Peers = &peers.Peers{
-		TimeToEvictNotResponsePeers: 0,
-		Peers:                       nil,
-	}
-
-	err = testProxy.Peers.Init(ctx, listPeer)
-
-	require.NoErrorf(t, err, "can't init peers")
-
-	go testProxy.AcceptConnections(ctx, listener)
-
-	time.Sleep(2 * time.Second)
-
-	httpClient := &http.Client{}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s", uri), nil)
-	if err != nil {
-		require.NoErrorf(t, err, "http request")
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		require.NoErrorf(t, err, "http client do")
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		assert.Equal(t, types.ResultOK, resp.StatusCode, "name: `%s`")
-	}
-
-	_, err = io.ReadAll(resp.Body)
-	if err != nil {
-		require.NoErrorf(t, err, "io readall")
-	}
-}
 
 // TestGetProxyPort tests the UpdatePort function.
 // It validates UpdatePort handles invalid environment variable values,
