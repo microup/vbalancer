@@ -16,8 +16,8 @@ import (
 type Peers struct {
 	currentPeerIndex            *uint64
 	blackListNotResponsePeers   *cache.VCache
-	TimeToEvictNotResponsePeers time.Duration `yaml:"timeToEvictNotResponsePeers"`
-	List                        []peer.Peer   `yaml:"list" json:"list"`
+	TimeToEvictNotResponsePeers time.Duration `json:"timeToEvictNotResponsePeers" yaml:"timeToEvictNotResponsePeers"`
+	Peers                       []peer.Peer   `json:"list"                        yaml:"list"`
 }
 
 // Initialize Peers struct with a slice of Peer objects,
@@ -26,20 +26,15 @@ type Peers struct {
 func (p *Peers) Init(ctx context.Context, peers []peer.Peer) error {
 	p.blackListNotResponsePeers = cache.New(time.Second, p.TimeToEvictNotResponsePeers)
 
-	err := p.blackListNotResponsePeers.StartEvict(ctx)
-	if err != nil {
+	if err := p.blackListNotResponsePeers.StartEvict(ctx); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
 	var startIndexInListPeer uint64
 	p.currentPeerIndex = &startIndexInListPeer
 
-	p.List = make([]peer.Peer, len(peers))
-
-	for index, cfgPeer := range peers {
-		peerCopy := cfgPeer
-		p.List[index] = peerCopy
-	}
+	p.Peers = make([]peer.Peer, len(peers))
+	copy(p.Peers, peers)
 
 	return nil
 }
@@ -48,18 +43,18 @@ func (p *Peers) Init(ctx context.Context, peers []peer.Peer) error {
 func (p *Peers) GetNextPeer() (*peer.Peer, types.ResultCode) {
 	var next int
 
-	if *p.currentPeerIndex >= uint64(len(p.List)) {
+	if *p.currentPeerIndex >= uint64(len(p.Peers)) {
 		atomic.StoreUint64(p.currentPeerIndex, uint64(0))
 	} else {
 		next = p.nextIndex()
 	}
 
-	l := len(p.List) + next
+	l := len(p.Peers) + next
 	for i := next; i < l; i++ {
-		idx := i % len(p.List)
+		idx := i % len(p.Peers)
 		atomic.StoreUint64(p.currentPeerIndex, uint64(idx))
 
-		peer := p.List[idx]
+		peer := p.Peers[idx]
 
 		_, found := p.blackListNotResponsePeers.Get(peer.URI)
 		if found {
@@ -79,5 +74,5 @@ func (p *Peers) AddToCacheBadPeer(uri string) {
 
 // nextIndex returns the next index in a list of peers.
 func (p *Peers) nextIndex() int {
-	return int(atomic.AddUint64(p.currentPeerIndex, uint64(1)) % uint64(len(p.List)))
+	return int(atomic.AddUint64(p.currentPeerIndex, uint64(1)) % uint64(len(p.Peers)))
 }

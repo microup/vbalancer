@@ -11,12 +11,6 @@ import (
 	"vbalancer/internal/types"
 )
 
-// Ilog is the interface for log.
-type ILog interface {
-	Add(values ...interface{})
-	Close() error
-}
-
 type VLog struct {
 	cfg               *config.Log
 	fileLog           *os.File
@@ -81,8 +75,7 @@ func (v *VLog) Add(values ...interface{}) {
 func (v *VLog) addInThread(values ...interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Printf("catch err: %v", err) //nolint:forbidigo
-			os.Exit(int(types.ErrGotPanic))
+			log.Fatalf("error recovery: %d, catch err: %s", types.ErrRecoverPanic,  err)
 		}
 	}()
 
@@ -95,19 +88,17 @@ func (v *VLog) addInThread(values ...interface{}) {
 	v.Mu.Lock()
 	defer v.Mu.Unlock()
 
-	if values == nil || v.MapLastLogRecords == nil {
+	if v.MapLastLogRecords == nil {
 		return
 	}
 
-	typeLog, recordRow := BuildRecord(ParseValues(values))
+	typeLog, recordRow := BuildRecord(types.ParseValues(values))
 
-	//nolint:exhaustive
-	switch typeLog {
-	case Fatal:
+	if typeLog == types.Fatal {
 		log.Panic(recordRow)
-	default:
-		log.Print(recordRow)
 	}
+
+	log.Print(recordRow)
 
 	_, err := v.fileLog.WriteString(recordRow + "\n")
 	if err != nil {

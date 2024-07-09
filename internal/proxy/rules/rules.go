@@ -12,6 +12,10 @@ type Rules struct {
 
 // Init initializes the rules.
 func (r *Rules) Init(ctx context.Context) error {
+	if r.Blacklist == nil {
+		return nil
+	}
+
 	err := r.Blacklist.Init(ctx)
 	if err != nil {
 		return fmt.Errorf("%w", err)

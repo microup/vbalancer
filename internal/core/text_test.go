@@ -27,7 +27,7 @@ func TestTrimLastChar(t *testing.T) {
 	for _, tc := range testCases {
 		got := core.TrimLastChar(tc.input)
 
-		assert.Equal(t, got, tc.want)
+		assert.Equal(t, tc.want, got)
 	}
 }
 

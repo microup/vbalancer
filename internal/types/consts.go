@@ -48,7 +48,7 @@ const (
 	//
 	DeafultPeerConnectionTimeout = 30 * time.Second
 	//
-	DeafultPeerHostDeadLine = 30 * time.Second
+	DeafultPeerHostDeadLine = 30 
 	//
 	DeafultCountMaxDialAttemptsToPeer = 30
 )
