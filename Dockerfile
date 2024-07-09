@@ -1,7 +1,7 @@
 FROM golang:latest
 
 ENV ConfigFile="config.yaml"
-ENV ProxyPort 8080
+ENV ProxyPort=8080
 
 EXPOSE 8080:8080
 

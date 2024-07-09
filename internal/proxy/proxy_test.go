@@ -1,11 +1,14 @@
-//nolint:testpackage
+//nolint:testpackage // the need to test the private method updatePort() in the proxy struct.
 package proxy
 
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"testing"
+	"time"
 
 	"vbalancer/internal/proxy/peer"
 	"vbalancer/internal/proxy/peers"
@@ -13,64 +16,83 @@ import (
 	"vbalancer/mocks"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestProxyServer - this is the `TestProxyServer` function of the proxy server.
 func TestCheckNewConnection(t *testing.T) {
-	t.Parallel()
-
-	proxySrv, err := net.Listen("tcp", "127.0.0.1:18880")
-
-	assert.Nil(t, err, "error creating listener")
-
-	defer proxySrv.Close()
-
-	logger := &mocks.MockLogger{}
-
-	listPeer := make([]peer.Peer, 0)
-	testPeer := peer.Peer{
-		Name: "test peer",
-		URI:  "127.0.0.1:18880",
-	}
-	listPeer = append(listPeer, testPeer)
-
-	//nolint:exhaustivestruct,exhaustruct
-	testProxy := &Proxy{
-		Logger:                logger,
-		Port:                  "18880",
-		ClientDeadLineTime:    10,
-		PeerConnectionTimeout: 10,
-		PeerHostDeadLine:      10,
-		MaxCountConnection:    100,
-	}
-
-	resultCode := testProxy.updatePort()
-	assert.Equal(t, resultCode, types.ResultOK, "name: `%s`")
-
-	//nolint:exhaustivestruct,exhaustruct
-	testProxy.Peers = &peers.Peers{}
-
-	err = testProxy.Peers.Init(context.Background(), listPeer)
-
-	assert.Nil(t, err, "can't init peers")
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go testProxy.AcceptConnections(ctx, proxySrv)
+	port := "18880"
+	uri := fmt.Sprintf("127.0.0.1:%s", port)
 
-	conn, err := net.Dial("tcp", proxySrv.Addr().String())
+	listener, err := net.Listen("tcp", uri)
 
-	assert.Nil(t, err, "dialing to proxy server")
+	require.NoErrorf(t, err, "error creating listener")
 
-	defer conn.Close()
+	defer listener.Close()
+
+	logger := &mocks.MockLogger{}
+
+	listPeer := []peer.Peer{
+		{
+			Name: "test client",
+			URI:  "127.0.0.1:18881",
+		},
+	}
+
+	testProxy := &Proxy{
+		Logger:                logger,
+		Port:                  port,
+		ClientDeadLineTime:    1,
+		PeerConnectionTimeout: 1,
+		MaxCountConnection:    100,
+		Peers:                 nil,
+		Rules:                 nil,
+	}
+
+	resultCode := testProxy.updatePort()
+	assert.Equal(t, types.ResultOK, resultCode, "name: `%s`")
+
+	testProxy.Peers = &peers.Peers{
+		TimeToEvictNotResponsePeers: 0,
+		Peers:                       nil,
+	}
+
+	err = testProxy.Peers.Init(ctx, listPeer)
+
+	require.NoErrorf(t, err, "can't init peers")
+
+	go testProxy.AcceptConnections(ctx, listener)
+
+	time.Sleep(2 * time.Second)
+
+	httpClient := &http.Client{}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s", uri), nil)
+	if err != nil {
+		require.NoErrorf(t, err, "http request")
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		require.NoErrorf(t, err, "http client do")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		assert.Equal(t, types.ResultOK, resp.StatusCode, "name: `%s`")
+	}
+
+	_, err = io.ReadAll(resp.Body)
+	if err != nil {
+		require.NoErrorf(t, err, "io readall")
+	}
 }
 
 // TestGetProxyPort tests the UpdatePort function.
 // It validates UpdatePort handles invalid environment variable values,
 // default values, and valid custom environment variable values correctly.
-//
-//nolint:paralleltest
 func TestGetProxyPort(t *testing.T) {
 	testCases := []struct {
 		port      string
@@ -115,8 +137,16 @@ func TestGetProxyPort(t *testing.T) {
 			port:      ":",
 		},
 	}
-	//nolint:exhaustivestruct,exhaustruct
-	prx := &Proxy{}
+
+	prx := &Proxy{
+		Logger:                nil,
+		Port:                  "",
+		ClientDeadLineTime:    10,
+		PeerConnectionTimeout: 10,
+		MaxCountConnection:    100,
+		Peers:                 nil,
+		Rules:                 nil,
+	}
 
 	for _, tc := range testCases {
 		testCase := tc

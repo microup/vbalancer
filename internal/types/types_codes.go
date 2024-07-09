@@ -24,7 +24,7 @@ const (
 	ErrCopyDataPeerToClient
 	ErrCopyDataClientToPeer
 	ErrCountAttempts
-	ErrGotPanic
+	ErrRecoverPanic
 	ErrCantGetProxyObject
 	ErrCantInitProxy
 	StatusBadRequest          ResultCode = http.StatusBadRequest
@@ -50,7 +50,11 @@ func (s ResultCode) ToStr() string {
 		ErrEmptyValue:             "value is empty",
 		ErrCantFindFile:           "can't find file",
 		ErrCantFindActivePeers:    "can't find active peers",
-		ErrGotPanic:               "got panic",
+		ErrUnknownTypeObjectPeer:  "unknown type obejct peer",
+		ErrCantGetProxyObject:     "can't get proxy object",
+		ErrCantInitProxy:          "can't init proxy",
+		ErrPeerIsFailed:           "peer is failed",
+		ErrRecoverPanic:           "recover panic",
 		ResultUnknown:             "unknown error",
 	}
 

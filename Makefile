@@ -4,7 +4,8 @@ all: lint test race build
 
 pre-push: lint test race
 
-build-mocks:
+prepare:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/golang/mock/mockgen@v1.6.0
 
 mocks:
@@ -25,7 +26,7 @@ lint:
 test:
 	go test -v ./...
 
-race: dep ## Run data race detector
+race: 
 	go test -race -v ./...
 
 build:

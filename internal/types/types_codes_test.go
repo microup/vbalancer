@@ -27,13 +27,13 @@ func TestResultCodeToStr(t *testing.T) {
 		{types.ErrEmptyValue, "value is empty"},
 		{types.ErrCantFindFile, "can't find file"},
 		{types.ErrCantFindActivePeers, "can't find active peers"},
-		{types.ErrGotPanic, "got panic"},
+		{types.ErrRecoverPanic, "recover panic"},
 		{types.ResultUnknown, "unknown error"},
 		{types.ResultCode(0xABC), "unknown result code: 2748"},
 	}
 
 	for _, test := range testCases {
-		assert.Equalf(t, test.input.ToStr(), test.want, "input: `%d | want %d`", test.input, test.want)
+		assert.Equalf(t, test.want, test.input.ToStr(), "input: `%d | want %d`", test.input, test.want)
 	}
 }
 
@@ -50,6 +50,6 @@ func TestResultCodeToUint(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		assert.Equalf(t, test.input.ToUint(), test.want, "input: `%d | want %d`", test.input, test.want)
+		assert.Equalf(t, test.want, test.input.ToUint(), "input: `%d | want %d`", test.input, test.want)
 	}
 }
