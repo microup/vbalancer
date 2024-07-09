@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.19' ]
+        go: [ '1.22' ]
         goos: [linux, darwin, windows]
         goarch: [386, amd64, arm64]
         exclude:
