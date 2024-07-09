@@ -1,29 +1,23 @@
 proxy:
 
   port: 8080
-  clientDeadLineTime: 30s
-  peerHostDeadLine: 30s
-  peerConnectionTimeout: 30s
-  maxCountConnection: 1000
+  clientDeadLineTime: 2s
+  peerConnectionTimeout: 1s
+  maxCountConnection: 100
 
   rules:
-    blacklist: 
+    blacklist:
       cacheDurationToEvict: 1h
-      remoteIp: 
+      remoteIp:
         - 127.0.0.5
-        - 192.168.1.40
 
   peers:
     timeToEvictNotResponsePeers: 60s
     list:
       - name: test_backend_1
-        uri: 127.0.0.1:8081
+        uri: 127.0.0.1:6010
       - name: test_backend_2
-        uri: 127.0.0.1:8082
-      - name: test_backend_3
-        uri: 127.0.0.1:8083
-      - name: test_backend_4
-        uri: 127.0.0.1:8084
+        uri: 127.0.0.1:6011
 
 logger:
   dirLog: ./logs/

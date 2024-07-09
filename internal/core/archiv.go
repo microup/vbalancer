@@ -56,7 +56,7 @@ func ArchiveFile(fileName string, extension string) error {
 		return fmt.Errorf("%w", err)
 	}
 
-	if _, err := io.Copy(fileZip, csvFileName); err != nil {
+	if _, err = io.Copy(fileZip, csvFileName); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 

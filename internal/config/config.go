@@ -18,9 +18,9 @@ var ErrCantFindProxySection = errors.New("can't find proxy section in config")
 // Config is the configuration of the proxy server.
 type Config struct {
 	// Logger is the configuration for the logger.
-	Log *Log `yaml:"logger" json:"logger"`
+	Log *Log `json:"logger" yaml:"logger"`
 	// Proxy is the configuration for the proxy server.
-	Proxy any `yaml:"proxy" json:"proxy"`
+	Proxy any `json:"proxy" yaml:"proxy"`
 }
 
 // New creates a new configuration for the vbalancer application.
@@ -78,8 +78,7 @@ func (c *Config) Load(cfgFileName string) error {
 	}
 
 	if !isPathFound {
-		//nolint:goerr113
-		return fmt.Errorf("path to config not found: %s", cfgFileName)
+		return fmt.Errorf("path to `%s` not found", cfgFileName)
 	}
 
 	fileConfig, err := os.Open(cfgFileName)

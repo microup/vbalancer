@@ -1,11 +1,8 @@
-package vlog
+package types
 
 import (
 	"fmt"
 	"strings"
-	"time"
-	"vbalancer/internal/core"
-	"vbalancer/internal/types"
 )
 
 type (
@@ -34,19 +31,19 @@ const (
 // and a string value built
 // from concatenating the string values in the input slice with semicolons.
 func ParseValues(values []interface{}) (
-	TypeLog, types.ResultCode,
+	TypeLog, ResultCode,
 	RemoteAddr, PeerAddr, string) {
 	var typeLog TypeLog
-	var resultCode types.ResultCode //nolint:wsl
-	var remoteAddr RemoteAddr       //nolint:wsl
-	var peerAddr PeerAddr           //nolint:wsl
-	var val strings.Builder         //nolint:wsl
+	var resultCode ResultCode
+	var remoteAddr RemoteAddr
+	var peerAddr PeerAddr
+	var val strings.Builder
 
 	for _, value := range values {
 		switch valueTypeLog := value.(type) {
 		case TypeLog:
 			typeLog = valueTypeLog
-		case types.ResultCode:
+		case ResultCode:
 			resultCode = valueTypeLog
 		case string:
 			val.WriteString(valueTypeLog)
@@ -62,34 +59,6 @@ func ParseValues(values []interface{}) (
 	}
 
 	return typeLog, resultCode, remoteAddr, peerAddr, val.String()
-}
-
-// BuildRecord function takes in several input values such as log type, result code,
-// remote address, client host, proxy host and string values. It creates a record in the
-// specified format with the current date and time by using the "GetDateTimeStr" function
-// from the "core" package. The result is returned as a tuple with the log type and the formatted record string.
-func BuildRecord(
-	typeLog TypeLog,
-	resultCode types.ResultCode,
-	remoteAddr RemoteAddr,
-	peerAddr PeerAddr,
-	valuesStr string) (TypeLog, string) {
-	var recordTime = time.Now()
-
-	var dateStr, timeStr = core.GetDateTimeStr(recordTime)
-
-	var resultStr = core.FmtStringWithDelimiter(";", valuesStr)
-
-	var recordRow = fmt.Sprintf("%s;%s;%s;%d;%s;%s;%s;",
-		dateStr,
-		timeStr,
-		typeLog.GetStr(),
-		resultCode,
-		remoteAddr,
-		peerAddr,
-		resultStr)
-
-	return typeLog, recordRow
 }
 
 // GetStr this function returns a string representation of a "TypeLog"

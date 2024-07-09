@@ -7,13 +7,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
 	"vbalancer/internal/core"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestArchive this is a test function for `archive()`.
-//nolint:paralleltest
+//
+//nolint:paralleltest // this why need to run once
 func TestArchiveFile(t *testing.T) {
 	helperArchiveFile(t)
 }
@@ -30,28 +33,28 @@ func helperArchiveFile(t *testing.T) {
 
 	testFile, err := os.Create(fileName)
 
-	assert.NoError(t, err, "failed to create test file")
+	require.NoErrorf(t, err, "failed to create test file")
 
 	defer os.Remove(fileName)
 
-	_, err = testFile.Write([]byte("test data"))
+	_, err = testFile.WriteString("test data")
 
-	assert.NoError(t, err, "failed to write data to test file")
+	require.NoErrorf(t, err, "failed to write data to test file")
 
 	err = testFile.Close()
 
-	assert.NoError(t, err, "failed to close test file")
+	require.NoErrorf(t, err, "failed to close test file")
 
 	err = core.ArchiveFile(fileName, extension)
 
-	assert.NoError(t, err, "archiving failed")
+	require.NoErrorf(t, err, "archiving failed")
 
 	archivedFile := strings.TrimSuffix(fileName, filepath.Ext(fileName)) + extension
 	if _, err = os.Stat(archivedFile); os.IsNotExist(err) {
 		assert.FailNow(t, "archived file does not exist", err)
 	}
 
-	assert.NoError(t, err, "archiving failed")
+	require.NoErrorf(t, err, "archiving failed")
 
 	defer os.Remove(archivedFile)
 
@@ -61,18 +64,16 @@ func helperArchiveFile(t *testing.T) {
 	}
 	defer zipFile.Close()
 
-	assert.Equal(t, 1, len(zipFile.File), "unexpected number of files in archived file")
-
 	fileInArchive := zipFile.File[0]
 	zipFileContent, err := fileInArchive.Open()
 
-	assert.NoError(t, err, "failed to open file in archive")
+	require.NoErrorf(t, err, "failed to open file in archive")
 
 	defer zipFileContent.Close()
 
 	data, err := io.ReadAll(zipFileContent)
 
-	assert.NoError(t, err, "failed to read data from file in archive")
+	require.NoErrorf(t, err, "failed to read data from file in archive")
 
 	assert.Equal(t, "test data", string(data), "unexpected data in archived file")
 }

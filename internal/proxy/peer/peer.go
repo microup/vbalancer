@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// IPeer this is the interface that defines the methods for dialing a connection.
-type IPeer interface {
+// Peerer this is the interface that defines the methods for dialing a connection.
+type Peerer interface {
 	GetURI() string
 	Dial(ctx context.Context, timeOut time.Duration, timeOutDeadLine time.Duration) (net.Conn, error)
 }
@@ -20,18 +20,8 @@ type Peer struct {
 }
 
 // Dial dials a connection to a peer.
-func (p *Peer) Dial(ctx context.Context, timeOut time.Duration, timeOutDeadLine time.Duration) (net.Conn, error) {
-	//nolint:exhaustivestruct,exhaustruct
-	dialer := net.Dialer{
-		Timeout: timeOut,
-	}
-
-	connect, err := dialer.DialContext(ctx, "tcp", p.GetURI())
-	if err != nil {
-		return nil, fmt.Errorf("%w", err)
-	}
-
-	err = connect.SetDeadline(time.Now().Add(timeOutDeadLine))
+func (p *Peer) Dial(timeOut time.Duration) (net.Conn, error) {
+	connect, err := net.DialTimeout("tcp", p.GetURI(), timeOut)
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}

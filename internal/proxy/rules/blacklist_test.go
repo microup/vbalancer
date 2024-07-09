@@ -8,11 +8,11 @@ import (
 
 	cache "github.com/microup/vcache"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const CachedDurationToEvict = 5 * time.Second
 
-//nolint:funlen
 func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 	t.Parallel()
 
@@ -81,8 +81,8 @@ func TestBlacklist_CheckIpBlacklist(t *testing.T) {
 	for _, test := range testCases {
 		err := test.b.Init(ctx)
 
-		assert.NoError(t, err, "name: `%s`", test.name)
+		require.NoErrorf(t, err, "name: `%s`", test.name)
 
-		assert.Equalf(t, test.b.IsBlacklistIP(test.checkedIP), test.want, "name: `%s`", test.name)
+		assert.Equalf(t, test.want,  test.b.IsBlacklistIP(test.checkedIP), "name: `%s`", test.name)
 	}
 }

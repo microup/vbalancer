@@ -70,7 +70,7 @@ func getValueStr(delimiter string, value interface{}) string {
 		valueStr = fmt.Sprintf("%d", value)
 	case reflect.Slice:
 		s := reflect.ValueOf(value)
-		for i := 0; i < s.Len(); i++ {
+		for i := range s.Len() {
 			val := s.Index(i)
 			if valueStr == "" {
 				valueStr = fmt.Sprintf("%v", val.Interface())

@@ -7,15 +7,17 @@ import (
 	"time"
 
 	"vbalancer/internal/config"
+	"vbalancer/internal/types"
 	"vbalancer/internal/vlog"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestVlogAdd is a test case for vlog.Add.
-//
-//nolint:paralleltest
 func TestVlogAdd(t *testing.T) {
+	t.Parallel()
+
 	helperVlogAdd(t)
 }
 
@@ -36,19 +38,19 @@ func helperVlogAdd(t *testing.T) {
 
 	err := vLog.Init()
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
-	vLog.Add(vlog.Debug, "test msg")
+	vLog.Add(types.Debug, "test msg")
 	time.Sleep(1 * time.Second)
 
-	assert.Equal(t, vLog.GetCountRecords(), 1, "expected count of log records to be 1, got %d", vLog.GetCountRecords())
+	assert.Equal(t, 1, vLog.GetCountRecords(), "expected count of log records to be 1, got %d", vLog.GetCountRecords())
 
 	err = vLog.Close()
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	absolutePath, _ := filepath.Abs(cfg.DirLog)
 	err = os.RemoveAll(absolutePath)
 
-	assert.Nil(t, err, "unexpected error delete tempore dir")
+	require.NoErrorf(t, err, "unexpected error delete tempore dir")
 }

@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [ '1.19' ]
+        go: [ '1.22' ]
 
     steps:
       - uses: actions/checkout@v3
@@ -43,7 +43,7 @@ jobs:
 
       - name: linter
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.1
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.59.1
           golangci-lint --version
           golangci-lint run -v ./...
 
