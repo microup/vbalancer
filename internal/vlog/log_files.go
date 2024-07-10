@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"vbalancer/internal/core"
 	"vbalancer/internal/types"
 	"vbalancer/internal/version"
 )
 
 // newFileLog - function for creating a new file log.
-func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
+func (v *VLog) newFileLog(isNewFileLog bool) error {
 	if isNewFileLog {
 		v.MapLastLogRecords = make([]string, 0)
 
-		err := v.Close()
-		if err != nil {
-			return err
+		if err := v.Close(); err != nil {
+			return fmt.Errorf("%w", err)
 		}
 	} else if !isNewFileLog {
 		if v.fileLog != nil {
@@ -24,21 +24,20 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 		}
 	}
 
-	var err error
-	if _, err = os.Stat(v.cfg.DirLog); os.IsNotExist(err) {
+	if _, err := os.Stat(v.cfg.DirLog); os.IsNotExist(err) {
 		err = os.Mkdir(v.cfg.DirLog, types.MaskDir)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
 	}
 
-	v.fileLog, err = v.open(newFileName)
+	var err error
+	v.fileLog, err = v.open()
 	if v.fileLog == nil || err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
-	_, err = v.fileLog.WriteString(v.headerCSV + "\n")
-	if err != nil {
+	if _, err = v.fileLog.WriteString(v.headerCSV + "\n"); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
@@ -47,7 +46,7 @@ func (v *VLog) newFileLog(newFileName string, isNewFileLog bool) error {
 
 // Close function for closing the file log.
 func (v *VLog) Close() error {
-	v.wgNewLog.Wait()
+	v.wg.Wait()
 
 	if v.fileLog != nil {
 		if err := v.fileLog.Close(); err != nil {
@@ -59,17 +58,13 @@ func (v *VLog) Close() error {
 }
 
 // open function for opening the file log.
-func (v *VLog) open(newFileName string) (*os.File, error) {
-	v.countToLogID++
-
+func (v *VLog) open() (*os.File, error) {
 	var fileNameLog string
 
-	if newFileName == "" {
-		timeCreateLogFile := v.startTimeLog.Format("20060102150405")
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.countToLogID, types.LogFileExtension)
-	} else {
-		fileNameLog = fmt.Sprintf("%s_%d_%d.%s", newFileName, version.Get(), v.countToLogID, types.LogFileExtension)
-	}
+	timeCreateLogFile := v.startTimeLog.Format("20060102150405")
+	fileNameLog = fmt.Sprintf("%s_%d_%d.%s", timeCreateLogFile, version.Get(), v.idLog, types.LogFileExtension)
+
+	atomic.AddUint64(&v.idLog, 1)
 
 	fileNameLog = filepath.Join(v.cfg.DirLog, fileNameLog)
 
@@ -95,7 +90,6 @@ func (v *VLog) GetCurrentFileLogInfo() *LogFile {
 	return &LogFile{
 		FileName: v.fileLog.Name(),
 		FileSize: core.HumanFileSize(float64(fileInfo.Size())),
-		Kind:     types.LogFileExtension,
 	}
 }
 
@@ -107,7 +101,7 @@ func (v *VLog) checkToCreateNewLogFile() error {
 	}
 
 	if fileInfo == nil {
-		err = v.newFileLog("", false)
+		err = v.newFileLog(false)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
@@ -118,25 +112,27 @@ func (v *VLog) checkToCreateNewLogFile() error {
 	fileSizeBytes := fileInfo.Size()
 	fileSizeMB := float64(fileSizeBytes) / (types.LengthKilobytesInBytes * types.LengthKilobytesInBytes)
 
-	if fileSizeMB > v.cfg.FileSizeMB {
-		oldFileCSV := v.fileLog.Name()
+	if fileSizeMB < v.cfg.FileSizeMB {
+		return nil
+	}
 
-		err = v.newFileLog("", false)
-		if err != nil {
-			return fmt.Errorf("%w", err)
-		}
+	oldFileCSV := v.fileLog.Name()
 
-		err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
-		if err != nil {
-			return fmt.Errorf("failed to archive file: %w", err)
-		}
+	err = v.newFileLog(false)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
 
-		fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
-		err = os.Remove(fileCsv)
+	err = core.ArchiveFile(oldFileCSV, fmt.Sprintf("_%s.zip", types.LogFileExtension))
+	if err != nil {
+		return fmt.Errorf("failed to archive file: %w", err)
+	}
 
-		if err != nil {
-			return fmt.Errorf("failed to os remove file:%s err:%w", fileCsv, err)
-		}
+	fileCsv := filepath.Join(v.cfg.DirLog, fileInfo.Name())
+	err = os.Remove(fileCsv)
+
+	if err != nil {
+		return fmt.Errorf("failed to os remove file:%s err:%w", fileCsv, err)
 	}
 
 	return nil
@@ -150,6 +146,7 @@ func (v *VLog) removeOldRecordsFromMemory() {
 		_, v.MapLastLogRecords = v.MapLastLogRecords[0], v.MapLastLogRecords[1:]
 		xLast, v.MapLastLogRecords = v.MapLastLogRecords[len(v.MapLastLogRecords)-1],
 			v.MapLastLogRecords[:len(v.MapLastLogRecords)-1]
+
 		v.MapLastLogRecords = append(v.MapLastLogRecords, xLast)
 	}
 }

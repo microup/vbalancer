@@ -66,6 +66,7 @@ func TestGetProxyPort(t *testing.T) {
 		MaxCountConnection:    100,
 		Peers:                 nil,
 		Rules:                 nil,
+		notify: 				make(chan error),
 	}
 
 	for _, tc := range testCases {

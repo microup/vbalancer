@@ -12,14 +12,14 @@ import (
 )
 
 type VLog struct {
+	wg                *sync.WaitGroup
 	cfg               *config.Log
 	fileLog           *os.File
-	countToLogID      int
+	idLog             uint64
 	MapLastLogRecords []string
 	Mu                *sync.Mutex
 	headerCSV         string
 	startTimeLog      time.Time
-	wgNewLog          *sync.WaitGroup
 	IsDisabled        bool
 }
 
@@ -34,11 +34,11 @@ func New(cfg *config.Log) *VLog {
 		"Description")
 
 	return &VLog{
-		wgNewLog:          &sync.WaitGroup{},
 		Mu:                &sync.Mutex{},
+		wg:                &sync.WaitGroup{},
 		fileLog:           nil,
 		cfg:               cfg,
-		countToLogID:      -1,
+		idLog:             0,
 		MapLastLogRecords: []string{},
 		headerCSV:         headerCSV,
 		startTimeLog:      time.Now(),
@@ -47,8 +47,7 @@ func New(cfg *config.Log) *VLog {
 }
 
 func (v *VLog) Init() error {
-	err := v.newFileLog("", true)
-	if err != nil {
+	if err := v.newFileLog(true); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
@@ -60,22 +59,20 @@ func (v *VLog) GetCountRecords() int {
 	v.Mu.Lock()
 	defer v.Mu.Unlock()
 
-	if v.MapLastLogRecords == nil {
-		return 0
-	}
-
 	return len(v.MapLastLogRecords)
 }
 
 // Add adds a log record to the log file.
 func (v *VLog) Add(values ...interface{}) {
+	v.wg.Add(1)
+
 	go v.addInThread(values...)
 }
 
 func (v *VLog) addInThread(values ...interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Fatalf("error recovery: %d, catch err: %s", types.ErrRecoverPanic,  err)
+			log.Fatalf("error recovery: %d, catch err: %s", types.ErrRecoverPanic, err)
 		}
 	}()
 
@@ -83,14 +80,10 @@ func (v *VLog) addInThread(values ...interface{}) {
 		return
 	}
 
-	v.wgNewLog.Wait()
-
 	v.Mu.Lock()
 	defer v.Mu.Unlock()
 
-	if v.MapLastLogRecords == nil {
-		return
-	}
+	defer v.wg.Done()
 
 	typeLog, recordRow := BuildRecord(types.ParseValues(values))
 
@@ -100,8 +93,7 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 	log.Print(recordRow)
 
-	_, err := v.fileLog.WriteString(recordRow + "\n")
-	if err != nil {
+	if _, err := v.fileLog.WriteString(recordRow + "\n"); err != nil {
 		log.Printf("Error: %s - is writing: %s to log file: %s\n", err, recordRow, v.fileLog.Name())
 
 		return
@@ -111,8 +103,7 @@ func (v *VLog) addInThread(values ...interface{}) {
 
 	v.MapLastLogRecords = append(v.MapLastLogRecords, recordRow)
 
-	err = v.checkToCreateNewLogFile()
-	if err != nil {
+	if err := v.checkToCreateNewLogFile(); err != nil {
 		log.Printf("Error: %s - is writing: %s to log file: %s", err, recordRow, v.fileLog.Name())
 	}
 }
