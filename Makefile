@@ -1,3 +1,5 @@
+PROJECT_NAME=vbalancer
+
 .PHONY: all dep build test lint mocks
 
 all: lint test race build
@@ -26,11 +28,14 @@ lint:
 test:
 	go test -v ./...
 
-race: 
+race:
 	go test -race -v ./...
 
 build:
 	go build -o build/$(PROJECT_NAME) cmd/$(PROJECT_NAME)/$(PROJECT_NAME).go
+
+build-win:
+	go build -o build/$(PROJECT_NAME).exe cmd/$(PROJECT_NAME)/$(PROJECT_NAME).go
 
 docker-create:
 	docker build --tag vbalancer . -f Dockerfile

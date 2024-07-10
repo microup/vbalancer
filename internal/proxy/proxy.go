@@ -45,6 +45,8 @@ type Proxy struct {
 	Peers *peers.Peers `json:"peers" yaml:"peers"`
 	// Defien allows configuration of blacklist rules to be passed to the proxy server
 	Rules *rules.Rules `json:"rules" yaml:"rules"`
+	// Notify is a channel used to send error notifications
+	notify chan error
 }
 
 func New() *Proxy {
@@ -61,6 +63,7 @@ func New() *Proxy {
 		Rules: &rules.Rules{
 			Blacklist: nil,
 		},
+		notify: make(chan error, 1),
 	}
 }
 
@@ -90,17 +93,25 @@ func (p *Proxy) Init(ctx context.Context, logger Loger) error {
 }
 
 // ListenAndServe starts the proxy server.
-func (p *Proxy) ListenAndServe(ctx context.Context) error {
-	proxySrv, err := net.Listen("tcp", p.Port)
-	if err != nil {
-		return fmt.Errorf("%w", err)
-	}
+func (p *Proxy) ListenAndServe(ctx context.Context) {
+	go func() {
+		proxySrv, err := net.Listen("tcp", p.Port)
+		if err != nil {
+			p.notify <- err
+			return
+		}
 
-	defer proxySrv.Close()
+		defer proxySrv.Close()
+		defer close(p.notify)
 
-	p.AcceptConnections(ctx, proxySrv)
+		p.Logger.Add(types.Info, types.ResultOK, fmt.Sprintf("start proxy on: %s", proxySrv.Addr().String()))
 
-	return nil
+		p.AcceptConnections(ctx, proxySrv)
+	}()
+}
+
+func (p *Proxy) Notify() <-chan error {
+	return p.notify
 }
 
 // AcceptConnections accepts connections from the proxy server.
